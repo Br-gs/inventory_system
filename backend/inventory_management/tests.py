@@ -14,7 +14,7 @@ class ProductModelTest(TestCase):
 
 # view test
 
-class ProductoViewTest(TestCase):
+class ProductViewTest(TestCase):
     def setUp(self):
         Product.objects.create(name = 'product2', description ='description2', price = 20, quantity = 200)
     def testViewExistProperLocation(self):
