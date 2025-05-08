@@ -10,5 +10,5 @@ class InventoryMovementSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)
     class Meta:
         model = InventoryMovement
-        fields = ['id', 'product', 'quantity', 'date', 'movement_type', 'date']
+        fields = ['id', 'product', 'quantity', 'date', 'movement_type',]
         read_only_fields = ['date']

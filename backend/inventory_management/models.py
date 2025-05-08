@@ -13,7 +13,7 @@ class Product(models.Model):
         return self.name
 
 class InventoryMovement(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='movements')
     quantity = models.IntegerField()
     date = models.DateTimeField(auto_now_add=True)
     MOVEMENT_INPUT = 'IN'
@@ -42,7 +42,7 @@ class InventoryMovement(models.Model):
             elif self.movement_type == self.MOVEMENT_OUTPUT:
                 change_stock = -self.quantity
             elif self.movement_type == self.MOVEMENT_ADJUSTMENT:
-                change_stock = self.quantity
+                change_stock = self.quantity - product_to_update.quantity
             else:
                 raise ValueError(f'Invalid movement type: {self.movement_type}')
 
