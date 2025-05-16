@@ -9,6 +9,6 @@ router.register('api/products', ProductViewSet, 'products')
 router.register('api/inventory_movements', InventoryMovementViewSet, 'inventory_movements')
 
 urlpatterns = [
-    path('products/', views.list_products, name='list_products'),
+    #path('products/', views.list_products, name='list_products'),
     path('', include(router.urls))
 ]

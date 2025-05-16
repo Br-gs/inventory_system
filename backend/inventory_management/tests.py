@@ -1,26 +1,100 @@
-from django.test import TestCase
+from rest_framework.test import APITestCase
 from django.urls import reverse
-from .models import Product
+from .models import Product, InventoryMovement
+from rest_framework import status
+from django.core.validators import MinValueValidator
+from django.db import transaction
+from decimal import Decimal
 
-# models test
-
-class ProductModelTest(TestCase):
+class ProductAPITest(APITestCase):
+    # Test case for Product API
     def setUp(self):
-        Product.objects.create(name = 'product1', description ='description1', price = 10, quantity = 100)
-    def testNameProduct(self):
-        product = Product.objects.get(id = 1)
-        expectedProduct = f'{product.name}'
-        self.assertEqual(expectedProduct, 'product1')
+        self.product1 = Product.objects.create(name='Laptop X1', description='Potente laptop para desarrollo', price=1200, quantity=10)
+        self.product2 = Product.objects.create(name='Mouse Gamer', description='Mouse ergonómico con RGB', price=Decimal('1200'), quantity=25)
+        self.list_create_url = reverse('products-list') 
+        self.detail_url_product1 = reverse('products-detail', kwargs={'pk': self.product1.pk})
+    
+    def test_list_products_api(self):
+        response = self.client.get(self.list_create_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]['name'], self.product1.name)
+        self.assertEqual(response.data[1]['name'], self.product2.name)
 
-# view test
+    def test_create_product_api(self):
+        new_product_data = {'name': 'teclado Mecánico', 'description': 'Teclado con switches azules', 'price': '100.00', 'quantity': 5}
+        response = self.client.post(self.list_create_url, new_product_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Product.objects.count(), 3)
+        created_product = Product.objects.get(pk=response.data['id'])
+        self.assertEqual(created_product.name, new_product_data['name'])
+        self.assertEqual(created_product.quantity, new_product_data['quantity'])
+        self.assertEqual(created_product.price, Decimal(new_product_data['price']))
+    
+    def test_retrieve_product_api(self):
+        response = self.client.get(self.detail_url_product1)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['name'], self.product1.name)
+        self.assertEqual(response.data['description'], self.product1.description)
+        self.assertEqual(response.data['price'], f'{self.product1.price:.2f}')
+        self.assertEqual(response.data['quantity'], self.product1.quantity)
+    
+    def test_update_product_api(self):
+        updated_product_data = {'name': 'Laptop X1 Pro', 'description': 'Potente laptop para desarrollo', 'price': '1300.00', 'quantity': 8}
+        response = self.client.put(self.detail_url_product1, updated_product_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.product1.refresh_from_db()
+        self.assertEqual(self.product1.name, updated_product_data['name'])
+        self.assertEqual(self.product1.price, Decimal(updated_product_data['price']))
+        self.assertEqual(self.product1.quantity, updated_product_data['quantity']) 
+    
+    def test_partial_update_product_api(self):
+        partial_update_data = {'price': '1100.00'}
+        response = self.client.patch(self.detail_url_product1, partial_update_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.product1.refresh_from_db()
+        self.assertEqual(self.product1.price, Decimal(partial_update_data['price']))
+        self.assertEqual(self.product1.name, 'Laptop X1')
+        self.assertEqual(self.product1.quantity, self.product1.quantity)
 
-class ProductViewTest(TestCase):
+    def test_delete_product_api(self):
+        response = self.client.delete(self.detail_url_product1)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Product.objects.count(), 1)
+        with self.assertRaises(Product.DoesNotExist):
+            Product.objects.get(pk=self.product1.pk)
+
+class InventoryMovementAPITest(APITestCase):
+    # Test case for InventoryMovement API
     def setUp(self):
-        Product.objects.create(name = 'product2', description ='description2', price = 20, quantity = 200)
-    def testViewExistProperLocation(self):
-        response = self.client.get('/products/')
-        self.assertEqual(response.status_code, 200)
-    def testViewCorrectTemplate(self):
-        response = self.client.get(reverse('list_products'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'list_products.html')
+        self.product = Product.objects.create(name='Laptop X1', description='Potente laptop para desarrollo', price=1200, quantity=10)
+        self.inventory_movement1 = InventoryMovement.objects.create(product=self.product, product_name=self.product.name, quantity=5, movement_type=InventoryMovement.MOVEMENT_INPUT)
+        self.product.refresh_from_db()
+        self.list_create_url = reverse('inventory_movements-list')
+        self.detail_url_movement1 = reverse('inventory_movements-detail', kwargs={'pk': self.inventory_movement1.pk})
+    
+    def test_list_inventory_movements_api(self):
+        response = self.client.get(self.list_create_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['product'], self.product.pk)
+        self.assertEqual(response.data[0]['quantity'], self.inventory_movement1.quantity)
+
+    def test_create_input_inventory_movement_updates_stock(self):
+        initial_quantity = self.product.quantity
+        new_movement_data = {'product': self.product.pk, 'product_name':self.product['name'], 'quantity': 5, 'movement_type': InventoryMovement.MOVEMENT_INPUT}
+        response = self.client.post(self.list_create_url, new_movement_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.product.refresh_from_db()
+        expected_quantity = initial_quantity + new_movement_data['quantity']
+        self.assertEqual(self.product.quantity, expected_quantity)
+
+    def test_create_output_inventory_movement_updates_stock(self):
+        initial_quantity = self.product.quantity
+        new_movement_data = {'product': self.product.pk, 'product_name':self.product['name'], 'quantity': 3, 'movement_type': InventoryMovement.MOVEMENT_OUTPUT}
+        response = self.client.post(self.list_create_url, new_movement_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(InventoryMovement.objects.count(), 3)
+        self.product.refresh_from_db()
+        expected_quantity = initial_quantity - new_movement_data['quantity']
+        self.assertEqual(self.product.quantity, expected_quantity)

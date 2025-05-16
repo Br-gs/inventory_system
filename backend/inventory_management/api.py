@@ -9,5 +9,5 @@ class ProductViewSet(viewsets.ModelViewSet):
 
 class InventoryMovementViewSet(viewsets.ModelViewSet):
     queryset = InventoryMovement.objects.all().order_by('-date')
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     serializer_class = InventoryMovementSerializer
