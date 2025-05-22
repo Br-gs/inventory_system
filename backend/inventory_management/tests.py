@@ -5,23 +5,58 @@ from rest_framework import status
 from django.core.validators import MinValueValidator
 from django.db import transaction
 from decimal import Decimal
+from django.contrib.auth.models import User
 
 class ProductAPITest(APITestCase):
     # Test case for Product API
     def setUp(self):
+        self.admin_user = User.objects.create_user(username='admin', password='admin123', is_staff=True)
+        self.regular_user = User.objects.create_user(username='user', password='user123', is_staff=False)
+
         self.product1 = Product.objects.create(name='Laptop X1', description='Potente laptop para desarrollo', price=1200, quantity=10)
         self.product2 = Product.objects.create(name='Mouse Gamer', description='Mouse ergonómico con RGB', price=Decimal('1200'), quantity=25)
         self.list_create_url = reverse('products-list') 
         self.detail_url_product1 = reverse('products-detail', kwargs={'pk': self.product1.pk})
     
-    def test_list_products_api(self):
+    # test cases only read for regular user
+    def test_list_products_regular_user_api(self):
+        self.client.force_authenticate(user=self.regular_user)
         response = self.client.get(self.list_create_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
         self.assertEqual(response.data[0]['name'], self.product1.name)
         self.assertEqual(response.data[1]['name'], self.product2.name)
 
+    def test_retrieve_product_regular_user_api(self):
+        self.client.force_authenticate(user=self.regular_user)
+        response = self.client.get(self.detail_url_product1)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['name'], self.product1.name)
+        self.assertEqual(response.data['description'], self.product1.description)
+        self.assertEqual(response.data['price'], f'{self.product1.price:.2f}')
+        self.assertEqual(response.data['quantity'], self.product1.quantity)
+
+    # test cases of writing for regular user 
+    def test_create_product_regular_user_forbidden(self):
+        self.client.force_authenticate(user=self.regular_user)
+        new_product_data = {'name': 'Tablet','description': 'Tablet de alta gama' , 'price': '300.00', 'quantity': 5, 'is_active': True}
+        response = self.client.post(self.list_create_url, new_product_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_update_product_regular_user_forbidden(self):
+        self.client.force_authenticate(user=self.regular_user)
+        updated_data = {'name': 'Laptop X1 Ultra','description':'laptop gamer' , 'price': '1300.00', 'quantity': 8, 'is_active': True}
+        response = self.client.put(self.detail_url_product1, updated_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_delete_product_regular_user_forbidden(self):
+        self.client.force_authenticate(user=self.regular_user)
+        response = self.client.delete(self.detail_url_product1)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    # test cases of writing for admin user
     def test_create_product_api(self):
+        self.client.force_authenticate(user=self.admin_user)
         new_product_data = {'name': 'teclado Mecánico', 'description': 'Teclado con switches azules', 'price': '100.00', 'quantity': 5, 'is_active': True}
         response = self.client.post(self.list_create_url, new_product_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -31,15 +66,8 @@ class ProductAPITest(APITestCase):
         self.assertEqual(created_product.quantity, new_product_data['quantity'])
         self.assertEqual(created_product.price, Decimal(new_product_data['price']))
     
-    def test_retrieve_product_api(self):
-        response = self.client.get(self.detail_url_product1)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['name'], self.product1.name)
-        self.assertEqual(response.data['description'], self.product1.description)
-        self.assertEqual(response.data['price'], f'{self.product1.price:.2f}')
-        self.assertEqual(response.data['quantity'], self.product1.quantity)
-    
     def test_update_product_api(self):
+        self.client.force_authenticate(user=self.admin_user)
         updated_product_data = {'name': 'Laptop X1 Pro', 'description': 'Potente laptop para desarrollo', 'price': '1300.00', 'quantity': 8, 'is_active': self.product1.is_active}
         response = self.client.put(self.detail_url_product1, updated_product_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -49,6 +77,7 @@ class ProductAPITest(APITestCase):
         self.assertEqual(self.product1.quantity, updated_product_data['quantity']) 
     
     def test_partial_update_product_api(self):
+        self.client.force_authenticate(user=self.admin_user)
         partial_update_data = {'price': '1100.50'}
         response = self.client.patch(self.detail_url_product1, partial_update_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -58,30 +87,51 @@ class ProductAPITest(APITestCase):
         self.assertEqual(self.product1.quantity, self.product1.quantity)
 
     def test_delete_product_api(self):
+        self.client.force_authenticate(user=self.admin_user)
         response = self.client.delete(self.detail_url_product1)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Product.objects.count(), 1)
         with self.assertRaises(Product.DoesNotExist):
             Product.objects.get(pk=self.product1.pk)
 
+
+
 class InventoryMovementAPITest(APITestCase):
     # Test case for InventoryMovement API
     def setUp(self):
+        self.admin_user = User.objects.create_user(username='admin_mov', password='password123', is_staff=True)
+        self.regular_user = User.objects.create_user(username='user_mov', password='password123', is_staff=False)
+
         self.product = Product.objects.create(name='Laptop X1', description='Potente laptop para desarrollo', price=1200, quantity=10, is_active=True)
         self.product_inactive = Product.objects.create(name='Monitor', description='Monitor con excelente resolución', price=400, quantity=17, is_active=False)
+
+        # Create an inventory movement for the product
+        self.client.force_authenticate(user=self.admin_user)
         self.inventory_movement1 = InventoryMovement.objects.create(product=self.product, quantity=5, movement_type=InventoryMovement.MOVEMENT_INPUT)
         self.product.refresh_from_db()
         self.list_create_url = reverse('inventory_movements-list')
         self.detail_url_movement1 = reverse('inventory_movements-detail', kwargs={'pk': self.inventory_movement1.pk})
     
-    def test_list_inventory_movements_api(self):
+    def test_list_inventory_movements_regular_user_api(self):
+        self.client.force_authenticate(user=self.regular_user)
         response = self.client.get(self.list_create_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]['product'], self.product.pk)
         self.assertEqual(response.data[0]['quantity'], self.inventory_movement1.quantity)
 
+    def test_create_input_movement_regular_user_forbidden(self):
+        self.client.force_authenticate(user=self.regular_user)
+        new_movement_data = {
+            'product': self.product.pk,
+            'quantity': 5,
+            'movement_type': InventoryMovement.MOVEMENT_INPUT
+        }
+        response = self.client.post(self.list_create_url, new_movement_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, response.data)
+
     def test_create_input_inventory_movement_updates_stock(self):
+        self.client.force_authenticate(user=self.admin_user)
         initial_quantity = self.product.quantity
         new_movement_data = {'product': self.product.pk, 'quantity': 5, 'movement_type': InventoryMovement.MOVEMENT_INPUT}
         response = self.client.post(self.list_create_url, new_movement_data, format='json')
@@ -92,6 +142,7 @@ class InventoryMovementAPITest(APITestCase):
         self.assertEqual(self.product.quantity, expected_quantity)
 
     def test_create_output_inventory_movement_updates_stock(self):
+        self.client.force_authenticate(user=self.admin_user)
         initial_quantity = self.product.quantity
         new_movement_data = {'product': self.product.pk, 'quantity': 3, 'movement_type': InventoryMovement.MOVEMENT_OUTPUT}
         response = self.client.post(self.list_create_url, new_movement_data, format='json')
@@ -102,6 +153,7 @@ class InventoryMovementAPITest(APITestCase):
         self.assertEqual(self.product.quantity, expected_quantity)
 
     def test_create_movement_inactive_product(self):
+        self.client.force_authenticate(user=self.admin_user)
         initial_quantity = self.product_inactive.quantity
         new_movement_data = {'product': self.product_inactive.pk, 'quantity': 5, 'movement_type': InventoryMovement.MOVEMENT_INPUT}
         response = self.client.post(self.list_create_url, new_movement_data, format='json')
@@ -112,6 +164,7 @@ class InventoryMovementAPITest(APITestCase):
         self.assertIn('This product is not active and can not receive any movement.', str(response.data['product']))
     
     def test_create_output_movement_insufficient_stock(self):
+        self.client.force_authenticate(user=self.admin_user)
         initial_quantity = self.product.quantity
         new_movement_data = {'product': self.product.pk, 'quantity': initial_quantity + 5, 'movement_type': InventoryMovement.MOVEMENT_OUTPUT}
         response = self.client.post(self.list_create_url, new_movement_data, format='json')
@@ -123,6 +176,7 @@ class InventoryMovementAPITest(APITestCase):
         self.assertIn('there is not enought stock for', str(response.data))
     
     def test_create_adjustment_movement_updates_stock(self):
+        self.client.force_authenticate(user=self.admin_user)
         new_movement_data = {'product': self.product.pk, 'quantity': 5, 'movement_type': InventoryMovement.MOVEMENT_ADJUSTMENT}
         response = self.client.post(self.list_create_url, new_movement_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -132,6 +186,7 @@ class InventoryMovementAPITest(APITestCase):
         self.assertEqual(self.product.quantity, expected_quantity)
     
     def test_retrieve_inventory_movement_api(self):
+        self.client.force_authenticate(user=self.regular_user)
         response = self.client.get(self.detail_url_movement1)
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
         self.assertEqual(response.data['product'], self.inventory_movement1.product.pk)

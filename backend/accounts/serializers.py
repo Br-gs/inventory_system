@@ -24,7 +24,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         required=True,
         validators=[validate_password],
     )
-    password2 = serializers.CharField(wite_only=True, required=True)
+    password2 = serializers.CharField(write_only=True, required=True)
     profile = UserProfileSerializer(required=False)
 
     class Meta:

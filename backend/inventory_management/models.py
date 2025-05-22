@@ -33,21 +33,25 @@ class InventoryMovement(models.Model):
         return f"{self.product.name} - {self.get_movement_type_display()} - {self.quantity}"
     
     def save(self, *args, **kwargs):
-        with transaction.atomic():
-            product_to_update = self.product
-            change_stock = 0
-            if self.movement_type == self.MOVEMENT_INPUT:
-                change_stock = self.quantity
-            elif self.movement_type == self.MOVEMENT_OUTPUT:
-                change_stock = -self.quantity
-            elif self.movement_type == self.MOVEMENT_ADJUSTMENT:
-                product_to_update.quantity = self.quantity
-            else:
-                raise ValueError(f'Invalid movement type: {self.movement_type}')
+        is_new = self.pk is None
+        if is_new:
+            with transaction.atomic():
+                product_to_update = self.product
+                change_stock = 0
+                if self.movement_type == self.MOVEMENT_INPUT:
+                    change_stock = self.quantity
+                elif self.movement_type == self.MOVEMENT_OUTPUT:
+                    change_stock = -self.quantity
+                elif self.movement_type == self.MOVEMENT_ADJUSTMENT:
+                    product_to_update.quantity = self.quantity
+                else:
+                    raise ValueError(f'Invalid movement type: {self.movement_type}')
 
-            product_to_update.quantity += change_stock
+                product_to_update.quantity += change_stock
 
-            if product_to_update.quantity < 0:
-                raise ValueError(f'there is not enought stock for {product_to_update.name}')
-            product_to_update.save()
-            super(InventoryMovement, self).save(*args, **kwargs)         
+                if product_to_update.quantity < 0:
+                    raise ValueError(f'there is not enought stock for {product_to_update.name}')
+                product_to_update.save()
+                super(InventoryMovement, self).save(*args, **kwargs)
+        else:
+            super(InventoryMovement, self).save(*args, **kwargs)        

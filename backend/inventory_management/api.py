@@ -3,16 +3,17 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.exceptions import ValidationError
 from .serializers import ProductSerializer, InventoryMovementSerializer
 from rest_framework.response import Response
+from accounts.permissions import IsAdminOrReadOnly
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
-    permission_classes = [permissions.AllowAny]
     serializer_class = ProductSerializer
+    permission_classes = [permissions.IsAuthenticated, IsAdminOrReadOnly]
 
 class InventoryMovementViewSet(viewsets.ModelViewSet):
     queryset = InventoryMovement.objects.all().order_by('-date')
-    permission_classes = [permissions.AllowAny]
     serializer_class = InventoryMovementSerializer
+    permission_classes = [permissions.IsAuthenticated, IsAdminOrReadOnly]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
