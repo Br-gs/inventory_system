@@ -35,7 +35,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'inventory_management',
     'rest_framework_simplejwt',
-    'accounts'
+    'accounts',
 ]
 
 MIDDLEWARE = [
@@ -100,9 +100,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Rest Framework settings
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
+    'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
+    ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
