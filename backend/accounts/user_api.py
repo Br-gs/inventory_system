@@ -1,5 +1,6 @@
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
+from rest_framework.generics import GenericAPIView
 from django.contrib.auth.models import User
 from rest_framework.views import APIView
 from .serializers import UserSerializer, RegisterSerializer, ChangePasswordSerializer
@@ -31,24 +32,26 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_object(self):
         return self.request.user
 
-class ChangePasswordView(APIView):
+class ChangePasswordView(GenericAPIView):
     serializer_class = ChangePasswordSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
         return self.request.user
     
-    def update(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         user = self.get_object()
         serializer = self.get_serializer(data=request.data)
 
         if serializer.is_valid():
-            if not user.check_password(serializer.data.get("old_password")):
+            old_password = serializer.validated_data.get("old_password")
+            new_password = serializer.validated_data.get("new_password")
+            if not user.check_password(old_password):
                 return Response(
                     {"old_password": ["Old password is not correct."]},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            user.set_password(serializer.data.get("new_password"))
+            user.set_password(new_password)
             user.save()
             return Response(
                 {"message": "Password updated successfully."},
