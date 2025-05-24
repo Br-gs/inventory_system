@@ -2,6 +2,9 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from .models import UserProfile
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Manages the additional fields of the user profile.
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -14,11 +17,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta: 
         model = User
-        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'date_joined', 'profile',)
-        read_only_fields = ('id', 'date_joined',)
-        extra_kwargs = {
-            'password': {'write_only': True, },
-        }
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'date_joined', 'is_staff', 'profile',)
+        read_only_fields = ('id', 'date_joined', 'is_staff',)
 
     def update(self, instance, validated_data):
         
@@ -31,8 +31,9 @@ class UserSerializer(serializers.ModelSerializer):
         
         # update profile fields if they exist
         if profile_data:
+            profile = instance.profile
             profile_serializer = UserProfileSerializer(
-                instance.profile, 
+                profile, 
                 data=profile_data, 
                 partial=True
             )
@@ -89,9 +90,21 @@ class RegisterSerializer(serializers.ModelSerializer):
         validated_data.pop('password2', None)
 
         user = User.objects.create_user(**validated_data)
+        logger.info(f"User {user.username} created by RegisterSerializer.")
 
         if profile_data:
-            UserProfile.objects.filter(user=user).update(**profile_data)
+            try:
+                profile = user.profile
+                profile_serializer = UserProfileSerializer(profile, data=profile_data, partial=True)
+                if profile_serializer.is_valid(raise_exception=True):
+                    profile_serializer.save()
+                    logger.info(f"Profile data updated for new user {user.username}.")
+                else:
+                    logger.error(f"Error validating profile data for new user {user.username}: {profile_serializer.errors}")
+            except UserProfile.DoesNotExist:
+                logger.error(f"User profile does not exist for new user {user.username} after creation. signal might have failed.")
+            except Exception as e:
+                logger.error(f"Error updating profile for new user {user.username}: {str(e)}")
         return user
     
 # To allow users to change their passwords.   

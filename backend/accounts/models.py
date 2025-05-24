@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    phone_number = models.CharField(max_length=15, blank=True, null=True)
 
     phone_regex = RegexValidator(
         regex=r'^\+?1?\d{9,15}$',
@@ -39,23 +38,20 @@ class UserProfile(models.Model):
         return self.user.username
 
 @receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
+def create_or_update_user_profile(sender, instance, created, **kwargs):
     if created:
         try:
             UserProfile.objects.get_or_create(user=instance)
             logger.info(f"User profile created for {instance.username}")
         except Exception as e:
             logger.error(f"Error creating user profile for {instance.username}: {str(e)}")
-
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    try:
-        if hasattr(instance, 'profile'):
-            instance.profile.save()
-            logger.info(f"User profile saved for {instance.username}")
-        else:
-            UserProfile.objects.create(user=instance)
-            logger.warning(f"User profile not found for {instance.username}, creating a new one.")
-    except Exception as e:
-        logger.error(f"Error saving user profile for {instance.username}: {str(e)}")       
-
+    else:
+        try:
+            if hasattr(instance, 'profile'):
+                instance.profile.save()
+                logger.info(f"User profile updated for {instance.username} during user update")
+            else:
+                UserProfile.objects.create(user=instance)
+                logger.warning(f"User profile not found for existing user {instance.username}, creating a new one")
+        except Exception as e:
+            logger.error(f"Error saving user profile for {instance.username} during user update: {str(e)}")
