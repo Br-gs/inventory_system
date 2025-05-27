@@ -41,11 +41,12 @@ class RegisterView(generics.CreateAPIView):
                 }
             }, status=status.HTTP_201_CREATED)
         
+        logger.warning(f"Registration failed: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # Allows authenticated users to view and update their information.
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.all()
+    # queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -55,39 +56,32 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     
     # register when a user deletes their account
     def perform_destroy(self, instance):
-        logger.info(f"User {instance.username} deleted their account.")
+        logger.info(f"User {instance.username} (ID: {instance.id}) deleted their account.")
         super().perform_destroy(instance)
 
     # register when a user updates their profile
     def perform_update(self, serializer):
-        logger.info(f"User {self.request.user.username} updated their profile.")
-        super().perform_update(serializer)
+        logger.info(f"User {self.request.user.username} (ID: {self.request.user.id}) updated their profile.")
+        serializer.save()
 
 class ChangePasswordView(GenericAPIView):
     serializer_class = ChangePasswordSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_object(self):
-        return self.request.user
-    
     def patch(self, request, *args, **kwargs):
-        user = self.get_object()
-        serializer = self.get_serializer(data=request.data)
+        user = request.user
+        serializer = self.get_serializer(data=request.data, context={"request": request})
 
         if serializer.is_valid():
-            old_password = serializer.validated_data.get("old_password")
             new_password = serializer.validated_data.get("new_password")
-            if not user.check_password(old_password):
-                return Response(
-                    {"old_password": ["Old password is not correct."]},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
             user.set_password(new_password)
             user.save()
+            logger.info(f"Password updated successfully for user {user.username}.")
             return Response(
                 {"message": "Password updated successfully."},
                 status=status.HTTP_200_OK,
             )
+        logger.warning(f"Password change failed for user {user.username}: {serializer.errors}.")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # view to handle user logout and blacklist the refresh token
@@ -95,10 +89,10 @@ class LogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        try:
-            
+        try:    
             refresh_token = request.data.get("refresh")
             if not refresh_token:
+                logger.warning(f"Logout attempt by {request.user.username} without refresh token.")
                 return Response({"error": "Refresh token is required "}, status=status.HTTP_400_BAD_REQUEST)
             
             token = RefreshToken(refresh_token)
@@ -106,12 +100,13 @@ class LogoutView(APIView):
             logger.info(f"User {request.user.username} logged out and token blacklisted.")
             return Response({"message": "Logged out successfully."}, status=status.HTTP_205_RESET_CONTENT)
         except TokenError as te:
-            return Response({"error": str(te)}, status=status.HTTP_400_BAD_REQUEST)
+            logger.error(f"TokenError during logout for user {request.user.username}: {str(te)}")
+            return Response({"error": "Invalid or blacklisted refresh token."}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Exception during logout for {request.user.username}: {str(e)}")
+            return Response({"error": "An unexpected error occurred during logout."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-class UserListView(generics.ListAPIView):
-    queryset = User.objects.all().select_related('profile')
+class UserListView(generics.ListAPIView): 
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
 
