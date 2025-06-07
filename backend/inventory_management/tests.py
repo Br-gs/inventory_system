@@ -2,8 +2,6 @@ from rest_framework.test import APITestCase
 from django.urls import reverse
 from .models import Product, InventoryMovement
 from rest_framework import status
-from django.core.validators import MinValueValidator
-from django.db import transaction
 from decimal import Decimal
 from django.contrib.auth.models import User
 
