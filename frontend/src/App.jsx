@@ -1,35 +1,26 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, {useEffect} from 'react';
+import axiosClient from './api/axiosClient';
 
 function App() {
-  const [count, setCount] = useState(0)
+  useEffect(() => {
+    const testApiConnection = async () => {
+      try {
+        const response = await axiosClient.get('/api/schema/');
+        console.log('API Connection Successful:', response.data);
+      } catch (error) {
+        console.error('API Connection Failed:', error);
+     }
+    };
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    testApiConnection();
+  }, []);
+
+return (
+    <div>
+      <h1>Sistema de Inventario</h1>
+      <p>Revisa la consola del navegador</p>
+    </div>
+  );
 }
 
-export default App
+export default App;
