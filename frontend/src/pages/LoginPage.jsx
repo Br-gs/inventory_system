@@ -11,7 +11,7 @@ const loginSchema = z.object({
 });
 
 const LoginPage = () => {
-  const { loginUser, loading, error } = useContext(AuthContext);
+  const { loginUser, loading, error: apiError } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const {
@@ -55,7 +55,7 @@ const LoginPage = () => {
           {...register("password")} />
           {errors.password && <p>{errors.password.message}</p>}
         </div>
-        {error && <p className="error">{error}</p>}
+        {apiError && <p className="error">{apiError}</p>}
         <button type="submit" disabled={loading}>
           {loading ? "Logging in..." : "Login"}
         </button>
