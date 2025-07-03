@@ -29,7 +29,7 @@ const LoginPage = () => {
   const onSubmit = async (data) => {
     try {
       await loginUser(data.username, data.password);
-      navigate("/dashboard");
+      navigate("/");
     } catch (err) {
       console.error("Login failed:", err);
     }

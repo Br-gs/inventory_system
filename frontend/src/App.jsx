@@ -1,26 +1,22 @@
-import React, {useEffect} from 'react';
-import axiosClient from './api/axiosClient';
+import { useContext } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
+import AuthContext from './context/authContext';
+import { LoginPage, RegisterPage, DashboardPage } from './pages';
 
 function App() {
-  useEffect(() => {
-    const testApiConnection = async () => {
-      try {
-        const response = await axiosClient.get('/api/schema/');
-        console.log('API Connection Successful:', response.data);
-      } catch (error) {
-        console.error('API Connection Failed:', error);
-     }
-    };
+  const { user } = useContext(AuthContext);
 
-    testApiConnection();
-  }, []);
-
-return (
-    <div>
-      <h1>Sistema de Inventario</h1>
-      <p>Revisa la consola del navegador</p>
-    </div>
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={user ? <DashboardPage /> : <Navigate to="/login" replace/>} />
+        <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/" replace />} />
+        <Route path="/register" element={!user ? <RegisterPage /> : <Navigate to="/" replace />} />
+        <Route path="*" element={<p>404: Page not found</p>} />
+      </Routes>
+    </Router>
   );
 }
+
 
 export default App;
