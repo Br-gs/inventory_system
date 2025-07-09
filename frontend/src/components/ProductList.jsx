@@ -3,8 +3,9 @@ import { inventoryService } from "../api";
 import { Modal } from "./modal";
 import { ProductForm } from "./productForm";
 import { AuthContext } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
-const ProductList = () => {
+const ProductList = ({onRefresh, refreshTrigger}) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -36,7 +37,7 @@ const ProductList = () => {
         return () => {
             controller.abort(); // Cancel the fetch request on unmount
         };
-    }, [fetchProducts]);
+    }, [fetchProducts, refreshTrigger]);
 
     const handleCreate = () => {
         setProductToEdit(null);
@@ -55,16 +56,17 @@ const ProductList = () => {
                 alert("Product deleted successfully");
                 fetchProducts(new AbortController().signal);
             } catch (err) {
-                setError("Failed to delete product");
+                const errorMessage = err.response?.data?.detail || "An error occurred while deleting the product.";
                 console.error("Error deleting product:", err);
+                toast.error(`Error: ${errorMessage}`);
             }
         }
     };
 
     const handleSuccess = () => {
-        setIsModalOpen(true);
-        fetchProducts(new AbortController().signal);
-        alert("Product saved successfully");
+        setIsModalOpen(false);
+        onRefresh();
+        toast.success(`Product ${productToEdit ? "updated" : "created"} successfully`);
     };
 
     if (loading && products.length === 0) {

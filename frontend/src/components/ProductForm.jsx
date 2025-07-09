@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { inventoryService } from "../api";
+import toast from "react-hot-toast";
 
 const productSchema = z.object({
     name: z.string().min(3, "Name must be at least 3 characters long"),
@@ -34,9 +35,13 @@ const ProductForm = ({ productToEdit, onSuccess, onClose }) => {
     });
 
     useEffect(() => {
-        if (productToEdit) {
-            reset(productToEdit);
-        }
+        reset(productToEdit ?? {
+            name: '',
+            description: '',
+            price: 0,
+            quantity: 0,
+            is_active: true,
+        });
     }, [productToEdit, reset]);
 
     const onSubmit = async (data) => {
@@ -46,10 +51,13 @@ const ProductForm = ({ productToEdit, onSuccess, onClose }) => {
             } else {
                 await inventoryService.createProduct(data);
             }
+            reset();
             onSuccess();
-            onClose();
         } catch (error) {
+            const errorMessage = error.response?.data?.detail || "An error occurred while saving the product.";
             console.error("Error saving product:", error);
+            toast.error(`Error: ${errorMessage}`);
+
         }
     };
 

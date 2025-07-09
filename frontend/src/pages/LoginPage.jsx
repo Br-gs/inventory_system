@@ -4,6 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import toast from "react-hot-toast";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -31,6 +32,8 @@ const LoginPage = () => {
       await loginUser(data.username, data.password);
       navigate("/");
     } catch (err) {
+      const errorMessage = err.response?.data?.detail || "An error occurred during login.";
+      toast.error(`Error: ${errorMessage}`);
       console.error("Login failed:", err);
     }
   };
