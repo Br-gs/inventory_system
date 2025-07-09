@@ -1,23 +1,49 @@
-import { useContext } from "react";
+import { useContext, useState, useCallback } from "react";
 import AuthContext from "../context/authContext";
+import {ProductList, MovementList, MovementForm, Modal } from "../components";
+import toast from "react-hot-toast";
 
 const DashboardPage = () => {
     const {user, logoutUser} = useContext(AuthContext);
+    const [isMovementModalOpen, setMovementModalOpen] = useState(false);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+    
+    const handleRefresh = useCallback(() => {
+        setRefreshTrigger(prev => prev + 1);
+    }, []);
+
+    const handleMovementSuccess = () => {
+        setMovementModalOpen(false);
+        handleRefresh();
+        toast.success("Movement saved successfully!");
+    };
 
     return (
         <div className="dashboard-page">
-            <h1>Dashboard</h1>
-            <p>Welcome, {user?.username}!</p>
-            <p>Your role is: {user?.is_staff ? 'Administrator' : 'Regular User'}</p>
-
-            <button onClick={logoutUser}>Logout</button>
+            <header >
+                <h1>Inventory Dashboard</h1>
+                <div>
+                    <span>¡Welcome, {user?.username}! ({user?.is_staff ? 'Admin' : 'User'}) </span>
+                    <button onClick={logoutUser}>Logout</button>
+                </div>
+            </header>
 
             <hr />
-            <h2>Dashboard Features</h2>
-            <ul>
-                <li>View your profile</li>
-                <li>Manage your account settings</li>
-            </ul>
+
+            <main>
+                <ProductList refreshTrigger={refreshTrigger} onRefresh={handleRefresh} />
+                <MovementList refreshTrigger={refreshTrigger} />
+            </main>
+
+            {user?.is_staff && (
+                <div>
+                    <button onClick={() => setMovementModalOpen(true)}>Add New Movement</button>
+                </div>
+            )}
+
+            <Modal isOpen={isMovementModalOpen} onClose={() => setMovementModalOpen(false)}>
+                <MovementForm onSuccess={handleMovementSuccess} onClose={() => setMovementModalOpen(false)} />
+            </Modal>
         </div>
     );
 };

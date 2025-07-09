@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import inventoryService from "../api/inventoryService";
+import toast from "react-hot-toast";
 
 const movementSchema = z.object({
     product_id: z.string().min(1, "Product is required"),
@@ -19,10 +20,16 @@ const MovementForm = ({ onSuccess, onClose }) => {
     const {
         register,
         handleSubmit,
+        reset,
         formState: { errors, isSubmitting },
     } = useForm({
         resolver: zodResolver(movementSchema),
         mode: 'onBlur',
+        defaultValues: {
+            product: '',
+            quantity: 0,
+            movement_type: '',
+        },
     });
 
     const fetchProductsForSelect = async () => {
@@ -45,10 +52,11 @@ const MovementForm = ({ onSuccess, onClose }) => {
         try {
             const movementData = {...data, product : Number(data.product)};
             await inventoryService.createInventoryMovement(movementData);
+            reset();
             onSuccess();
         } catch (error) {
             console.error("Error saving movement:", error.response?.data?.detail || error.message);
-            alert(`Error: ${error.response?.data?.detail || 'An error occurred while saving the movement.'}`);
+            toast.error("Failed to save movement. Please try again.");
         }
     };
 
@@ -58,6 +66,7 @@ const MovementForm = ({ onSuccess, onClose }) => {
 
     return (
         <form onSubmit={handleSubmit(onSubmit)}>
+            <fieldset disabled={isSubmitting}>
             <h2>Add New Movement</h2>
 
             <div>
@@ -94,6 +103,7 @@ const MovementForm = ({ onSuccess, onClose }) => {
                 {isSubmitting ? "Saving..." : "Save Movement"}
             </button>
             <button type="button" onClick={onClose}>Cancel</button>
+            </fieldset>
         </form>
     );
 };
