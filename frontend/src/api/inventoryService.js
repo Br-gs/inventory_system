@@ -2,11 +2,15 @@ import axiosClient from "./axiosClient";
 
 const inventoryService = {
 
-    getProducts : (params) => {
-        return axiosClient.get('/api/products/', { params });
+    getProducts : (params, signal) => {
+        return axiosClient.get('/api/products/', { params, signal });
     },
-    getProductById : (id) => {
-        return axiosClient.get(`/api/products/${id}/`);
+    getProductSuggestions : (searchTerm, signal) => {
+        const params =  new URLSearchParams({ search: searchTerm });
+        return axiosClient.get('/api/products/suggestions/', { params, signal });
+    },
+    getProductById : (id, signal) => {
+        return axiosClient.get(`/api/products/${id}/`, { signal });
     },
     createProduct : (productData) => {
         return axiosClient.post('/api/products/', productData);
