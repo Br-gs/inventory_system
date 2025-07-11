@@ -4,6 +4,7 @@ import { Modal } from "./modal";
 import { ProductForm } from "./productForm";
 import { AuthContext } from "../context/AuthContext";
 import toast from "react-hot-toast";
+import {SearchSuggestions} from "./SearchSuggestions";
 
 const ProductList = ({onRefresh, refreshTrigger}) => {
     const [products, setProducts] = useState([]);
@@ -13,12 +14,17 @@ const ProductList = ({onRefresh, refreshTrigger}) => {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [productToEdit, setProductToEdit] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
-    const fetchProducts = useCallback(async (signal) => {
+    const fetchProducts = useCallback(async (signal, currentSearchTerm) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await inventoryService.getProducts(null, signal);
+            const params = new URLSearchParams();
+            if (currentSearchTerm) {
+                params.append('search', currentSearchTerm);
+            }
+            const response = await inventoryService.getProducts(params, signal);
             setProducts(response.data.results);
         } catch (err) {
             if (err.name !== 'CancelError'){
@@ -32,12 +38,16 @@ const ProductList = ({onRefresh, refreshTrigger}) => {
 
     useEffect(() => {
         const controller = new AbortController();
-        fetchProducts(controller.signal);
+
+        const devounceTimer = setTimeout(() => {
+            fetchProducts(controller.signal, searchTerm);
+        }, 300);
 
         return () => {
+            clearTimeout(devounceTimer);
             controller.abort(); // Cancel the fetch request on unmount
         };
-    }, [fetchProducts, refreshTrigger]);
+    }, [fetchProducts, refreshTrigger, searchTerm]);
 
     const handleCreate = () => {
         setProductToEdit(null);
@@ -53,8 +63,8 @@ const ProductList = ({onRefresh, refreshTrigger}) => {
         if (window.confirm("Are you sure you want to delete this product?")) {
             try {
                 await inventoryService.deleteProduct(productId);
-                alert("Product deleted successfully");
-                fetchProducts(new AbortController().signal);
+                toast.success("Product deleted successfully");
+                onRefresh();
             } catch (err) {
                 const errorMessage = err.response?.data?.detail || "An error occurred while deleting the product.";
                 console.error("Error deleting product:", err);
@@ -85,6 +95,8 @@ const ProductList = ({onRefresh, refreshTrigger}) => {
                 )}
             </div>
 
+            <SearchSuggestions onSearch={setSearchTerm} />
+
             <table>
                 <thead>
                     <tr>
@@ -96,20 +108,31 @@ const ProductList = ({onRefresh, refreshTrigger}) => {
                     </tr>
                 </thead>
                 <tbody>
-                    {products.map((product) => (
-                        <tr key={product.id}>
-                            <td>{product.name}</td>
-                            <td>{product.description}</td>
-                            <td>${Number(product.price).toFixed(2)}</td>
-                            <td>{product.quantity}</td>
-                                {user?.is_staff && (
-                                    <td>
-                                        <button onClick={() => handleEdit(product)}>Edit</button>
-                                        <button onClick={() => handleDelete(product.id)}>Delete</button>
-                                    </td>
-                                )}
+                    {loading ? (
+                        <tr>
+                            <td colSpan={user?.is_staff ? 5 : 4}>Loading products...</td>
                         </tr>
-                    ))}
+                    ) : products.length > 0 ? (
+                        products.map((product) => (
+                            <tr key={product.id}>
+                                <td>{product.name}</td>
+                                <td>{product.description}</td>
+                                <td>${Number(product.price).toFixed(2)}</td>
+                                <td>{product.quantity}</td>
+                                <td>{product.is_active ? 'Yes' : 'NO'}</td>
+                                    {user?.is_staff && (
+                                        <td>
+                                            <button onClick={() => handleEdit(product)}>Edit</button>
+                                            <button onClick={() => handleDelete(product.id)}>Delete</button>
+                                        </td>
+                                    )}
+                            </tr>
+                        ))
+                    ) : (
+                        <tr>
+                            <td colSpan={user?.is_staff ? 5 : 4}>No products found for "{searchTerm}"</td>
+                        </tr>
+                    )}
                 </tbody>
             </table>
 
