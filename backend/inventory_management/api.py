@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from accounts.permissions import IsAdminOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
+from .filters import MovementFilter
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -43,7 +44,7 @@ class InventoryMovementViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = InventoryMovementSerializer
     permission_classes = [permissions.IsAuthenticated, IsAdminOrReadOnly]
 
-    filterset_fields = ["product", "movement_type", "date"]
+    filterset_class = MovementFilter
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
