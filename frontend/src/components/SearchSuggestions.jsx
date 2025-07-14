@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import {inventoryService} from "../api/inventoryService";
+import {inventoryService} from "../api";
 
 const SearchSuggestions = ({ onSearch }) => {
     const [query, setQuery] = useState("");

@@ -1,7 +1,8 @@
-import modal from './modal';
-import productForm from './productForm';
-import productList from './productList';
+import ProductList from './ProductList';
 import MovementList from './MovementList';
+import Modal from './modal';
+import ProductForm from './ProductForm';
+import MovementForm from './MovementForm';
 import SearchSuggestions from './SearchSuggestions';
 
-export { modal, productForm, productList, MovementList, SearchSuggestions }
+export { ProductList, MovementList, Modal, ProductForm, MovementForm, SearchSuggestions, };
