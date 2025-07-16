@@ -4,21 +4,21 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import authService from "../api/authService";
+import toast from "react-hot-toast";
 
 const registerSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters long"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters long"),
-  confirmPassword: z.string().min(8, "Confirm Password must be at least 8 characters long"),
-}).refine((data) => data.password === data.confirmPassword, {
+  password2: z.string().min(8, "Confirm Password must be at least 8 characters long"),
+}).refine((data) => data.password === data.password2, {
     message: "Passwords must match",
-    path: ["confirmPassword"],
+    path: ["password2"],
 });
 
 const RegisterPage = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
-    const [apiError, setApiError] = useState(null);
 
     const { register, handleSubmit, formState: { errors } } = useForm({
         resolver: zodResolver(registerSchema),
@@ -27,23 +27,25 @@ const RegisterPage = () => {
             username: "",
             email: "",
             password: "",
-            confirmPassword: "",
+            password2: "",
         },
     });
 
     const onSubmit = async (data) => {
         setLoading(true);
-        setApiError(null);
         try {
             await authService.register(data);
+            toast.success('Registration successful! Please log in.');
             navigate("/login");
         } catch (error) {
             const apiErrors = error.response?.data;
             if (apiErrors) {
-                const errorMessages = Object.entries(apiErrors).map(([field, messages]) => `${field}: ${messages.join(" ")}`).join("\n");
-                setApiError(errorMessages);
+                Object.entries(apiErrors).forEach(([field, messages]) => {
+                    const messageText = Array.isArray(messages) ? messages.join(", ") : messages;
+                    toast.error(`${field}: ${messageText}`);
+                });
             } else {
-                setApiError("An unexpected error occurred. Please try again.");
+                toast.error("An unexpected error occurred. Please try again.");
             }
         } finally {
             setLoading(false);
@@ -82,15 +84,15 @@ const RegisterPage = () => {
                     {errors.password && <p className="error">{errors.password.message}</p>}
                 </div>
                 <div>
-                    <label htmlFor="confirmPassword">Confirm Password</label>
+                    <label htmlFor="password2">Confirm Password</label>
                     <input
-                        id="confirmPassword"
+                        id="password2"
                         type="password"
-                        {...register("confirmPassword")}
+                        {...register("password2")}
                     />
-                    {errors.confirmPassword && <p className="error">{errors.confirmPassword.message}</p>}
+                    {errors.password2 && <p className="error">{errors.password2.message}</p>}
                 </div>
-                {apiError && <p className="error">{apiError}</p>}
+                
                 <button type="submit" disabled={loading}>
                     {loading ? "Registering..." : "Register"}
                 </button>

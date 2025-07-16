@@ -1,10 +1,10 @@
 import { useState, useEffect, useContext, useCallback } from "react";
 import { inventoryService } from "../api";
-import { Modal } from "./modal";
-import { ProductForm } from "./productForm";
-import { AuthContext } from "../context/AuthContext";
+import Modal from "./modal";
+import ProductForm from "./ProductForm";
+import AuthContext from "../context/authContext";
 import toast from "react-hot-toast";
-import {SearchSuggestions} from "./SearchSuggestions";
+import SearchSuggestions from "./SearchSuggestions";
 
 const ProductList = ({onRefresh, refreshTrigger}) => {
     const [products, setProducts] = useState([]);
