@@ -119,7 +119,6 @@ const ProductList = ({onRefresh, refreshTrigger}) => {
                                 <td>{product.description}</td>
                                 <td>${Number(product.price).toFixed(2)}</td>
                                 <td>{product.quantity}</td>
-                                <td>{product.is_active ? 'Yes' : 'NO'}</td>
                                     {user?.is_staff && (
                                         <td>
                                             <button onClick={() => handleEdit(product)}>Edit</button>

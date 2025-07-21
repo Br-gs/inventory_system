@@ -28,11 +28,11 @@ class ProductViewSet(viewsets.ModelViewSet):
     filterset_fields = ["is_active"]
 
     @action(detail=False, methods=["get"])
-    def active(self, request):
+    def suggestions(self, request):
         """Custom endpoint for product search suggestions"""
         queryset = self.filter_queryset(self.get_queryset())
-        sugestions = queryset.values_list("name", flat=True)[:10]
-        return Response(sugestions)
+        suggestions = queryset.values_list("name", flat=True)[:10]
+        return Response(suggestions)
 
 
 class InventoryMovementViewSet(viewsets.ReadOnlyModelViewSet):

@@ -25,7 +25,7 @@ const MovementFilters = ({ filters, onFilterChange, onClearFilters }) => {
 
             <select name='movementType' value={filters.movementType} onChange={onFilterChange}>
                 <option value=''>All Movement Types</option>
-                <option value='IN'>I</option>
+                <option value='IN'>Input</option>
                 <option value='OUT'>Output</option>
                 <option value='ADJ'>Adjustment</option>
             </select>
