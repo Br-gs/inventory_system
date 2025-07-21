@@ -1,5 +1,4 @@
 import axios from 'axios';
-import authService from './authService';
 
 const axiosClient = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
@@ -17,15 +16,20 @@ axiosClient.interceptors.request.use(
         }
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
 );
 
 axiosClient.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
+
+        if (originalRequest.url ===  '/api/token/refresh/') {
+            console.error('Refresh token request failed. Logging out.');
+            localStorage.removeItem('authTokens');
+            window.location.href = '/login';
+            return Promise.reject(error);
+        }
 
         if (error.response.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
@@ -37,10 +41,11 @@ axiosClient.interceptors.response.use(
                 }
 
                 const refreshToken = JSON.parse(tokenString).refresh;
-                const { data : newTokens } = await authService.refreshToken(refreshToken);
+                const { data : newTokens } = await axios.post(`${import.meta.env.VITE_API_URL}/api/token/refresh/`, {
+                    refresh: refreshToken
+                });
 
                 localStorage.setItem('authTokens', JSON.stringify(newTokens));
-                axiosClient.defaults.headers.common['Authorization'] = `Bearer ${newTokens.access}`;
                 originalRequest.headers['Authorization'] = `Bearer ${newTokens.access}`;
                 return axiosClient(originalRequest);
             } catch (refreshError) {
