@@ -10,8 +10,8 @@ const MovementList = ({ refreshTrigger }) => {
     const [filters, setFilters] = useState({
         product: '',
         movementType: '',
-        startDate: '',
-        endDate: ''
+        start_date: '',
+        end_date: ''
     });
     
     const fetchMovements = useCallback(async (signal, currentFilters) => {

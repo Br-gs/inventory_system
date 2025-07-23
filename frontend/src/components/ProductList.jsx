@@ -4,7 +4,7 @@ import Modal from "./modal";
 import ProductForm from "./ProductForm";
 import AuthContext from "../context/authContext";
 import toast from "react-hot-toast";
-import SearchSuggestions from "./SearchSuggestions";
+import ProductFilters from "./ProductFilters";
 
 const ProductList = ({onRefresh, refreshTrigger}) => {
     const [products, setProducts] = useState([]);
@@ -14,16 +14,18 @@ const ProductList = ({onRefresh, refreshTrigger}) => {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [productToEdit, setProductToEdit] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [filters, setFilters] = useState({
+        search: '',
+        is_active: ''
+    });
 
-    const fetchProducts = useCallback(async (signal, currentSearchTerm) => {
+    const fetchProducts = useCallback(async (signal, currentFilters) => {
         setLoading(true);
         setError(null);
         try {
             const params = new URLSearchParams();
-            if (currentSearchTerm) {
-                params.append('search', currentSearchTerm);
-            }
+            if (currentFilters.search) params.append('search', currentFilters.search);
+            if (currentFilters.is_active) params.append('is_active', currentFilters.is_active);
             const response = await inventoryService.getProducts(params, signal);
             setProducts(response.data.results);
         } catch (err) {
@@ -40,14 +42,29 @@ const ProductList = ({onRefresh, refreshTrigger}) => {
         const controller = new AbortController();
 
         const devounceTimer = setTimeout(() => {
-            fetchProducts(controller.signal, searchTerm);
+            fetchProducts(controller.signal, filters);
         }, 300);
 
         return () => {
             clearTimeout(devounceTimer);
             controller.abort(); // Cancel the fetch request on unmount
         };
-    }, [fetchProducts, refreshTrigger, searchTerm]);
+    }, [fetchProducts, refreshTrigger, filters]);
+
+    const handleSearchChange = (searchTerm) => {
+        setFilters((prevFilters) => ({
+            ...prevFilters,
+            search: searchTerm
+        }));
+    };
+
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        setFilters((prevFilters) => ({
+            ...prevFilters,
+            [name]: value
+        }));
+    };
 
     const handleCreate = () => {
         setProductToEdit(null);
@@ -95,7 +112,7 @@ const ProductList = ({onRefresh, refreshTrigger}) => {
                 )}
             </div>
 
-            <SearchSuggestions onSearch={setSearchTerm} />
+            <ProductFilters filters={filters} onFilterChange={handleFilterChange} onSearch={handleSearchChange} />
 
             <table>
                 <thead>
@@ -129,7 +146,7 @@ const ProductList = ({onRefresh, refreshTrigger}) => {
                         ))
                     ) : (
                         <tr>
-                            <td colSpan={user?.is_staff ? 5 : 4}>No products found for "{searchTerm}"</td>
+                            <td colSpan={user?.is_staff ? 5 : 4}>No products found</td>
                         </tr>
                     )}
                 </tbody>
