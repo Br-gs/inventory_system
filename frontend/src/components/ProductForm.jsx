@@ -10,9 +10,7 @@ const productSchema = z.object({
     description: z.string().optional(),
     price: z.coerce.number({ invalid_type_error: "Price must be a number" })
         .positive({ message: "Price must be a positive number" }),
-    quantity: z.coerce.number({ invalid_type_error: "Quantity must be a number" })
-        .int({ message: "Quantity must be an integer" })
-        .nonnegative({ message: "Quantity cannot be negative" }),
+    quantity: z.number().optional(),
     is_active: z.boolean().default(true),
 });
 
@@ -46,10 +44,12 @@ const ProductForm = ({ productToEdit, onSuccess, onClose }) => {
 
     const onSubmit = async (data) => {
         try {
+            // eslint-disable-next-line no-unused-vars
+            const {quantity, ...productData} = data;
             if (productToEdit) {
-                await inventoryService.updateProduct(productToEdit.id, data);
+                await inventoryService.updateProduct(productToEdit.id, productData);
             } else {
-                await inventoryService.createProduct(data);
+                await inventoryService.createProduct(productData);
             }
             reset();
             onSuccess();
@@ -101,8 +101,9 @@ const ProductForm = ({ productToEdit, onSuccess, onClose }) => {
                     id="quantity"
                     type="number"
                     {...register("quantity")}
+                    readOnly
                 />
-                {errors.quantity && <p className="error">{errors.quantity.message}</p>}
+                <small>Note: To change quantity, create a inventory movement</small>
             </div> 
 
             <div>
