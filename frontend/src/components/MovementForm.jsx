@@ -6,14 +6,14 @@ import inventoryService from "../api/inventoryService";
 import toast from "react-hot-toast";
 
 const movementSchema = z.object({
-    product_id: z.string().min(1, "Product is required"),
+    product: z.string().min(1, "Product is required"),
     quantity: z.coerce.number({ invalid_type_error: "Quantity must be a number" })
         .int({ message: "Quantity must be an integer" })
         .nonnegative({ message: "Quantity cannot be negative" }),
     movement_type: z.enum(['IN', 'OUT', 'ADJ'], { required_error: "Movement type must be required" }),
 });
 
-const MovementForm = ({ onSuccess, onClose }) => {
+const MovementForm = ({ onSuccess, onClose, refreshTrigger }) => {
     const [products, setProducts] = useState([]);
     const [loadingProducts, setLoadingProducts] = useState(true);
 
@@ -46,7 +46,7 @@ const MovementForm = ({ onSuccess, onClose }) => {
 
     useEffect(() => {
         fetchProductsForSelect();
-    }, []);
+    }, [refreshTrigger]);
 
     const onSubmit = async (data) => {
         try {
@@ -55,8 +55,10 @@ const MovementForm = ({ onSuccess, onClose }) => {
             reset();
             onSuccess();
         } catch (error) {
+            const errorMessage = error.response?.data?.detail || 
+                           (typeof error.response?.data === 'object' ? JSON.stringify(error.response.data) : 'No se pudo crear el movimiento.');
             console.error("Error saving movement:", error.response?.data?.detail || error.message);
-            toast.error("Failed to save movement. Please try again.");
+            toast.error(`Failed to save movement. Please try again. ${errorMessage}`);
         }
     };
 
