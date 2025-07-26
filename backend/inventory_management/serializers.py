@@ -2,9 +2,13 @@ from rest_framework import serializers
 from .models import Product, InventoryMovement
 from decimal import Decimal
 class ProductSerializer (serializers.ModelSerializer):
+    initial_quantity = serializers.IntegerField(
+        write_only=True, required=False, default=0, min_value=0, help_text="Initial quantity for the product."
+    )
     class Meta:
         model = Product
-        fields = ['id', 'name', 'description', 'price', 'quantity', 'is_active']
+        fields = ['id', 'name', 'description', 'price', 'quantity', 'is_active', 'initial_quantity']
+        read_only_fields = ['id', 'quantity']
 
     def validate_price(self, value):
         if not isinstance(value, Decimal):
@@ -20,6 +24,19 @@ class ProductSerializer (serializers.ModelSerializer):
         if not value or len(value.strip()) < 2:
             raise serializers.ValidationError('Name must be at least 2 characters long.')
         return value.strip()
+    
+    def create(self, validated_data):
+        initial_quantity = validated_data.pop('initial_quantity', 0)
+        validated_data['quantity'] = 0
+        product = super().create(validated_data)
+        if initial_quantity > 0:
+            InventoryMovement.objects.create(
+                product=product,
+                quantity=initial_quantity,
+                movement_type=InventoryMovement.MOVEMENT_INPUT
+            )
+            product.refresh_from_db()
+        return product
 
 class InventoryMovementSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)

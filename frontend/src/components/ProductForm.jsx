@@ -10,7 +10,10 @@ const productSchema = z.object({
     description: z.string().optional(),
     price: z.coerce.number({ invalid_type_error: "Price must be a number" })
         .positive({ message: "Price must be a positive number" }),
-    quantity: z.number().optional(),
+    initial_quantity: z.coerce.number({ invalid_type_error: "Initial quantity must be a number" })
+        .int({ message: "Initial quantity must be an integer" })
+        .nonnegative({ message: "Initial quantity cannot be negative" })
+        .default(0),
     is_active: z.boolean().default(true),
 });
 
@@ -37,19 +40,17 @@ const ProductForm = ({ productToEdit, onSuccess, onClose }) => {
             name: '',
             description: '',
             price: 0,
-            quantity: 0,
+            initial_quantity: 0,
             is_active: true,
         });
     }, [productToEdit, reset]);
 
     const onSubmit = async (data) => {
         try {
-            // eslint-disable-next-line no-unused-vars
-            const {quantity, ...productData} = data;
             if (productToEdit) {
-                await inventoryService.updateProduct(productToEdit.id, productData);
+                await inventoryService.updateProduct(productToEdit.id, data);
             } else {
-                await inventoryService.createProduct(productData);
+                await inventoryService.createProduct(data);
             }
             reset();
             onSuccess();
@@ -95,16 +96,27 @@ const ProductForm = ({ productToEdit, onSuccess, onClose }) => {
                 {errors.price && <p className="error">{errors.price.message}</p>}
             </div>
 
+            {productToEdit ? (
             <div>
-                <label htmlFor="quantity">Quantity:</label>
+                <label htmlFor="quantity">Current Quantity:</label>
                 <input
-                    id="quantity"
-                    type="number"
-                    {...register("quantity")}
+                    value={productToEdit.quantity}
                     readOnly
+                    disabled
                 />
-                <small>Note: To change quantity, create a inventory movement</small>
-            </div> 
+                <small>To change quantity, create a inventory movement.</small>
+            </div>
+            ) : (
+            <div>
+                <label htmlFor="initial_quantity">Initial Quantity:</label>
+                <input
+                    id="initial_quantity"
+                    type="number"
+                    {...register("initial_quantity")}
+                />
+                {errors.initial_quantity && <p className="error">{errors.initial_quantity.message}</p>}
+            </div>
+            )}
 
             <div>
                 <label htmlFor="is_active">Active:</label>
