@@ -42,7 +42,8 @@ const DashboardPage = () => {
             )}
 
             <Modal isOpen={isMovementModalOpen} onClose={() => setMovementModalOpen(false)}>
-                <MovementForm onSuccess={handleMovementSuccess} onClose={() => setMovementModalOpen(false)} />
+                <MovementForm onSuccess={handleMovementSuccess} onClose={() => setMovementModalOpen(false)}
+                refreshTrigger={refreshTrigger} />
             </Modal>
         </div>
     );

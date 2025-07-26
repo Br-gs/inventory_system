@@ -35,7 +35,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         return Response(suggestions)
 
 
-class InventoryMovementViewSet(viewsets.ReadOnlyModelViewSet):
+class InventoryMovementViewSet(viewsets.ModelViewSet):
     """ViewSet for handling inventory movements.
     Provides read-only access to inventory movements with filtering capabilities.
     """
