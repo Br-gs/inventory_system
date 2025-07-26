@@ -40,3 +40,9 @@ class InventoryMovementSerializer(serializers.ModelSerializer):
         if not product_instance.is_active:
             raise serializers.ValidationError('This product is not active and can not receive any movement.')
         return product_instance
+
+    def create(self, validated_data):
+        try:
+            return super().create(validated_data)
+        except Exception as e:
+            raise serializers.ValidationError(f'Error creating inventory movement: {str(e)}')
