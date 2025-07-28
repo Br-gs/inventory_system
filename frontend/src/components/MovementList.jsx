@@ -91,7 +91,15 @@ const MovementList = ({ refreshTrigger }) => {
                                     <td>{movement.product_name}</td>
                                     <td>{movement.movement_type_display}</td>
                                     <td>{movement.quantity}</td>
-                                    <td>{new Date(movement.date).toLocaleDateString()}</td>
+                                    <td>{new Date(movement.date).toLocaleDateString('es-CO', {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: true,
+                                        })}
+                                    </td>
                                 </tr>
                             ))
                         ) : (

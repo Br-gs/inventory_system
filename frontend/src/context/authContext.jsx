@@ -12,12 +12,11 @@ export const AuthProvider = ({children}) => {
     const [user, setUser] = useState(() =>
         localStorage.getItem('authTokens') ? jwtDecode(JSON.parse(localStorage.getItem('authTokens')).access) : null
     );
-    const [loading, setLoading] = useState(true);
+    const [initialLoading, setInitialLoading] = useState(true);
     const [error, setError] = useState(null);
 
 
     const loginUser = useCallback(async (username, password) => {
-        setLoading(true);
         setError(null);
         try {
             const response = await authService.login(username, password);
@@ -32,13 +31,10 @@ export const AuthProvider = ({children}) => {
             const apiMsg = err.response?.data?.detail || err.response?.data?.message;
             setError(apiMsg || err.message || "An error occurred during login");
             throw err;
-        } finally {
-            setLoading(false);
         }
     }, []);
 
     const logoutUser = useCallback(async () => {
-        setLoading(true);
         setError(null);
         try {
             if (authTokens) {
@@ -51,14 +47,13 @@ export const AuthProvider = ({children}) => {
             setAuthTokens(null);
             setUser(null);
             localStorage.removeItem('authTokens');
-            setLoading(false);
         }
     }, [authTokens]);
 
     // Automatically refresh token before it expires
     useEffect(() => {
         if (!authTokens) {
-            setLoading(false);
+            setInitialLoading(false);
             return;
         }
 
@@ -77,7 +72,7 @@ export const AuthProvider = ({children}) => {
         }, Math.max(timeToRefresh, 0));
 
         // Set loading to false after setting up the timeout
-        setLoading(false);
+        setInitialLoading(false);
         // Cleanup timeout on unmount
         return () => clearTimeout(timeoutId);
     }, [authTokens, logoutUser]);
@@ -88,13 +83,13 @@ export const AuthProvider = ({children}) => {
         authTokens,
         loginUser,
         logoutUser,
-        loading,
+        initialLoading,
         error,
     };
 
     return (
         <AuthContext.Provider value={contextData}>
-            {loading ? null : children}
+            {initialLoading ? null : children}
         </AuthContext.Provider>
     );
 };
