@@ -1,15 +1,13 @@
-import { useState, useEffect, useContext, useCallback } from "react";
+import { useState, useContext } from "react";
 import { inventoryService } from "../api";
 import Modal from "./modal";
 import ProductForm from "./ProductForm";
 import AuthContext from "../context/authContext";
 import toast from "react-hot-toast";
 import ProductFilters from "./ProductFilters";
+import {useProducts} from "../hooks";
 
 const ProductList = ({onRefresh, refreshTrigger}) => {
-    const [products, setProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const { user } = useContext(AuthContext);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,37 +17,7 @@ const ProductList = ({onRefresh, refreshTrigger}) => {
         is_active: ''
     });
 
-    const fetchProducts = useCallback(async (signal, currentFilters) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const params = new URLSearchParams();
-            if (currentFilters.search) params.append('search', currentFilters.search);
-            if (currentFilters.is_active) params.append('is_active', currentFilters.is_active);
-            const response = await inventoryService.getProducts(params, signal);
-            setProducts(response.data.results);
-        } catch (err) {
-            if (err.name !== 'CancelError'){
-                setError("Failed to fetch products");
-                console.error("Error fetching products:", err);
-            }
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        const controller = new AbortController();
-
-        const devounceTimer = setTimeout(() => {
-            fetchProducts(controller.signal, filters);
-        }, 300);
-
-        return () => {
-            clearTimeout(devounceTimer);
-            controller.abort(); // Cancel the fetch request on unmount
-        };
-    }, [fetchProducts, refreshTrigger, filters]);
+    const { products, loading, error } = useProducts(filters, refreshTrigger);
 
     const handleSearchChange = (searchTerm) => {
         setFilters((prevFilters) => ({
