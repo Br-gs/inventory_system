@@ -16,7 +16,7 @@ const useMovements = (filters, refreshTrigger) => {
             if (currentFilters.start_date) params.append('start_date', currentFilters.start_date);
             if (currentFilters.end_date) params.append('end_date', currentFilters.end_date);
 
-            const response = await inventoryService.getMovements(params, signal);
+            const response = await inventoryService.getInventoryMovements(params, signal);
             setMovements(response.data.results);
         } catch (err) {
             if (err.name !== 'CancelError') {
