@@ -80,7 +80,12 @@ const ProductList = ({onRefresh, refreshTrigger}) => {
                 )}
             </div>
 
-            <ProductFilters filters={filters} onFilterChange={handleFilterChange} onSearch={handleSearchChange} />
+            <ProductFilters 
+            filters={filters} 
+            onFilterChange={handleFilterChange} 
+            searchValue={filters.search}
+            onSearchChange={handleSearchChange} 
+            />
 
             <table>
                 <thead>

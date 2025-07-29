@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {inventoryService} from "../api";
 
-const SearchSuggestions = ({ onSearch }) => {
-    const [query, setQuery] = useState("");
+const SearchSuggestions = ({ value, onChange }) => {
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -24,10 +23,10 @@ const SearchSuggestions = ({ onSearch }) => {
         useEffect(() => {
             const controller = new AbortController();
 
-            if (query) {
+            if (value) {
                 setShowSuggestions(true);
                 const debounceTime = setTimeout(() => {
-                    fetchSuggestions(query, controller.signal);
+                    fetchSuggestions(value, controller.signal);
                 }, 300);
                 return () => clearTimeout(debounceTime);
             } else {
@@ -36,18 +35,15 @@ const SearchSuggestions = ({ onSearch }) => {
             }
 
             return () => controller.abort();
-        }, [query, fetchSuggestions]);
+        }, [value, fetchSuggestions]);
 
         const handleSuggestionClick = (suggestion) => {
-            setQuery(suggestion);
-            setSuggestions([]);
+            onChange(suggestion);
             setShowSuggestions(false);
-            onSearch(suggestion);
         };
 
         const handleSearchSubmit = (e) => {
             e.preventDefault();
-            onSearch(query);
             setShowSuggestions(false);
         };
 
@@ -56,10 +52,10 @@ const SearchSuggestions = ({ onSearch }) => {
                 <form onSubmit={handleSearchSubmit} className="relative">
                     <input
                         type="text"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
+                        value={value}
+                        onChange={(e) => onChange(e.target.value)}
                         placeholder="Search products..."
-                        onFocus={() => query && setShowSuggestions(true)}
+                        onFocus={() => value && setShowSuggestions(true)}
                     />
                 </form>
                 {showSuggestions && suggestions.length > 0 && (

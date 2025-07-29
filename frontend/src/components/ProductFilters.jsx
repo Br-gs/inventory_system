@@ -1,10 +1,10 @@
 import SearchSuggestions from './SearchSuggestions';
 
-const ProductFilters = ({filters, onFilterChange, onSearch}) => {
+const ProductFilters = ({filters, onFilterChange, searchValue, onSearchChange}) => {
     return (
         <div>
             <div>
-                <SearchSuggestions onSearch={onSearch} />
+                <SearchSuggestions value={searchValue} onChange={onSearchChange} />
             </div>
 
             <div>
