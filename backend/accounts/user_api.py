@@ -12,7 +12,7 @@ from .serializers import (
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 import logging
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 logger = logging.getLogger(__name__)
 
@@ -104,31 +104,72 @@ class ChangePasswordView(GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+
+        if response.status_code == 200:
+            refresh_token = response.data.pop("refresh", None)
+            if refresh_token:
+                response.set_cookie(
+                    key="refresh_token",
+                    value=refresh_token,
+                    httponly=True,
+                    samesite="Lax",
+                    secure=False,
+                    path="/token/refresh/",
+                )
+            return response
+
+
+class MyTokenRefreshView(TokenRefreshView):
+    def post(self, request, *args, **kwargs):
+        refresh_token = request.COOKIES.get("refresh_token")
+
+        if not refresh_token:
+            return Response(
+                {"error": "Refresh token not found in the cookies."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        request.data["refresh"] = refresh_token
+
+        try:
+            response = super().post(request, *args, **kwargs)
+            return response
+        except TokenError as e:
+            return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+
+
 # view to handle user logout and blacklist the refresh token
 class LogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
         try:
-            refresh_token = request.data.get("refresh")
-            if not refresh_token:
+            refresh_token_value = request.COOKIES.get("refresh_token")
+            if not refresh_token_value:
                 logger.warning(
                     f"Logout attempt by {request.user.username} without refresh token."
                 )
                 return Response(
-                    {"error": "Refresh token is required "},
+                    {"error": "Refresh token not found."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            token = RefreshToken(refresh_token)
+            token = RefreshToken(refresh_token_value)
             token.blacklist()
-            logger.info(
-                f"User {request.user.username} logged out and token blacklisted."
-            )
-            return Response(
+            response = Response(
                 {"message": "Logged out successfully."},
                 status=status.HTTP_205_RESET_CONTENT,
             )
+            response.delete_cookie("refresh_token")
+            logger.info(
+                f"User {request.user.username} logged out and token blacklisted."
+            )
+            return response
         except TokenError as te:
             logger.error(
                 f"TokenError during logout for user {request.user.username}: {str(te)}"
@@ -157,7 +198,3 @@ class UserListView(generics.ListAPIView):
             .select_related("profile")
             .order_by("-date_joined")
         )
-
-
-class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
