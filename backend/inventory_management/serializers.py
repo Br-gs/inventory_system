@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Product, InventoryMovement
 from decimal import Decimal
 from .services import create_inventory_movement
+from django.db import transaction
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -24,7 +25,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "is_active",
             "initial_quantity",
         ]
-        read_only_fields = ["id", "quantity"]
+        read_only_fields = ["quantity"]
 
     def validate_price(self, value):
         if not isinstance(value, Decimal):
@@ -45,17 +46,19 @@ class ProductSerializer(serializers.ModelSerializer):
             )
         return value.strip()
 
+    @transaction.atomic
     def create(self, validated_data):
         initial_quantity = validated_data.pop("initial_quantity", 0)
-        validated_data["quantity"] = 0
         product = super().create(validated_data)
+
         if initial_quantity > 0:
-            InventoryMovement.objects.create(
+            create_inventory_movement(
                 product=product,
                 quantity=initial_quantity,
-                movement_type=InventoryMovement.MOVEMENT_INPUT,
+                movement_type=InventoryMovement.MOVEMENT_INPUT
             )
-            product.refresh_from_db()
+        
+        product.refresh_from_db()  # Ensure the product has the latest data
         return product
 
 

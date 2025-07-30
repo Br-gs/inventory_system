@@ -36,13 +36,15 @@ const ProductForm = ({ productToEdit, onSuccess, onClose }) => {
     });
 
     useEffect(() => {
-        reset(productToEdit ?? {
+        const defaultValuesForCreate = {
             name: '',
             description: '',
             price: 0,
             initial_quantity: 0,
             is_active: true,
-        });
+            };
+
+        reset(productToEdit || defaultValuesForCreate);
     }, [productToEdit, reset]);
 
     const onSubmit = async (data) => {
