@@ -6,6 +6,6 @@ import MovementForm from './MovementForm';
 import SearchSuggestions from './SearchSuggestions';
 import ProductFilters from './ProductFilters';
 import Layout from './Layout';
-import sidebar from './Sidebar';
+import Sidebar from './Sidebar';
 
-export { ProductList, MovementList, Modal, ProductForm, MovementForm, SearchSuggestions, ProductFilters, Layout, sidebar };
+export { ProductList, MovementList, Modal, ProductForm, MovementForm, SearchSuggestions, ProductFilters, Layout, Sidebar };

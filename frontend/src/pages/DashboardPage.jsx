@@ -1,36 +1,19 @@
-import { ProductList, MovementList, MovementForm, Modal } from "../components";
-import { useState, useCallback } from "react";
-import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
 
 const DashboardPage = () => {
-    const [isMovementModalOpen, setMovementModalOpen] = useState(false);
-        const [refreshTrigger, setRefreshTrigger] = useState(0);
-    
-        const handleRefresh = useCallback(() => {
-            setRefreshTrigger(prev => prev + 1);
-        }, []);
-    
-        const handleMovementSuccess = () => {
-            setMovementModalOpen(false);
-            handleRefresh();
-            toast.success("Movement saved successfully!");
-        }
     return (
-        <main>
-            <ProductList refreshTrigger={refreshTrigger} onRefresh={handleRefresh} />
-            <MovementList refreshTrigger={refreshTrigger} />
-
-         {/*   {user?.is_staff && (
-                <div>
-                    <button onClick={() => setMovementModalOpen(true)}>Add New Movement</button>
-                </div>
-            )} */}
-
-            <Modal isOpen={isMovementModalOpen} onClose={() => setMovementModalOpen(false)}>
-                <MovementForm onSuccess={handleMovementSuccess} onClose={() => setMovementModalOpen(false)}
-                refreshTrigger={refreshTrigger} />
-            </Modal>
-        </main>
+        <div>
+            <h1>Welcome to the Inventory Dashboard</h1>
+            <p>Here you can manage your products and movements.</p>
+            <ul>
+                <li>
+                    <Link to="/products">Manage Products</Link>
+                </li>
+                <li>
+                    <Link to="/movements">View Movements</Link>
+                </li>
+            </ul>
+        </div>
     );
 };
 

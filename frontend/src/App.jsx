@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
 import AuthContext from './context/authContext';
-import { LoginPage, RegisterPage, DashboardPage } from './pages';
+import { LoginPage, RegisterPage, DashboardPage, ProductsPage, MovementsPage} from './pages';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout';
 
@@ -20,14 +20,21 @@ function App() {
         <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/" replace />} />
         <Route path="/register" element={!user ? <RegisterPage /> : <Navigate to="/" replace />} />
 
-        <Route path="/" element={user ? <Layout /> : <Navigate to="/login" replace/>} />
+        <Route 
+          path="/" 
+          element={user ? <Layout /> : <Navigate to="/login" />}
+        >
+          
           <Route index element={<DashboardPage />} />
+          <Route path="products" element={<ProductsPage />} />
+          <Route path="movements" element={<MovementsPage />} />
+          
+        </Route>
 
         <Route path="*" element={<p>404: Page not found</p>} />
       </Routes>
     </Router>
   );
 }
-
 
 export default App;
