@@ -4,5 +4,8 @@ import Modal from './modal';
 import ProductForm from './ProductForm';
 import MovementForm from './MovementForm';
 import SearchSuggestions from './SearchSuggestions';
+import ProductFilters from './ProductFilters';
+import Layout from './Layout';
+import sidebar from './Sidebar';
 
-export { ProductList, MovementList, Modal, ProductForm, MovementForm, SearchSuggestions, };
+export { ProductList, MovementList, Modal, ProductForm, MovementForm, SearchSuggestions, ProductFilters, Layout, sidebar };
