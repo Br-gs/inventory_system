@@ -9,7 +9,7 @@ const UserAdminPage = () => {
     const fetchUsers = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await axiosClient.get('/users/');
+            const response = await axiosClient.get('/api/users/');
             setUsers(response.data.results);
         } catch (error) {
             toast.error('Failed to fetch users');
@@ -27,7 +27,7 @@ const UserAdminPage = () => {
         const action = user.is_staff ? 'Deactivate Admin' : 'Activate Admin';
         if (window.confirm(`Are you sure you want to ${action} for ${user.username}?`)) {
             try {
-                await axiosClient.patch(`/users/${user.id}/`, { is_staff: !user.is_staff });
+                await axiosClient.patch(`/api/users/${user.id}/`, { is_staff: !user.is_staff });
                 toast.success(`User ${user.username} admin status updated successfully.`);
                 fetchUsers();
             } catch (error) {
@@ -40,7 +40,7 @@ const UserAdminPage = () => {
     const handleDeleteUser = async (userId, username) => {
         if (window.confirm(`Are you sure you want to delete user ${username}? this action cannot be undone.`)) {
             try {
-                await axiosClient.delete(`/users/${userId}/`);
+                await axiosClient.delete(`/api/users/${userId}/`);
                 toast.success(`User ${username} deleted successfully.`);
                 fetchUsers();
             } catch (error) {

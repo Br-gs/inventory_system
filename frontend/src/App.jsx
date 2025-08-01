@@ -1,9 +1,9 @@
 import { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
 import AuthContext from './context/authContext';
-import { LoginPage, RegisterPage, DashboardPage, ProductsPage, MovementsPage} from './pages';
+import { LoginPage, RegisterPage, DashboardPage, ProductsPage, MovementsPage, ProfilePage, UserAdminPage} from './pages';
 import { Toaster } from 'react-hot-toast';
-import Layout from './components/Layout';
+import {Layout, AdminRoute} from './components';
 
 function App() {
   const { user } = useContext(AuthContext);
@@ -28,7 +28,11 @@ function App() {
           <Route index element={<DashboardPage />} />
           <Route path="products" element={<ProductsPage />} />
           <Route path="movements" element={<MovementsPage />} />
-          
+          <Route path="profile" element={<ProfilePage />} />
+
+          <Route element={<AdminRoute />}>
+            <Route path="admin/users" element={<UserAdminPage />} />
+          </Route>          
         </Route>
 
         <Route path="*" element={<p>404: Page not found</p>} />

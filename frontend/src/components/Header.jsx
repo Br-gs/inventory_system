@@ -43,13 +43,19 @@ const Header = () => {
           >
             Movements
           </NavLink>
+          { user.is_staff &&
+            <NavLink 
+              to="/admin/users"
+            >
+              User Admin
+            </NavLink> }
         </nav>
       )}
 
       <div>
         {user && (
           <>
-            <span>¡Hola, {user.username}!</span>
+            <Link to="/profile"> Hello, {user.username}! </Link>
             <button onClick={logoutUser} style={{ marginLeft: '15px' }}>Logout</button>
           </>
         )}

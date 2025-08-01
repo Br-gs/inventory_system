@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import AuthContext from "../context/AuthContext";
+import AuthContext from "../context/authContext";
 
 const ProfilePage = () => {
     const {user} = useContext(AuthContext);
@@ -16,7 +16,6 @@ const ProfilePage = () => {
                 <p><strong>Email:</strong> {user.email}</p>
                 <p><strong>First Name:</strong> {user.first_name}</p>
                 <p><strong>Last Name:</strong> {user.last_name}</p>
-                <p><strong>Date Joined:</strong> {new Date(user.date_joined).toLocaleDateString()}</p>
             </div>
 
             <hr />
