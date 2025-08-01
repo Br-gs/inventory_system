@@ -166,6 +166,13 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError("Old password is incorrect.")
         return value
 
+class UserAdminSerializer(serializers.ModelSerializer):
+    profile = UserProfileSerializer(read_only=True)
+    class Meta:
+        model = User
+
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'is_active', 'is_staff', 'profile')
+        read_only_fields = ('id', 'username', 'email', 'first_name', 'last_name', 'profile')
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -176,3 +183,4 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["email"] = user.email
         token["is_staff"] = user.is_staff
         return token
+

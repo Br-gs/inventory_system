@@ -8,6 +8,7 @@ from .serializers import (
     RegisterSerializer,
     ChangePasswordSerializer,
     MyTokenObtainPairSerializer,
+    UserAdminSerializer
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
@@ -77,7 +78,6 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
             f"User {self.request.user.username} (ID: {self.request.user.id}) updated their profile."
         )
         serializer.save()
-
 
 class ChangePasswordView(GenericAPIView):
     serializer_class = ChangePasswordSerializer
@@ -198,3 +198,8 @@ class UserListView(generics.ListAPIView):
             .select_related("profile")
             .order_by("-date_joined")
         )
+
+class UserAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserAdminSerializer
+    permission_classes = [permissions.IsAdminUser]

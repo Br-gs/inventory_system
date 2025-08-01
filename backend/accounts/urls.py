@@ -7,6 +7,7 @@ from .user_api import (
     UserListView,
     MyTokenObtainPairView,
     MyTokenRefreshView,
+    UserAdminDetailView
 )
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 
@@ -23,4 +24,5 @@ urlpatterns = [
     path("user/profile/", UserDetailView.as_view(), name="user_profile"),
     path("user/change-password/", ChangePasswordView.as_view(), name="change_password"),
     path("users/", UserListView.as_view(), name="user_list"),
+    path('users/<int:pk>/', UserAdminDetailView.as_view(), name='user_admin_detail'),
 ]
