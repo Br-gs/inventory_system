@@ -15,13 +15,14 @@ const sidebarStyle = {
     top: 0,
     right: 0,
     width: "400px",
-    maxWidth: "100%",
+    maxWidth: "90%",
     height: "100%",
-    backgroundColor: "#white",
+    backgroundColor: "yellow",
     boxShadow: "-2px 0 8px rgba(0, 0, 0, 0.1)",
-    zIndex: 101,
+    zIndex: 1001,
     padding: "20px",
     overflowY: "auto",
+    transition: "transform 1s ease-in-out",
 };
 
 const Sidebar = ({ isOpen, onClose, title, children }) => {
@@ -49,6 +50,7 @@ const Sidebar = ({ isOpen, onClose, title, children }) => {
                 ...sidebarOverlayStyle,
                 opacity: isOpen ? 1 : 0,
                 pointerEvents: isOpen ? 'auto' : 'none',
+                transform : isOpen ? 'translateX(0)' : 'translateX(100%)',
                 }}
                 onClick={onClose}
             />
