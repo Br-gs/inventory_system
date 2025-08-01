@@ -7,11 +7,14 @@ const authService = {
     register : (userData) => {
         return axiosClient.post('/api/register/', userData);
     },
-    logout : (refreshToken) => {
-        return axiosClient.post('/api/logout/', {refresh: refreshToken});
+    logout : () => {
+        return axiosClient.post('/api/logout/');
     },
-    refreshToken : (refreshToken) => {
-        return axiosClient.post('/api/token/refresh/', {refresh: refreshToken});
+    refreshToken : () => {
+        return axiosClient.post('/api/token/refresh/');
+    },
+    changePassword : (passwordData) => {
+        return axiosClient.patch('/api/user/change-password/', passwordData);
     },
 };
 

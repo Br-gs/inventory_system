@@ -8,5 +8,6 @@ import ProductFilters from './ProductFilters';
 import Layout from './Layout';
 import Sidebar from './Sidebar';
 import AdminRoute from './AdminRoute';
+import ChangepasswordForm from './ChangepasswordForm';
 
-export { ProductList, MovementList, Modal, ProductForm, MovementForm, SearchSuggestions, ProductFilters, Layout, Sidebar, AdminRoute };
+export { ProductList, MovementList, Modal, ProductForm, MovementForm, SearchSuggestions, ProductFilters, Layout, Sidebar, AdminRoute, ChangepasswordForm };

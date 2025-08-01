@@ -1,5 +1,6 @@
 import { useContext } from "react";
 import AuthContext from "../context/authContext";
+import { ChangepasswordForm } from "../components";
 
 const ProfilePage = () => {
     const {user} = useContext(AuthContext);
@@ -20,6 +21,11 @@ const ProfilePage = () => {
 
             <hr />
 
+            <div>
+                <h2>Change Password</h2>
+                <p>Change your password here. Make sure to remember it!</p>
+                <ChangepasswordForm />
+            </div>
         </div>
     );
 };

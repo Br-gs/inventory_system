@@ -44,8 +44,7 @@ export const AuthProvider = ({children}) => {
             localStorage.removeItem('authTokens');
         }
     }, []);
-
-    // Automatically refresh token before it expires
+    
     useEffect(() => {
         if (!authTokens) {
             setInitialLoading(false);
