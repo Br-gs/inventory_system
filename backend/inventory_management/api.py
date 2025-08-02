@@ -6,6 +6,7 @@ from accounts.permissions import IsAdminOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from .filters import MovementFilter
+from rest_framework.views import APIView
 
 
 class ProductViewSet(viewsets.ModelViewSet):

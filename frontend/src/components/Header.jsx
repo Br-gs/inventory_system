@@ -49,6 +49,13 @@ const Header = () => {
             >
               User Admin
             </NavLink> }
+
+          { user.is_staff &&
+            <NavLink 
+              to="/reports"
+            >
+              Reports
+            </NavLink>}
         </nav>
       )}
 

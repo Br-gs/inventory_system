@@ -9,5 +9,7 @@ router.register('products', ProductViewSet, basename= 'products')
 router.register('inventory-movements', InventoryMovementViewSet, basename= 'inventory_movements')
 
 urlpatterns = [
-    path('reports', InventoryReportsView.as_view(), name='inventory-reports'),
+    path('', include(router.urls)),
+
+    path('reports/', InventoryReportsView.as_view(), name='inventory-reports'),
 ]

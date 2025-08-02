@@ -5,5 +5,6 @@ import ProductsPage from "./ProductsPage";
 import MovementsPage from "./MovementsPage";
 import ProfilePage from "./ProfilePage";
 import UserAdminPage from "./UserAdminPage";
+import ReportsPage from "./ReportsPage";
 
-export { LoginPage, RegisterPage, DashboardPage, ProductsPage, MovementsPage, ProfilePage, UserAdminPage };
+export { LoginPage, RegisterPage, DashboardPage, ProductsPage, MovementsPage, ProfilePage, UserAdminPage, ReportsPage };
