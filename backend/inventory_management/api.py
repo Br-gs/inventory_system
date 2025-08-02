@@ -46,3 +46,47 @@ class InventoryMovementViewSet(viewsets.ModelViewSet):
 
     filterset_class = MovementFilter
 
+class InventoryReportsView(APIView):
+
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request, *args, **kwargs):
+        """Endpoint to generate inventory reports."""
+        # Group together output movements by month and summarize quantities
+        sales_by_month = (
+            InventoryMovement.objects
+            .filter(movement_type=InventoryMovement.MOVEMENT_OUTPUT)
+            .annotate(month=TruncMonth('date'))
+            .values('month')
+            .annotate(total_quantity=Sum('quantity'))
+            .order_by('month')
+        )
+    
+        # Report on best-selling products
+        top_selling_products = (
+            InventoryMovement.objects
+            .filter(movement_type=InventoryMovement.MOVEMENT_OUTPUT)
+            .values('product__name')
+            .annotate(total_movements=Count('id'))
+            .order_by('-total_quantity')[:5]
+        )
+
+        #Report current stock for products
+        stock_levels = (
+            Product.objects
+            .filter(is_active=True)
+            .order_by('-quantity')
+            .values('name', 'quantity')[:10]
+        )
+
+        # The data is formatted so that it is easy to use on the frontend.
+        report_data = {
+            'sales_by_month': [
+                {'month': sale['month'].strftime('%Y-%m'), 'total_quantity': sale['total_quantity']}
+                for sale in sales_by_month
+            ],
+            'top_selling_products' : list(top_selling_products),
+            'stock_levels': list(stock_levels)
+        }
+
+        return Response(report_data)
