@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo} from "react";
 import { Bar, Line } from "react-chartjs-2";
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, TimeScale } from "chart.js";
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, TimeScale, Interaction } from "chart.js";
 import "chartjs-adapter-date-fns";
 import {reportsService} from "../api";
 import toast from 'react-hot-toast';
@@ -11,7 +11,7 @@ const ReportsPage = () => {
     const [reportData, setReportData] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const fetchRepors = useCallback(async () => {
+    const fetchReports = useCallback(async () => {
         setLoading(true);
         try {
             const response = await reportsService.getInventoryReport();
@@ -25,26 +25,35 @@ const ReportsPage = () => {
     }, []);
 
     useEffect(() => {
-        fetchRepors();
-    }, [fetchRepors]);
+        fetchReports();
+    }, [fetchReports]);
 
-    if (loading) return <p>Generating reports... </p>
-    if (!reportData) return <p>No report data available</p>;
+    const salesChartData = useMemo(() => {
+        const salesByMonth = reportData?.sales_by_month ?? [];
+        return {
+            labels : salesByMonth.map(d => d.month),
+            datasets: [{
+                label: 'Sales by Month',
+                data: salesByMonth.map(d => d.total_quantity),
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                borderColor: 'rgba(75, 192, 192)',
+                fill: true,
+                tension: 0.1,
+            }],
+        };
+    }, [reportData]);
 
-    const salesChartData = {
-        labels : reportData.sales_by_month.map(d => d.month),
-        datasets: [{
-            label: 'Sales by Month',
-            data: reportData.sales_by_month.map(d => d.total_quantity),
-            backgroundColor: 'rgba(75, 192, 192, 0.6)',
-            borderColor: 'rgba(75, 192, 192)',
-            fill: true,
-            tension: 0.1,
-        }]
-    };
-
-    const salesChartOptions = {
+    const salesChartOptions = useMemo(() => ({
         responsive: true,
+        maintainAspectRatio: false,
+        animation: {
+            duration: 750,
+            easing: 'easeOutQuart'
+        },
+        interaction: {
+            intersect: false,
+            mode: 'index'
+        },
         plugins: {
             legend:{ position: 'top'},
             title: {display: true, text: 'Monthly Sales Trend' },
@@ -56,8 +65,6 @@ const ReportsPage = () => {
         },
         scales: {
             x: {
-                type: 'time',
-                time: { unit: 'month', tooltipFormat: 'MMM yyyy' },
                 title: { display: true, text: 'Month' },
             },
             y: {
@@ -65,26 +72,28 @@ const ReportsPage = () => {
                 title: { display: true, text: 'Total Quantity Sold' },
             }
         }
-    };
+    }), []);
 
-    const topProductsChartData = {
-        labels : reportData.top_selling_products.map(p => p.product__name),
-        datasets: [{
-            label: 'Number of Sales Transactions',
-            data: reportData.top_selling_products.map(p => p.total_movements),
-            backgroundColor: [
-                'rgba(255, 99, 132, 0.6)',
-                'rgba(54, 162, 235, 0.6)',
-                'rgba(255, 206, 86, 0.6)',
-                'rgba(75, 192, 192, 0.6)',
-                'rgba(153, 102, 255, 0.6)',
-            ],
-        }],
-    };
+    const topProductsChartData = useMemo(() => {
+        const topSellingProducts = reportData?.top_selling_products ?? [];
+        return {
+            labels : topSellingProducts.map(p => p.product__name),
+            datasets: [{
+                label: 'Number of Sales Transactions',
+                data: topSellingProducts.map(p => p.total_movements),
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
+            }],
+        };
+    }, [reportData]);
 
-    const topProductsChartOptions = {
+    const topProductsChartOptions = useMemo(() => ({
         indexAxis: 'y',
         responsive: true,
+        maintainAspectRatio: false,
+        animation: {
+            duration: 750,
+            easing: 'easeOutQuart'
+        },
         plugins: {
             legend: { display: false },
             title : { display: true, text: 'Top 5 Selling Products' },
@@ -94,20 +103,28 @@ const ReportsPage = () => {
                 }
             }
         }
-    };
+    }), []);
 
-    const stockLevelsChartData = {
-        labels : reportData.stock_levels.map(p => p.name),
-        datasets: [{
-            label: 'Quantity in Stock',
-            data: reportData.stock_levels.map(p => p.quantity),
-            backgroundColor: 'rgba(153, 102, 255, 0.6)',
-        }]
-    };
+    const stockLevelsChartData = useMemo(() => {
+        const stockLevels = reportData?.stock_levels ?? [];
+        return {
+            labels : stockLevels.map(p => p.name),
+            datasets: [{
+                label: 'Quantity in Stock',
+                data: stockLevels.map(p => p.quantity),
+                backgroundColor: 'rgba(153, 102, 255, 0.6)',
+            }],
+        };
+    }, [reportData]);
 
-    const stockLevelsChartOptions = {
+    const stockLevelsChartOptions =  useMemo(() => ({
         indexAxis: 'y',
         responsive: true,
+        maintainAspectRatio: false,
+        animation: {
+            duration: 750,
+            easing: 'easeOutQuart'
+        },
         plugins: {
             legend: { display: false },
             title: { display: true, text: 'Top 10 Products by Stock Level' },
@@ -123,25 +140,36 @@ const ReportsPage = () => {
                 title: { display: true, text: 'Quantity in Stock' }
             }
         }
-    };
+    }), []);
 
+    if (loading) return <p>Generating reports... </p>
+    if (!reportData || Object.keys(reportData).length === 0) { return <p>No report data available</p>; }
 
     return (
         <div>
             <h1>Inventory Reports</h1>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '2rem' }}>
                 
+                {(reportData?.sales_by_month?.length ?? 0) > 0 && (
                 <div>
-                    <Line data={salesChartData} options={salesChartOptions} />
+                    <h3>Monthly Sales Trend</h3>
+                    <Line data={salesChartData} options={salesChartOptions} key={'sales-chart'} />
                 </div>
+                )}
 
+                {(reportData?.top_selling_products?.length ?? 0) > 0 && (
                 <div>
-                    <Bar data={topProductsChartData} options={topProductsChartOptions} />
+                    <h3>Top 5 Selling Products</h3>
+                    <Bar data={topProductsChartData} options={topProductsChartOptions} key={'top-products-chart'} />
                 </div>
+                )}
 
+                {(reportData?.stock_levels?.length ?? 0) > 0 && (
                 <div style={{ gridColumn: '1 / -1' }}>
-                    <Bar data={stockLevelsChartData} options={stockLevelsChartOptions} />
+                    <h3>Top 10 Products by Stock Level</h3>
+                    <Bar data={stockLevelsChartData} options={stockLevelsChartOptions} key={'stock-level-chart'} />
                 </div>
+                )}
                 
             </div>
         </div>
