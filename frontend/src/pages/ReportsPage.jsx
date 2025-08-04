@@ -10,6 +10,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,
 const ReportsPage = () => {
     const [reportData, setReportData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('sales');
 
     const fetchReports = useCallback(async () => {
         setLoading(true);
@@ -148,28 +149,45 @@ const ReportsPage = () => {
     return (
         <div>
             <h1>Inventory Reports</h1>
+
+            <div className="tabs" style={{ marginBottom: '2rem', borderBottom: '1px solid #ccc' }}>
+                <button onClick={() => setActiveTab('sales')} style={activeTab === 'sales' ? { fontWeight: 'bold', borderBottom: '2px solid blue' } : {}}>
+                    Monthly Sales
+                </button>
+                <button onClick={() => setActiveTab('topProducts')} style={activeTab === 'topProducts' ? { fontWeight: 'bold', borderBottom: '2px solid blue' } : {}}>
+                    Top Products
+                </button>
+                <button onClick={() => setActiveTab('stockLevels')} style={activeTab === 'stockLevels' ? { fontWeight: 'bold', borderBottom: '2px solid blue' } : {}}>
+                    Stock Levels
+                </button>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '2rem' }}>
                 
-                {(reportData?.sales_by_month?.length ?? 0) > 0 && (
-                <div>
-                    <h3>Monthly Sales Trend</h3>
-                    <Line data={salesChartData} options={salesChartOptions} key={'sales-chart'} />
-                </div>
+                {activeTab === 'sales' && (
+                    (reportData?.sales_by_month?.length ?? 0) > 0 ? (
+                        <div style={{ position: 'relative', height: '400px', width: '100%' }}>
+                            <h3>Monthly Sales Trend</h3>
+                            <Line data={salesChartData} options={{...salesChartOptions, maintainAspectRatio: false}} />
+                        </div>
+                    ) : <p>No hay datos</p>
                 )}
 
-                {(reportData?.top_selling_products?.length ?? 0) > 0 && (
-                <div>
-                    <h3>Top 5 Selling Products</h3>
-                    <Bar data={topProductsChartData} options={topProductsChartOptions} key={'top-products-chart'} />
-                </div>
+                {activeTab === 'topProducts' && (
+                    (reportData?.top_selling_products?.length ?? 0) > 0 ? (
+                            <div style={{ position: 'relative', height: '400px', width: '100%' }}>
+                            <Bar data={topProductsChartData} options={{ ...topProductsChartOptions, maintainAspectRatio: false }} />
+                            </div>
+                    ) : <p>No hay datos de productos más vendidos para mostrar.</p>
                 )}
 
-                {(reportData?.stock_levels?.length ?? 0) > 0 && (
-                <div style={{ gridColumn: '1 / -1' }}>
-                    <h3>Top 10 Products by Stock Level</h3>
-                    <Bar data={stockLevelsChartData} options={stockLevelsChartOptions} key={'stock-level-chart'} />
-                </div>
-                )}
+                {activeTab === 'stockLevels' && (
+                    (reportData?.stock_levels?.length ?? 0) > 0 ? (
+                        <div style={{ position: 'relative', height: '500px', width: '100%' }}>
+                        <Bar data={stockLevelsChartData} options={{ ...stockLevelsChartOptions, maintainAspectRatio: false }} />
+                        </div>
+                    ) : <p>No hay datos de niveles de stock para mostrar.</p>
+        )}
                 
             </div>
         </div>
