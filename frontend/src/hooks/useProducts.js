@@ -16,7 +16,7 @@ const useProducts = (filters, refreshTrigger) => {
             const response = await inventoryService.getProducts(params, signal);
             setProducts(response.data.results);
         } catch (err) {
-            if (err.name !== 'CancelError') {
+            if (err.name !== 'CanceledError') {
                 setError("Failed to fetch products");
                 console.error("Error fetching products:", err);
             }

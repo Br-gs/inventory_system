@@ -9,6 +9,7 @@ from .filters import MovementFilter
 from rest_framework.views import APIView
 from django.db.models.functions import TruncMonth
 from django.db.models import Sum, Count
+from datetime import datetime
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -82,7 +83,7 @@ class InventoryReportsView(APIView):
             base_queryset
             .values('product__name')
             .annotate(total_quantity_sold=Sum('quantity'))
-            .order_by('-total_movements')[:5]
+            .order_by('-total_quantity_sold')[:5]
         )
 
         #Report current stock for products

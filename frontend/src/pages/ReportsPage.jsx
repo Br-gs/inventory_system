@@ -4,6 +4,7 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Toolti
 import "chartjs-adapter-date-fns";
 import {reportsService} from "../api";
 import toast from 'react-hot-toast';
+import { ReportFilters } from "../components";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, TimeScale, Filler);
 
@@ -11,11 +12,16 @@ const ReportsPage = () => {
     const [reportData, setReportData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('sales');
+    const [filters, setFilters] = useState({
+        product_id: '',
+        start_date: '',
+        end_date: '',
+    })
 
-    const fetchReports = useCallback(async () => {
+    const fetchReports = useCallback(async (currentFilters) => {
         setLoading(true);
         try {
-            const response = await reportsService.getInventoryReport();
+            const response = await reportsService.getInventoryReport(currentFilters);
             setReportData(response.data);
         } catch (error) {
             toast.error("Failed to fetch report data");
@@ -26,8 +32,17 @@ const ReportsPage = () => {
     }, []);
 
     useEffect(() => {
-        fetchReports();
-    }, [fetchReports]);
+        fetchReports(filters);
+    }, [fetchReports, filters]);
+
+    const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({ ...prev, [name]: value }));
+  };
+
+    const clearFilters = () => {
+        setFilters({ product_id: '', start_date: '', end_date: '' });
+    };
 
     const salesChartData = useMemo(() => {
         const salesByMonth = reportData?.sales_by_month ?? [];
@@ -161,6 +176,18 @@ const ReportsPage = () => {
                     Stock Levels
                 </button>
             </div>
+
+            <ReportFilters 
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                onClearFilters={clearFilters}
+            />
+
+            {filters.product_id && reportData?.sales_by_month && (
+                <h2>
+                Showing reports for: {reportData.sales_by_month[0]?.product_name || 'selected Product'}
+                </h2>
+            )}
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '2rem' }}>
                 
