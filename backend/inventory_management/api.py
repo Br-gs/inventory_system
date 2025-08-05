@@ -55,10 +55,22 @@ class InventoryReportsView(APIView):
 
     def get(self, request, *args, **kwargs):
         """Endpoint to generate inventory reports."""
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+        product_id = request.query_params.get('product_id')
+
+        base_queryset = InventoryMovement.objects.filter(movement_type=InventoryMovement.MOVEMENT_OUTPUT)
+
+        if start_date_str:
+            base_queryset = base_queryset.filter(date__gte=datetime.fromisoformat(start_date_str))
+        if end_date_str:
+            base_queryset = base_queryset.filter(date__lte=datetime.fromisoformat(end_date_str))
+        if product_id:
+            base_queryset = base_queryset.filter(product_id=product_id)
+
         # Group together output movements by month and summarize quantities
         sales_by_month = (
-            InventoryMovement.objects
-            .filter(movement_type=InventoryMovement.MOVEMENT_OUTPUT)
+            base_queryset
             .annotate(month=TruncMonth('date'))
             .values('month')
             .annotate(total_quantity=Sum('quantity'))
@@ -67,10 +79,9 @@ class InventoryReportsView(APIView):
     
         # Report on best-selling products
         top_selling_products = (
-            InventoryMovement.objects
-            .filter(movement_type=InventoryMovement.MOVEMENT_OUTPUT)
+            base_queryset
             .values('product__name')
-            .annotate(total_movements=Count('id'))
+            .annotate(total_quantity_sold=Sum('quantity'))
             .order_by('-total_movements')[:5]
         )
 

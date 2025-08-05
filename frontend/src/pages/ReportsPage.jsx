@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useMemo} from "react";
 import { Bar, Line } from "react-chartjs-2";
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, TimeScale, Interaction } from "chart.js";
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, TimeScale, Filler} from "chart.js";
 import "chartjs-adapter-date-fns";
 import {reportsService} from "../api";
 import toast from 'react-hot-toast';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, TimeScale);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, TimeScale, Filler);
 
 const ReportsPage = () => {
     const [reportData, setReportData] = useState(null);
