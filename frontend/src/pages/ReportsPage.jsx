@@ -17,6 +17,7 @@ const ReportsPage = () => {
         start_date: '',
         end_date: '',
     })
+    const [stagedFilters, setStagedFilters] = useState(filters); 
 
     const fetchReports = useCallback(async (currentFilters) => {
         setLoading(true);
@@ -35,13 +36,19 @@ const ReportsPage = () => {
         fetchReports(filters);
     }, [fetchReports, filters]);
 
-    const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
-  };
+    const handleStangedFilterChange = (e) => {
+        const { name, value } = e.target;
+        setStagedFilters(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleApplyFilters = () => {
+        setFilters(stagedFilters);
+    };
 
     const clearFilters = () => {
-        setFilters({ product_id: '', start_date: '', end_date: '' });
+        const cleared = { product_id: '', start_date: '', end_date: '' };
+        setStagedFilters(cleared);
+        setFilters(cleared);
     };
 
     const salesChartData = useMemo(() => {
@@ -96,7 +103,7 @@ const ReportsPage = () => {
             labels : topSellingProducts.map(p => p.product__name),
             datasets: [{
                 label: 'Number of Sales Transactions',
-                data: topSellingProducts.map(p => p.total_movements),
+                data: topSellingProducts.map(p => p.total_quantity_sold),
                 backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
             }],
         };
@@ -177,15 +184,18 @@ const ReportsPage = () => {
                 </button>
             </div>
 
-            <ReportFilters 
-                filters={filters}
-                onFilterChange={handleFilterChange}
-                onClearFilters={clearFilters}
-            />
+            {activeTab === 'sales' && (
+                <ReportFilters 
+                    filters={filters}
+                    onFilterChange={handleStangedFilterChange}
+                    onApplyFilters={handleApplyFilters}
+                    onClearFilters={clearFilters}
+                />
+            )}
 
             {filters.product_id && reportData?.sales_by_month && (
                 <h2>
-                Showing reports for: {reportData.sales_by_month[0]?.product_name || 'selected Product'}
+                    Showing reports for: {reportData.sales_by_month[0]?.product_name || 'selected Product'}
                 </h2>
             )}
 
