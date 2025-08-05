@@ -22,7 +22,9 @@ const ReportsPage = () => {
     const fetchReports = useCallback(async (currentFilters) => {
         setLoading(true);
         try {
-            const response = await reportsService.getInventoryReport(currentFilters);
+            const controller = new AbortController();
+
+            const response = await reportsService.getInventoryReport(currentFilters, {signal: controller.signal});
             setReportData(response.data);
         } catch (error) {
             toast.error("Failed to fetch report data");
@@ -34,9 +36,10 @@ const ReportsPage = () => {
 
     useEffect(() => {
         fetchReports(filters);
-    }, [fetchReports, filters]);
+        setStagedFilters
+    }, [fetchReports, setStagedFilters , filters]);
 
-    const handleStangedFilterChange = (e) => {
+    const handleStagedFilterChange = (e) => {
         const { name, value } = e.target;
         setStagedFilters(prev => ({ ...prev, [name]: value }));
     };
@@ -186,8 +189,8 @@ const ReportsPage = () => {
 
             {activeTab === 'sales' && (
                 <ReportFilters 
-                    filters={filters}
-                    onFilterChange={handleStangedFilterChange}
+                    filters={stagedFilters}
+                    onFilterChange={handleStagedFilterChange}
                     onApplyFilters={handleApplyFilters}
                     onClearFilters={clearFilters}
                 />
