@@ -8,6 +8,7 @@ import {useProducts} from "../hooks";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { MoreHorizontal } from 'lucide-react';
 
 const ProductList = ({onRefresh, refreshTrigger, onEditProduct}) => {
     const { user } = useContext(AuthContext);
@@ -89,9 +90,8 @@ const ProductList = ({onRefresh, refreshTrigger, onEditProduct}) => {
                                                     <DropdownMenuTrigger asChild>
                                                             <Button variant="ghost" className="h-8 w-8 p-0">
                                                                 <span className="sr-only">Open menú</span>
-
-                                                                <span className="h-4 w-4">...</span>
-                                                        </Button>
+                                                                <MoreHorizontal className="h-4 w-4" />
+                                                            </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
                                                         <DropdownMenuItem onClick={() => onEditProduct(product)}>

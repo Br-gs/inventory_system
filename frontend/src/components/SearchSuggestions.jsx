@@ -48,7 +48,7 @@ const SearchSuggestions = ({ value, onChange }) => {
         };
 
         return (
-            <div>
+            <div className="relative">
                 <form onSubmit={handleSearchSubmit} className="relative">
                     <input
                         type="text"
@@ -56,16 +56,16 @@ const SearchSuggestions = ({ value, onChange }) => {
                         onChange={(e) => onChange(e.target.value)}
                         placeholder="Search products..."
                         onFocus={() => value && setShowSuggestions(true)}
+                        className="w-full p-2 border rounded-md bg-transparent focus:ring-2 focus:ring-ring focus:outline-none"
                     />
                 </form>
                 {showSuggestions && suggestions.length > 0 && (
-                    <ul>
+                    <ul className="absolute top-full mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-lg z-10">
                         {suggestions.map((suggestion, index) => (
                             <li
                                 key={index}
                                 onClick={() => handleSuggestionClick(suggestion)}
-                                onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
-                                onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
+                                className="px-3 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground"
                             >
                                 {suggestion}
                             </li>

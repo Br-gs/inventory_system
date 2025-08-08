@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import AuthContext from '../context/authContext';
 import { CardContent, CardDescription, CardHeader, CardTitle, Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PlusCircle } from 'lucide-react';
 
 const ProductsPage = () => {
     const { user } = useContext(AuthContext);
@@ -73,10 +74,10 @@ const ProductsPage = () => {
                     {user?.is_staff && (
                         <div className="flex gap-2">
                             <Button onClick={openCreateProductSidebar}>
-                                Add New Product
+                                <PlusCircle className="mr-2 h-4 w-4" />Add New Product
                             </Button>
                             <Button onClick={openMovementSidebar}>
-                                Add New Movement
+                                <PlusCircle className="mr-2 h-4 w-4" />Add New Movement
                             </Button>
                         </div>
                     )}
