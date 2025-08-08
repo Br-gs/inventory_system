@@ -3,6 +3,8 @@ import { useState, useCallback, useContext} from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import AuthContext from '../context/authContext';
+import { CardContent, CardDescription, CardHeader, CardTitle, Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const ProductsPage = () => {
     const { user } = useContext(AuthContext);
@@ -51,7 +53,8 @@ const ProductsPage = () => {
                 <button onClick={() => {
                     navigate("/movements");
                     toast.dismiss(t.id);
-                }}>View Movements</button>
+                }}
+                className="ml-2 p-1 border rounded hover:bg-gray-100 dark:hover:bg-gray-700">View Movements</button>
                 </span>
         ),
             {duration: 5000,}
@@ -59,25 +62,32 @@ const ProductsPage = () => {
     };
 
     return (
-        <div>
-            <div>
-                <h1>Manage Products</h1>
-                {user?.is_staff && (
+        <div className="space-y-6">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
                     <div>
-                        <button onClick={openCreateProductSidebar}>
-                            Add New Product
-                        </button>
-                        <button onClick={openMovementSidebar}>
-                            Add New Movement
-                        </button>
+                        <CardTitle>Manage Products</CardTitle>
+                        <CardDescription>Manage your product catalog and record stock movements.</CardDescription>
                     </div>
-                )}
-            </div>
-
-            <ProductList 
-                refreshTrigger={refreshTrigger} 
-                onEditProduct={openEditProductSidebar}
-                onRefresh={handleRefresh} />
+                    
+                    {user?.is_staff && (
+                        <div className="flex gap-2">
+                            <Button onClick={openCreateProductSidebar}>
+                                Add New Product
+                            </Button>
+                            <Button onClick={openMovementSidebar}>
+                                Add New Movement
+                            </Button>
+                        </div>
+                    )}
+                </CardHeader>
+                <CardContent>
+                    <ProductList 
+                        refreshTrigger={refreshTrigger} 
+                        onEditProduct={openEditProductSidebar}
+                        onRefresh={handleRefresh} />
+                </CardContent>
+            </Card>
 
             <Sidebar 
                 isOpen={sidebarContent !== null} 

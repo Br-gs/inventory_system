@@ -5,6 +5,10 @@ import toast from "react-hot-toast";
 import ProductFilters from "./ProductFilters";
 import {useProducts} from "../hooks";
 
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+
 const ProductList = ({onRefresh, refreshTrigger, onEditProduct}) => {
     const { user } = useContext(AuthContext);
     const [filters, setFilters] = useState({
@@ -43,16 +47,12 @@ const ProductList = ({onRefresh, refreshTrigger, onEditProduct}) => {
         }
     };
 
-    if (loading && products.length === 0) {
-        return <div>Loading...</div>;
-    }
     if (error) {
-        return <div className="error">{error}</div>;
+        return <div className="text-red-500 text-center p-4">{error}</div>;
     }
 
     return (
-        <div>
-            <div>
+        <div className="space-y-4">
                 <ProductFilters 
                 filters={filters} 
                 onFilterChange={handleFilterChange} 
@@ -60,43 +60,59 @@ const ProductList = ({onRefresh, refreshTrigger, onEditProduct}) => {
                 onSearchChange={handleSearchChange} 
                 />
 
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Description</th>
-                            <th>Price</th>
-                            <th>Quantity</th>
-                            { user?.is_staff && <th>Actions</th>}
-                        </tr>
-                    </thead>
-                    <tbody>
+            <div className="rounded-md border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead className="hidden md:table-cell">Description</TableHead>
+                            <TableHead>Price</TableHead>
+                            <TableHead>Quantity</TableHead>
+                            { user?.is_staff && <TableHead className="text-right">Actions</TableHead>}
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {loading ? (
-                            <tr>
-                                <td colSpan={user?.is_staff ? 5 : 4}>Loading products...</td>
-                            </tr>
+                            <TableRow>
+                                <TableCell colSpan={user?.is_staff ? 5 : 4} className="h-24 text-center">Loading products...</TableCell>
+                            </TableRow>
                         ) : products.length > 0 ? (
                             products.map((product) => (
-                                <tr key={product.id}>
-                                    <td>{product.name}</td>
-                                    <td>{product.description}</td>
-                                    <td>${Number(product.price).toFixed(2)}</td>
-                                    <td>{product.quantity}</td>
+                                <TableRow key={product.id}>
+                                    <TableCell className="font-medium">{product.name}</TableCell>
+                                    <TableCell className="hidden md:table-cell max-w-xs truncate">{product.description}</TableCell>
+                                    <TableCell>${Number(product.price).toFixed(2)}</TableCell>
+                                    <TableCell>{product.quantity}</TableCell>
                                         {user?.is_staff && (
-                                            <td>
-                                                <button onClick={() => onEditProduct(product)}>Edit</button>
-                                                <button onClick={() => handleDelete(product.id)}>Delete</button>
-                                            </td>
+                                            <TableCell className="text-right">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                                                <span className="sr-only">Open menú</span>
+
+                                                                <span className="h-4 w-4">...</span>
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem onClick={() => onEditProduct(product)}>
+                                                            Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleDelete(product.id)} className="text-red-500 focus:text-red-500">
+                                                            Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
                                         )}
-                                </tr>
+                                </TableRow>
                             ))
                         ) : (
-                            <tr>
-                                <td colSpan={user?.is_staff ? 5 : 4}>No products found</td>
-                            </tr>
+                            <TableRow>
+                                <TableCell colSpan={user?.is_staff ? 5 : 4} className="text-center">No products found</TableCell>
+                            </TableRow>
                         )}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
         </div>
     );
