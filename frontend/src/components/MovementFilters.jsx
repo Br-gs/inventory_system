@@ -4,22 +4,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button"
 
-const MovementFilters = ({ filters, onFilterChange, onClearFilters }) => {
+const MovementFilters = ({ filters, onFilterChange, onClearFilters}) => {
     const [productList, setProductList] = useState([]);
-    const [loadingProducts, setLoadingProducts] = useState(true);
 
     useEffect(() => {
-        const fetchProductsForFilter = async () => {
-            try {
-                const response = await inventoryService.getProducts();
-                setProductList(response.data.results);
-            } catch (error) {
-                console.error("Failed to fetch products:", error);
-            } finally {
-                setLoadingProducts(false);
-            }
-        };
-        fetchProductsForFilter();
+        inventoryService.getProducts()
+        .then(response => setProductList(response.data.results))
+        .catch(err => console.error("Failed to fetch products for filter.", err));
     }, []);
 
     const handleProductChange = (value) => onFilterChange({ target: { name: 'product', value } });
@@ -27,7 +18,7 @@ const MovementFilters = ({ filters, onFilterChange, onClearFilters }) => {
 
     return (
         <div className="flex flex-col sm:flex-row gap-2 items-center">
-            <Select value={filters.product} onValueChange={handleProductChange} disabled={loadingProducts}>
+            <Select value={filters.product} onValueChange={handleProductChange}>
                 <SelectTrigger className="w-full sm:w-[200px]">
                     <SelectValue placeholder="All Products" />
                 </SelectTrigger>

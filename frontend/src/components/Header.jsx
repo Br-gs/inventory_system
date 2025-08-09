@@ -1,71 +1,54 @@
 import AuthContext from '../context/authContext';
 import {Link, NavLink} from 'react-router-dom';
 import {useContext} from 'react';
-
-const headerStyle = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: '1rem 2rem',
-  backgroundColor: '#f8f9fa',
-  borderBottom: '1px solid #dee2e6',
-};
-const navStyle = { display: 'flex', gap: '1.5rem', alignItems: 'center' };
-const linkStyle = { textDecoration: 'none', color: '#333' };
-const activeLinkStyle = { textDecoration: 'underline', fontWeight: 'bold' };
+import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
 
 const Header = () => {
   const {user, logoutUser} = useContext(AuthContext);
 
+  const getNavLinkClass = ({ isActive }) => 
+    `text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-muted-foreground'}`;
+
   return (
-    <header style={headerStyle}>
-      <Link to="/" style={{ ...linkStyle, fontWeight: 'bold', fontSize: '1.2rem' }}>
-        InventoryApp
-      </Link>
-      
-      {user && (
-        <nav style={navStyle}>
-          <NavLink 
-            to="/" 
-            style={({ isActive }) => isActive ? { ...linkStyle, ...activeLinkStyle } : linkStyle}
-          >
-            Home
-          </NavLink>
-          <NavLink 
-            to="/products" 
-            style={({ isActive }) => isActive ? { ...linkStyle, ...activeLinkStyle } : linkStyle}
-          >
-            Products
-          </NavLink>
-          <NavLink 
-            to="/movements" 
-            style={({ isActive }) => isActive ? { ...linkStyle, ...activeLinkStyle } : linkStyle}
-          >
-            Movements
-          </NavLink>
-          { user.is_staff &&
-            <NavLink 
-              to="/admin/users"
-            >
-              User Admin
-            </NavLink> }
-
-          { user.is_staff &&
-            <NavLink 
-              to="/reports"
-            >
-              Reports
-            </NavLink>}
-        </nav>
-      )}
-
-      <div>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        <Link to="/" className="mr-6 flex items-center space-x-2">
+          <span className="font-bold">InventoryApp</span>
+        </Link>
+        
         {user && (
-          <>
-            <Link to="/profile"> Hello, {user.username}! </Link>
-            <button onClick={logoutUser} style={{ marginLeft: '15px' }}>Logout</button>
-          </>
-        )}
+          <nav className="flex items-center space-x-6 text-sm font-medium">
+            <NavLink to="/" className={getNavLinkClass}>
+              Home
+            </NavLink>
+            <NavLink to="/products" className={getNavLinkClass}>
+              Products
+            </NavLink>
+            <NavLink to="/movements" className={getNavLinkClass}>
+              Movements
+            </NavLink>
+            {user.is_staff && (
+                <>
+                  <NavLink to="/reports" className={getNavLinkClass}>Reportes</NavLink>
+                  <NavLink to="/admin/users" className={getNavLinkClass}>Usuarios</NavLink>
+                </>
+              )}
+            </nav>
+          )}
+
+        <div className="flex flex-1 items-center justify-end space-x-4">
+          {user && (
+            <>
+              <NavLink to="/profile" className={getNavLinkClass}>
+                Hello, {user.username}!
+              </NavLink>
+              <Button variant="ghost" size="icon" onClick={logoutUser}>
+                  <LogOut className="h-4 w-4" />
+                </Button>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );
