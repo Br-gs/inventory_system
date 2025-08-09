@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMovements } from "../hooks";
 import MovementFilters from "./MovementFilters";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const MovementList = ({ refreshTrigger }) => {
     const [filters, setFilters] = useState({
@@ -29,55 +30,57 @@ const MovementList = ({ refreshTrigger }) => {
         });
     };
 
-    if (loading) return <p>Loading movements...</p>;
-    if (error) return <p>{error}</p>;
+    if (error) return <p className="text-red-500 text-center p-4">{error}</p>;
 
     return (
-        <div>
-            <h2>Inventory Movements</h2>
+        <div className="space-y-4">
             <MovementFilters 
                 filters={filters} 
                 onFilterChange={handleFilterChange} 
                 onClearFilters={handleClearFilters}
             />
             
-            {loading && <p>Loading movements...</p>}
-            {!loading && (
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Movement Type</th>
-                            <th>Quantity</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {movements.length > 0 ? (
+            <div className="rounded-md border">
+               <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Product</TableHead>
+                            <TableHead>Type of Movement</TableHead>
+                            <TableHead>Quantity</TableHead>
+                            <TableHead>Date and Time</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {loading ? (
+                            <TableRow>
+                                <TableCell colSpan="4" className="h-24 text-center">
+                                    Loading history...
+                                </TableCell>
+                            </TableRow>
+                        ) : movements.length > 0 ? (
                             movements.map((movement) => (
-                                <tr key={movement.id}>
-                                    <td>{movement.product_name}</td>
-                                    <td>{movement.movement_type_display}</td>
-                                    <td>{movement.quantity}</td>
-                                    <td>{new Date(movement.date).toLocaleDateString('es-CO', {
-                                        year: 'numeric',
-                                        month: 'short',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        hour12: true,
+                                <TableRow key={movement.id}>
+                                    <TableCell className="font-medium">{movement.product_name}</TableCell>
+                                    <TableCell>{movement.movement_type_display}</TableCell>
+                                    <TableCell>{movement.quantity}</TableCell>
+                                    <TableCell>
+                                        {new Date(movement.date).toLocaleString('es-CO', {
+                                            year: 'numeric', month: 'short', day: 'numeric',
+                                            hour: '2-digit', minute: '2-digit', hour12: true,
                                         })}
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))
                         ) : (
-                            <tr>
-                                <td colSpan="4">No movements found</td>
-                            </tr>
+                            <TableRow>
+                                <TableCell colSpan="4" className="h-24 text-center">
+                                    Don't found movements.
+                                </TableCell>
+                            </TableRow>
                         )}
-                    </tbody>
-                </table>
-            )}
+                    </TableBody>
+                </Table>
+            </div>
         </div>
     );
 };
