@@ -62,6 +62,21 @@ class InventoryReportsView(APIView):
 
         base_queryset = InventoryMovement.objects.filter(movement_type=InventoryMovement.MOVEMENT_OUTPUT)
 
+        # For dashboard
+        total_products = Product.objects.filter(is_active=True).count()
+        low_stock_products_count = Product.objects.filter(is_active=True, quantity__lte=10).count()
+        recent_movements = InventoryMovement.objects.order_by('-date')[:5]
+        recent_movements_data = [
+            {
+                'id': movement.id,
+                'product_name': movement.product.name,
+                'quantity': movement.quantity,
+                'movement_type_display': movement.get_movement_type_display(),
+                'date': movement.date
+            }
+            for movement in recent_movements
+        ]
+
         if start_date_str:
             base_queryset = base_queryset.filter(date__gte=datetime.fromisoformat(start_date_str))
         if end_date_str:
@@ -96,6 +111,14 @@ class InventoryReportsView(APIView):
 
         # The data is formatted so that it is easy to use on the frontend.
         report_data = {
+            #Dashboard data
+            'kpis': {
+                'total_products': total_products,
+                'low_stock_count': low_stock_products_count,
+            },
+            'recent_movements': recent_movements_data,
+
+            #Reports data
             'sales_by_month': [
                 {'month': sale['month'].strftime('%Y-%m'), 'total_quantity': sale['total_quantity']}
                 for sale in sales_by_month
