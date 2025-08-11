@@ -1,73 +1,24 @@
-import { useEffect } from "react";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
-const sidebarOverlayStyle = {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    zIndex: 1000,
-};
-
-const sidebarStyle = {
-    position: "fixed",
-    top: 0,
-    right: 0,
-    width: "400px",
-    maxWidth: "90%",
-    height: "100%",
-    backgroundColor: "yellow",
-    boxShadow: "-2px 0 8px rgba(0, 0, 0, 0.1)",
-    zIndex: 1001,
-    padding: "20px",
-    overflowY: "auto",
-    transition: "transform 1s ease-in-out",
-};
-
-const Sidebar = ({ isOpen, onClose, title, children }) => {
-    useEffect(() => {
-        const handlekeyDown = (event) => {
-            if (event.key === "Escape") {
-                onClose();
-            }
-        };
-        if (isOpen) {
-            window.addEventListener("keydown", handlekeyDown);
-        }
-        return () => {
-            window.removeEventListener("keydown", handlekeyDown);
-        };
-    }, [isOpen, onClose]);
-    
-    if (!isOpen) return null;
-    
+const Sidebar = ({ isOpen, onClose, title, description, children }) => {
     return (
-        <>
- 
-            <div 
-                style={{
-                ...sidebarOverlayStyle,
-                opacity: isOpen ? 1 : 0,
-                pointerEvents: isOpen ? 'auto' : 'none',
-                transform : isOpen ? 'translateX(0)' : 'translateX(100%)',
-                }}
-                onClick={onClose}
-            />
-
-            <div 
-                style={sidebarStyle}
-                onClick={(e) => e.stopPropagation()}
-            >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '20px' }}>
-                    <h2>{title}</h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>
-                        &times;
-                    </button>
-                </div>
+        <Sheet open={isOpen} onOpenChange={onClose}>
+            <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+                <SheetHeader>
+                <SheetTitle>{title}</SheetTitle>
+                {description && <SheetDescription>{description}</SheetDescription>}
+                </SheetHeader>
+                <div className="py-4">
                 {children}
-            </div>
-    </>
+                </div>
+            </SheetContent>
+        </Sheet>
   );
 };
 

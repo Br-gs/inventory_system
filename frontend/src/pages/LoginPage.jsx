@@ -49,7 +49,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="flex items-center justify-center min-h-screen bg-background">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">Log In</CardTitle>
@@ -67,8 +67,8 @@ const LoginPage = () => {
               {errors.username && <p className="text-xs text-red-600 mt-1">{errors.username.message}</p>}
             </div>
             <div className="grid gap-2">
-              <label htmlFor="password">Password</label>
-              <input 
+              <Label htmlFor="password">Password</Label>
+              <Input 
               type="password"
               id="password"
               disabled={isSubmitting}
@@ -80,13 +80,14 @@ const LoginPage = () => {
           </CardContent>
 
           <CardFooter className="flex flex-col">
-            <button className="w-full" type="submit" disabled={isSubmitting} >
+            <Button className="w-full" type="submit" disabled={isSubmitting} >
               {isSubmitting ? "Logging in..." : "Login"}
-            </button>
+            </Button>
         
-            <p className="mt-4 text-center text-sm text-gray-600">
-              Don't have an account? <Link to="/register" className="underline hover:text-blue-600">Register here</Link>
+            <p className="mt-4 text-center text-sm text-muted-foreground">
+              Don't have an account? 
             </p>
+              <Link to="/register" className="underline hover:text-primary">Register here</Link>
           </CardFooter>
         </form>
       </Card>

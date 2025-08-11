@@ -10,27 +10,28 @@ import { Package, Archive, TrendingUp, ArrowRight } from 'lucide-react';
 
 const DashboardPage = () => {
     const [summaryData, setSummaryData] = useState(null);
-  const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
 
-  const fetchSummary = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await reportsService.getInventoryReport();
-      setSummaryData(response.data);
-    } catch (error) {
-      console.error("Failed to fetch summary data:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    const fetchSummary = useCallback(async () => {
+        setLoading(true);
+        try {
+        const response = await reportsService.getInventoryReport();
+        setSummaryData(response.data);
+        } catch (error) {
+        console.error("Failed to fetch summary data:", error);
+        } finally {
+        setLoading(false);
+        }
+    }, []);
 
-  useEffect(() => {
-    fetchSummary();
-  }, [fetchSummary]);
+    useEffect(() => {
+        fetchSummary();
+    }, [fetchSummary]);
 
-  if (loading) {
-    return <p>Cargando dashboard...</p>;
-  }
+    if (loading) return <p>Cargando dashboard...</p>;
+
+    const salesChange = summaryData?.kpis?.sales_percentage_change ?? 0;
+
     return (
         <div className="space-y-6">
             <h1 className="text-3xl font-bold">Dashboard</h1>
@@ -57,12 +58,14 @@ const DashboardPage = () => {
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Sales this month (Example)</CardTitle>
+                        <CardTitle className="text-sm font-medium">Sales this month</CardTitle>
                         <TrendingUp className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">+1,234</div>
-                        <p className="text-xs text-muted-foreground">+20.1% since last month</p>
+                        <div className="text-2xl font-bold">{summaryData?.kpis?.sales_current_month ?? 0} units</div>
+                        <p className={`text-xs ${salesChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            {salesChange >= 0 ? '+' : ''}{salesChange}% since last month
+                        </p>
                     </CardContent>
                 </Card>
             </div>    

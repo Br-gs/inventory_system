@@ -6,6 +6,11 @@ import { z } from "zod";
 import authService from "../api/authService";
 import toast from "react-hot-toast";
 
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 const registerSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters long"),
   email: z.string().email("Invalid email address"),
@@ -53,54 +58,49 @@ const RegisterPage = () => {
     };
 
     return (
-        <div>
-            <h1>Register</h1>
-            <form onSubmit={ handleSubmit(onSubmit) }>
-                <div>
-                    <label htmlFor="username">Username</label>
-                    <input
-                        id="username"
-                        type="text"
-                        {...register("username")}
-                    />
-                    {errors.username && <p className="error">{errors.username.message}</p>}
-                </div>
-                <div>
-                    <label htmlFor="email">Email</label>
-                    <input
-                        id="email"
-                        type="email"
-                        {...register("email")}
-                    />
-                    {errors.email && <p className="error">{errors.email.message}</p>}
-                </div>
-                <div>
-                    <label htmlFor="password">Password</label>
-                    <input
-                        id="password"
-                        type="password"
-                        {...register("password")}
-                    />
-                    {errors.password && <p className="error">{errors.password.message}</p>}
-                </div>
-                <div>
-                    <label htmlFor="password2">Confirm Password</label>
-                    <input
-                        id="password2"
-                        type="password"
-                        {...register("password2")}
-                    />
-                    {errors.password2 && <p className="error">{errors.password2.message}</p>}
-                </div>
-                
-                <button type="submit" disabled={loading}>
-                    {loading ? "Registering..." : "Register"}
-                </button>
-            </form>
-            <p>
-                Already have an account? <Link to="/login">Login</Link>
+        <div className="flex items-center justify-center min-h-screen bg-background">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="text-2xl">Create an Account</CardTitle>
+          <CardDescription>Enter your details to register.</CardDescription>
+        </CardHeader>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <CardContent className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="username">User</Label>
+              <Input id="username" type="text" {...register("username")} />
+              {errors.username && <p className="text-xs text-red-500 mt-1">{errors.username.message}</p>}
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" {...register("email")} />
+              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="password">Password</Label>
+              <Input id="password" type="password" {...register("password")} />
+              {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>}
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="password2">Confirm Password</Label>
+              <Input id="password2" type="password" {...register("password2")} />
+              {errors.password2 && <p className="text-xs text-red-500 mt-1">{errors.password2.message}</p>}
+            </div>
+          </CardContent>
+          <CardFooter className="flex flex-col">
+            <Button className="w-full" type="submit" disabled={loading}>
+              {loading ? 'Registrando...' : 'Crear Cuenta'}
+            </Button>
+            <p className="mt-4 text-center text-sm text-muted-foreground">
+              Already have an account?{' '}
             </p>
-        </div>
+              <Link to="/login" className="underline hover:text-primary">
+                Log In
+              </Link>
+          </CardFooter>
+        </form>
+      </Card>
+    </div>
     );
 };
 
