@@ -2,9 +2,16 @@ import {useState, useEffect, useCallback} from 'react';
 import {axiosClient} from '../api';
 import toast from 'react-hot-toast';
 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { MoreHorizontal } from 'lucide-react';
+
 const UserAdminPage = () => {
     const [users, setUsers] = useState([]);
-    const [Loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
 
     const fetchUsers = useCallback(async () => {
         setLoading(true);
@@ -50,43 +57,64 @@ const UserAdminPage = () => {
         }
     };
 
-    if (Loading) return <div>Loading users...</div>;
-
     return (
-        <div>
-            <h1>User Management</h1>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Username</th>
-                        <th>Email</th>
-                        <th>First Name</th>
-                        <th>Last Name</th>
-                        <th>Admin Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {users.map(user => (
-                        <tr key={user.id}>
-                            <td>{user.username}</td>
-                            <td>{user.email}</td>
-                            <td>{user.first_name}</td>
-                            <td>{user.last_name}</td>
-                            <td>{user.is_staff ? 'Admin' : 'User'}</td>
-                            <td>
-                                <button onClick={() => handleToggleAdmin(user)}>
-                                    {user.is_staff ? 'Deactivate Admin' : 'Activate Admin'}
-                                </button>
-                                <button onClick={() => handleDeleteUser(user.id, user.username)}>
-                                    Delete User
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+        <Card>
+            <CardHeader>
+                <CardTitle>User Management</CardTitle>
+                <CardDescription>Forward users to administrators or remove them from the system.</CardDescription> 
+            </CardHeader>
+            <CardContent>
+                <div className="rounded-md border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Username</TableHead>
+                                <TableHead>Email</TableHead>
+                                <TableHead>First Name</TableHead>
+                                <TableHead>Last Name</TableHead>
+                                <TableHead>Admin Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
+                                <TableRow><TableCell colSpan="4" className="h-24 text-center">Cargando...</TableCell></TableRow>
+                            ) : users.map(user => (
+                                <TableRow key={user.id}>
+                                    <TableCell className="font-medium">{user.username}</TableCell>
+                                    <TableCell>{user.email}</TableCell>
+                                    <TableCell>{user.first_name}</TableCell>
+                                    <TableCell>{user.last_name}</TableCell>
+                                    <TableCell> 
+                                        <Badge variant={user.is_staff ? 'default' : 'secondary'}>
+                                            {user.is_staff ? 'Admin' : 'Usuario'}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                    <span className="sr-only">Open Menu</span>
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align='end'>
+                                                <DropdownMenuItem onClick={() => handleToggleAdmin(user)}>
+                                                    {user.is_staff ? 'Remove Admin' : 'Become Admin'}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleDeleteUser(user.id, user.username)} className="text-red-500 focus:text-red-500">
+                                                    Delete User
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            </CardContent>
+        </Card>
     );
 };
 

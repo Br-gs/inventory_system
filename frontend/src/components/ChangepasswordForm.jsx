@@ -4,6 +4,10 @@ import {z} from 'zod';
 import { authService } from '../api';
 import toast from 'react-hot-toast';
 
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
 const changePasswordSchema = z.object({
     old_password: z.string().min(1, 'Old password is required'),
     new_password: z.string().min(8, 'New password must be at least 8 characters long'),
@@ -48,39 +52,37 @@ const ChangepasswordForm = () => {
     };
 
     return ( 
-        <form onSubmit={handleSubmit(onSubmit)} >
-            <fieldset>
-                <div>
-                    <label htmlFor="old_password">Old Password</label>
-                    <input
+        <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4" >
+                <div className="grid gap-2">
+                    <Label htmlFor="old_password">Old Password</Label>
+                    <Input
                         type="password"
                         id="old_password"
                         {...register('old_password')}
                     />
-                    {errors.old_password && <p className="error">{errors.old_password.message}</p>}
+                    {errors.old_password && <p className="text-sm text-red-500 mt-1">{errors.old_password.message}</p>}
                 </div>
-                <div>
-                    <label htmlFor="new_password">New Password</label>
-                    <input
+                <div className="grid gap-2">
+                    <Label htmlFor="new_password">New Password</Label>
+                    <Input
                         type="password"
                         id="new_password"
                         {...register('new_password')}
                     />
-                    {errors.new_password && <p className="error">{errors.new_password.message}</p>}
+                    {errors.new_password && <p className="text-sm text-red-500 mt-1">{errors.new_password.message}</p>}
                 </div>
-                <div>
-                    <label htmlFor="new_password2">Confirm New Password</label>
-                    <input
+                <div className="grid gap-2">
+                    <Label htmlFor="new_password2">Confirm New Password</Label>
+                    <Input
                         type="password"
                         id="new_password2"
                         {...register('new_password2')}
                     />
-                    {errors.new_password2 && <p className="error">{errors.new_password2.message}</p>}
+                    {errors.new_password2 && <p className="text-sm text-red-500 mt-1">{errors.new_password2.message}</p>}
                 </div>
-                <button type="submit">
+                <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
                     {isSubmitting ? 'Updating...' : 'Updated Password'}
-                </button>
-            </fieldset>
+                </Button>
         </form>
     );
 };

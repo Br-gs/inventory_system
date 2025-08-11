@@ -12,9 +12,9 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
+      <div className="container flex h-16 items-center">
         <Link to="/" className="mr-6 flex items-center space-x-2">
-          <span className="font-bold">InventoryApp</span>
+          <span className="font-bold text-lg">InventoryApp</span>
         </Link>
         
         {user && (
@@ -30,8 +30,8 @@ const Header = () => {
             </NavLink>
             {user.is_staff && (
                 <>
-                  <NavLink to="/reports" className={getNavLinkClass}>Reportes</NavLink>
-                  <NavLink to="/admin/users" className={getNavLinkClass}>Usuarios</NavLink>
+                  <NavLink to="/reports" className={getNavLinkClass}>Reports</NavLink>
+                  <NavLink to="/admin/users" className={getNavLinkClass}>Users</NavLink>
                 </>
               )}
             </nav>
