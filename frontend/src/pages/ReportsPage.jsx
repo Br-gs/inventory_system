@@ -5,13 +5,14 @@ import "chartjs-adapter-date-fns";
 import {reportsService} from "../api";
 import toast from 'react-hot-toast';
 import { ReportFilters } from "../components";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, TimeScale, Filler);
 
 const ReportsPage = () => {
     const [reportData, setReportData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('sales');
     const [filters, setFilters] = useState({
         product_id: '',
         start_date: '',
@@ -172,64 +173,64 @@ const ReportsPage = () => {
     if (!reportData || Object.keys(reportData).length === 0) { return <p>No report data available</p>; }
 
     return (
-        <div>
-            <h1>Inventory Reports</h1>
+        <div className="space-y-6">
+            <h1 className="text-3xl font-bold">Inventory Reports</h1>
 
-            <div className="tabs" style={{ marginBottom: '2rem', borderBottom: '1px solid #ccc' }}>
-                <button onClick={() => setActiveTab('sales')} style={activeTab === 'sales' ? { fontWeight: 'bold', borderBottom: '2px solid blue' } : {}}>
-                    Monthly Sales
-                </button>
-                <button onClick={() => setActiveTab('topProducts')} style={activeTab === 'topProducts' ? { fontWeight: 'bold', borderBottom: '2px solid blue' } : {}}>
-                    Top Products
-                </button>
-                <button onClick={() => setActiveTab('stockLevels')} style={activeTab === 'stockLevels' ? { fontWeight: 'bold', borderBottom: '2px solid blue' } : {}}>
-                    Stock Levels
-                </button>
-            </div>
+            <Tabs defaultValue="sales" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="sales">Monthly Sales</TabsTrigger>
+                    <TabsTrigger value="topProducts">Top Products</TabsTrigger>
+                    <TabsTrigger value="stockLevels">Stock Levels</TabsTrigger>
+                </TabsList>
 
-            {activeTab === 'sales' && (
-                <ReportFilters 
-                    filters={stagedFilters}
-                    onFilterChange={handleStagedFilterChange}
-                    onApplyFilters={handleApplyFilters}
-                    onClearFilters={clearFilters}
-                />
-            )}
+                <TabsContent value="sales">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Sales Trend</CardTitle>
+                            <CardDescription>Filter by product and date range to analyze sales.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                        <ReportFilters 
+                            filters={stagedFilters}
+                            onFilterChange={handleStagedFilterChange}
+                            onApplyFilters={handleApplyFilters}
+                            onClearFilters={clearFilters}
+                        />
+                        {loading ? <p>Loading graph...</p> : 
+                            (reportData?.sales_by_month?.length > 0 ? 
+                            <div style={{ position: 'relative', height: '400px' }}><Line data={salesChartData} options={{...salesChartOptions, maintainAspectRatio: false}} /></div> : 
+                            <p>There are no sales data for the selected filters.</p>)
+                        }
+                        </CardContent>
+                    </Card>
+                </TabsContent>
 
-            {filters.product_id && reportData?.sales_by_month && (
-                <h2>
-                    Showing reports for: {reportData.sales_by_month[0]?.product_name || 'selected Product'}
-                </h2>
-            )}
+                <TabsContent value="topProducts">
+                    <Card>
+                        <CardHeader><CardTitle>Top 5 Products by Units Sold</CardTitle></CardHeader>
+                        <CardContent>
+                        {loading ? <p>Loading  graph...</p> :
+                            (reportData?.top_selling_products?.length > 0 ?
+                            <div style={{ position: 'relative', height: '400px' }}><Bar data={topProductsChartData} options={{ ...topProductsChartOptions, maintainAspectRatio: false }} /></div> :
+                            <p>There is no data on best-selling products.</p>)
+                        }
+                        </CardContent>
+                    </Card>
+                </TabsContent>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '2rem' }}>
-                
-                {activeTab === 'sales' && (
-                    (reportData?.sales_by_month?.length ?? 0) > 0 ? (
-                        <div style={{ position: 'relative', height: '400px', width: '100%' }}>
-                            <h3>Monthly Sales Trend</h3>
-                            <Line data={salesChartData} options={{...salesChartOptions, maintainAspectRatio: false}} />
-                        </div>
-                    ) : <p>No hay datos</p>
-                )}
-
-                {activeTab === 'topProducts' && (
-                    (reportData?.top_selling_products?.length ?? 0) > 0 ? (
-                            <div style={{ position: 'relative', height: '400px', width: '100%' }}>
-                            <Bar data={topProductsChartData} options={{ ...topProductsChartOptions, maintainAspectRatio: false }} />
-                            </div>
-                    ) : <p>No hay datos de productos más vendidos para mostrar.</p>
-                )}
-
-                {activeTab === 'stockLevels' && (
-                    (reportData?.stock_levels?.length ?? 0) > 0 ? (
-                        <div style={{ position: 'relative', height: '500px', width: '100%' }}>
-                        <Bar data={stockLevelsChartData} options={{ ...stockLevelsChartOptions, maintainAspectRatio: false }} />
-                        </div>
-                    ) : <p>No hay datos de niveles de stock para mostrar.</p>
-        )}
-                
-            </div>
+                <TabsContent value="stockLevels">
+                    <Card>
+                        <CardHeader><CardTitle>Top 10 Products by Stock Level</CardTitle></CardHeader>
+                        <CardContent>
+                        {loading ? <p>Loading graph...</p> :
+                            (reportData?.stock_levels?.length > 0 ?
+                            <div style={{ position: 'relative', height: '500px' }}><Bar data={stockLevelsChartData} options={{ ...stockLevelsChartOptions, maintainAspectRatio: false }} /></div> :
+                            <p>No stock level data available.</p>)
+                        }
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
         </div>
     );
 };
