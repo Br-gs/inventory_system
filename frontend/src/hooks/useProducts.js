@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { inventoryService } from "../api";
 
-const useProducts = (filters, refreshTrigger, page) => {
+const useProducts = (filters, page, refreshTrigger) => {
     const [data, setData] = useState({ results: [], count: 0 });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -16,7 +16,7 @@ const useProducts = (filters, refreshTrigger, page) => {
             if (currentPage) params.append('page', currentPage);
 
             const response = await inventoryService.getProducts(params, signal);
-            setData(response.data.results);
+            setData(response.data); 
         } catch (err) {
             if (err.name !== 'CanceledError') {
                 setError("Failed to fetch products");
@@ -31,7 +31,7 @@ const useProducts = (filters, refreshTrigger, page) => {
         const controller = new AbortController();
 
         const debounceTimer = setTimeout(() => {
-            fetchProducts(controller.signal, filters, page);
+            fetchProducts(controller.signal, filters, Math.max(1, page));
         }, 300);
 
         return () => {

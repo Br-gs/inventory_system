@@ -18,7 +18,7 @@ const useMovements = (filters, refreshTrigger, page) => {
             if (currentPage) params.append('page', currentPage);
 
             const response = await inventoryService.getInventoryMovements(params, signal);
-            setData(response.data.results);
+            setData(response.data);
         } catch (err) {
             if (err.name !== 'CancelError') {
                 setError("Failed to fetch movements");
@@ -32,7 +32,7 @@ const useMovements = (filters, refreshTrigger, page) => {
 
     useEffect(() => {
         const controller = new AbortController();
-        fetchMovements(controller.signal, filters, page); 
+        fetchMovements(controller.signal, filters, Math.max(1, page)); 
 
         return () => {
             controller.abort();

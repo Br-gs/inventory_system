@@ -4,7 +4,7 @@ import MovementFilters from "./MovementFilters";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 10
 
 const MovementList = ({ refreshTrigger }) => {
     const [filters, setFilters] = useState({
@@ -90,31 +90,38 @@ const MovementList = ({ refreshTrigger }) => {
                 </Table>
             </div>
 
-            <Pagination>
-                            <PaginationContent>
-                                <PaginationItem>
-                                    <PaginationPrevious 
-                                        href="#" 
-                                        onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.max(1, p - 1)); }}
-                                        disabled={currentPage === 1}
-                                    />
-                                </PaginationItem>
-                                
-                                <PaginationItem>
-                                    <PaginationLink href="#">
-                                        Page {currentPage} of {totalPages}
-                                    </PaginationLink>
-                                </PaginationItem>
-            
-                                <PaginationItem>
-                                    <PaginationNext 
-                                        href="#" 
-                                        onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.min(totalPages, p + 1)); }}
-                                        disabled={currentPage === totalPages}
-                                    />
-                                </PaginationItem>
-                            </PaginationContent>
-                        </Pagination>
+            {totalPages > 1 && (
+                <Pagination>
+                    <PaginationContent className="space-x-1"> 
+                        <PaginationItem>
+                            <PaginationPrevious 
+                                href="#" 
+                                onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.max(1, p - 1)); }}
+                                disabled={currentPage === 1}
+                                className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                            />
+                        </PaginationItem>
+                        
+                        <PaginationItem>
+                            <PaginationLink href="#" isActive>
+                                {currentPage}
+                            </PaginationLink>
+                        </PaginationItem>
+                        <PaginationItem>
+                            <span className="p-2 text-sm text-muted-foreground">of {totalPages}</span>
+                        </PaginationItem>
+
+                        <PaginationItem>
+                            <PaginationNext 
+                                href="#" 
+                                onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.min(totalPages, p + 1)); }}
+                                disabled={currentPage >= totalPages}
+                                className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
+            )}
 
         </div>
     );
