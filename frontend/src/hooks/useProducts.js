@@ -31,7 +31,7 @@ const useProducts = (filters, refreshTrigger, page) => {
         const controller = new AbortController();
 
         const debounceTimer = setTimeout(() => {
-            fetchProducts(controller.signal, filters);
+            fetchProducts(controller.signal, filters, page);
         }, 300);
 
         return () => {

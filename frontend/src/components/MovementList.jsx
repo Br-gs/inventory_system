@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useMovements } from "../hooks";
 import MovementFilters from "./MovementFilters";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+
+const PAGE_SIZE = 20
 
 const MovementList = ({ refreshTrigger }) => {
     const [filters, setFilters] = useState({
@@ -10,8 +13,13 @@ const MovementList = ({ refreshTrigger }) => {
         start_date: '',
         end_date: ''
     });
+    const [currentPage, setCurrentPage] = useState(1);
     
-    const { movements, loading, error} = useMovements(filters, refreshTrigger);
+    const { data, loading, error} = useMovements(filters, currentPage, refreshTrigger);
+
+    const movements = data?.results ?? [];
+    const totalMovements = data?.count ?? 0;
+    const totalPages = Math.ceil(totalMovements / PAGE_SIZE);
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
@@ -81,6 +89,33 @@ const MovementList = ({ refreshTrigger }) => {
                     </TableBody>
                 </Table>
             </div>
+
+            <Pagination>
+                            <PaginationContent>
+                                <PaginationItem>
+                                    <PaginationPrevious 
+                                        href="#" 
+                                        onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.max(1, p - 1)); }}
+                                        disabled={currentPage === 1}
+                                    />
+                                </PaginationItem>
+                                
+                                <PaginationItem>
+                                    <PaginationLink href="#">
+                                        Page {currentPage} of {totalPages}
+                                    </PaginationLink>
+                                </PaginationItem>
+            
+                                <PaginationItem>
+                                    <PaginationNext 
+                                        href="#" 
+                                        onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.min(totalPages, p + 1)); }}
+                                        disabled={currentPage === totalPages}
+                                    />
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
+
         </div>
     );
 };
