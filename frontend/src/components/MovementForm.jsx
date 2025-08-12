@@ -5,6 +5,11 @@ import { z } from 'zod';
 import inventoryService from "../api/inventoryService";
 import toast from "react-hot-toast";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 const movementSchema = z.object({
     product: z.string().min(1, "Product is required"),
     quantity: z.coerce.number({ invalid_type_error: "Quantity must be a number" })
@@ -19,6 +24,7 @@ const MovementForm = ({ onSuccess, onClose, refreshTrigger }) => {
 
     const {
         register,
+        setValue,
         handleSubmit,
         reset,
         formState: { errors, isSubmitting },
@@ -67,45 +73,36 @@ const MovementForm = ({ onSuccess, onClose, refreshTrigger }) => {
     }
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)}>
-            <fieldset disabled={isSubmitting}>
-            <h2>Add New Movement</h2>
-
-            <div>
-                <label htmlFor="product">Product</label>
-                <select id="product" {...register("product")}>
-                    <option value="">-- Select a product --</option>
-                    {products.map(product => (
-                        <option key={product.id} value={product.id}>
-                            {product.name} (Stock actual: {product.quantity})
-                        </option>
-                    ))}
-                </select>
-                {errors.product && <p className="error">{errors.product.message}</p>}
+        <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
+            <div className="grid gap-2">
+                <Label htmlFor="product">Product</Label>
+                <Select onValueChange={(value) => setValue('product', value)} disabled={loadingProducts}>
+                    <SelectTrigger id="product">
+                        <SelectValue placeholder="-- Select a product --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {products.map(product => (
+                            <SelectItem key={product.id} value={String(product.id)}>
+                                {product.name} (Stock: {product.quantity})
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                {errors.product && <p className="text-sm text-red-500 mt-1">{errors.product.message}</p>}
             </div>
 
-            <div>
-                <label htmlFor="quantity">Quantity</label>
-                <input type="number" id="quantity" {...register("quantity")} />
-                {errors.quantity && <p className="error">{errors.quantity.message}</p>}
+            <div className="grid gap-2">
+                <Label htmlFor="quantity">Quantity</Label>
+                <Input type="number" id="quantity" {...register("quantity")} />
+                {errors.quantity && <p className="text-sm text-red-500 mt-1">{errors.quantity.message}</p>}
             </div>
 
-            <div>
-                <label htmlFor="movement_type">Movement Type</label>
-                <select id="movement_type" {...register("movement_type")}>
-                    <option value="">-- Select movement type--</option>
-                    <option value="IN">Input</option>
-                    <option value="OUT">Output</option>
-                    <option value="ADJ">Adjustment</option>
-                </select>
-                {errors.movement_type && <p className="error">{errors.movement_type.message}</p>}
+            <div className="flex justify-end gap-2 mt-4">
+                <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "Submitting..." : "Save Movement"}
+                </Button>
             </div>
-
-            <button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : "Save Movement"}
-            </button>
-            <button type="button" onClick={onClose}>Cancel</button>
-            </fieldset>
         </form>
     );
 };

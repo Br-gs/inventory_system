@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo} from "react";
+import { useState, useEffect, useCallback, useMemo, useRef} from "react";
 import { Bar, Line } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, TimeScale, Filler} from "chart.js";
 import "chartjs-adapter-date-fns";
@@ -18,7 +18,9 @@ const ReportsPage = () => {
         start_date: '',
         end_date: '',
     })
-    const [stagedFilters, setStagedFilters] = useState(filters); 
+
+    const debounceRef = useRef(null);
+    const isInitialMount = useRef(true);
 
     const fetchReports = useCallback(async (currentFilters) => {
         setLoading(true);
@@ -36,23 +38,46 @@ const ReportsPage = () => {
     }, []);
 
     useEffect(() => {
-        fetchReports(filters);
-        setStagedFilters
-    }, [fetchReports, setStagedFilters , filters]);
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            fetchReports(filters);
+            return;
+        }
 
-    const handleStagedFilterChange = (e) => {
+        if (!debounceRef.current) {
+            return;
+        }
+
+        debounceRef.current = setTimeout(() => {
+            fetchReports(filters);
+            debounceRef.current = null;
+        }, 500);
+
+        return () => {
+            if (debounceRef.current) {
+                clearTimeout(debounceRef.current);
+            }
+        };
+    }, [filters, fetchReports]);
+
+    const handleFilterChange = (e) => {
         const { name, value } = e.target;
-        setStagedFilters(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleApplyFilters = () => {
-        setFilters(stagedFilters);
+        if (debounceRef.current) {
+            clearTimeout(debounceRef.current);
+        }
+        debounceRef.current = setTimeout(() => {
+        }, 0);
+        setFilters(prev => ({ ...prev, [name]: value }));
     };
 
     const clearFilters = () => {
         const cleared = { product_id: '', start_date: '', end_date: '' };
-        setStagedFilters(cleared);
+        if (debounceRef.current) {
+            clearTimeout(debounceRef.current);
+            debounceRef.current = null;
+        }
         setFilters(cleared);
+        fetchReports(cleared);
     };
 
     const salesChartData = useMemo(() => {
@@ -169,8 +194,7 @@ const ReportsPage = () => {
         }
     }), []);
 
-    if (loading) return <p>Generating reports... </p>
-    if (!reportData || Object.keys(reportData).length === 0) { return <p>No report data available</p>; }
+    if (loading && !reportData) return <p>Generating reports... </p>
 
     return (
         <div className="space-y-6">
@@ -191,12 +215,17 @@ const ReportsPage = () => {
                         </CardHeader>
                         <CardContent className="space-y-4">
                         <ReportFilters 
-                            filters={stagedFilters}
-                            onFilterChange={handleStagedFilterChange}
-                            onApplyFilters={handleApplyFilters}
+                            filters={filters}
+                            onFilterChange={handleFilterChange}
                             onClearFilters={clearFilters}
                         />
-                        {loading ? <p>Loading graph...</p> : 
+                        {loading ? (<div className="flex items-center justify-center h-96">
+                                    <div className="flex items-center space-x-2">
+                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                                        <span>Updating chart...</span>
+                                    </div>
+                                </div>
+                            ) : 
                             (reportData?.sales_by_month?.length > 0 ? 
                             <div style={{ position: 'relative', height: '400px' }}><Line data={salesChartData} options={{...salesChartOptions, maintainAspectRatio: false}} /></div> : 
                             <p>There are no sales data for the selected filters.</p>)
@@ -209,11 +238,20 @@ const ReportsPage = () => {
                     <Card>
                         <CardHeader><CardTitle>Top 5 Products by Units Sold</CardTitle></CardHeader>
                         <CardContent>
-                        {loading ? <p>Loading  graph...</p> :
-                            (reportData?.top_selling_products?.length > 0 ?
-                            <div style={{ position: 'relative', height: '400px' }}><Bar data={topProductsChartData} options={{ ...topProductsChartOptions, maintainAspectRatio: false }} /></div> :
+                        {loading ?  (
+                                <div className="flex items-center justify-center h-96">
+                                    <div className="flex items-center space-x-2">
+                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                                        <span>Updating chart...</span>
+                                    </div>
+                                </div>
+                            ) :(reportData?.top_selling_products?.length > 0 ? (
+                            <div style={{ position: 'relative', height: '400px' }}>
+                                <Bar data={topProductsChartData} options={{ ...topProductsChartOptions, maintainAspectRatio: false }} />
+                            </div> 
+                            ) : (
                             <p>There is no data on best-selling products.</p>)
-                        }
+                        )}
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -222,11 +260,21 @@ const ReportsPage = () => {
                     <Card>
                         <CardHeader><CardTitle>Top 10 Products by Stock Level</CardTitle></CardHeader>
                         <CardContent>
-                        {loading ? <p>Loading graph...</p> :
-                            (reportData?.stock_levels?.length > 0 ?
-                            <div style={{ position: 'relative', height: '500px' }}><Bar data={stockLevelsChartData} options={{ ...stockLevelsChartOptions, maintainAspectRatio: false }} /></div> :
+                        {loading ? (
+                                <div className="flex items-center justify-center h-96">
+                                    <div className="flex items-center space-x-2">
+                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                                        <span>Updating chart...</span>
+                                    </div>
+                                </div>
+                            ) :
+                            (reportData?.stock_levels?.length > 0 ? (
+                            <div style={{ position: 'relative', height: '500px' }}>
+                                <Bar data={stockLevelsChartData} options={{ ...stockLevelsChartOptions, maintainAspectRatio: false }} />
+                            </div>
+                             ) : (
                             <p>No stock level data available.</p>)
-                        }
+                        )}
                         </CardContent>
                     </Card>
                 </TabsContent>
