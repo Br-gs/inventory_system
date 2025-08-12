@@ -1,20 +1,22 @@
 import { useState, useEffect, useCallback } from "react";
 import { inventoryService } from "../api";
 
-const useProducts = (filters, refreshTrigger) => {
-    const [products, setProducts] = useState([]);
+const useProducts = (filters, refreshTrigger, page) => {
+    const [data, setData] = useState({ results: [], count: 0 });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const fetchProducts = useCallback(async (signal, currentFilters) => {
+    const fetchProducts = useCallback(async (signal, currentFilters, currentPage) => {
         setLoading(true);
         setError(null);
         try {
             const params = new URLSearchParams();
             if (currentFilters.search) params.append('search', currentFilters.search);
             if (currentFilters.is_active) params.append('is_active', currentFilters.is_active);
+            if (currentPage) params.append('page', currentPage);
+
             const response = await inventoryService.getProducts(params, signal);
-            setProducts(response.data.results);
+            setData(response.data.results);
         } catch (err) {
             if (err.name !== 'CanceledError') {
                 setError("Failed to fetch products");
@@ -36,10 +38,10 @@ const useProducts = (filters, refreshTrigger) => {
             clearTimeout(debounceTimer);
             controller.abort();
         };
-    }, [fetchProducts, refreshTrigger, filters]);
+    }, [fetchProducts, refreshTrigger, filters, page]);
 
     return {
-        products,
+        data,
         loading,
         error,
         fetchProducts

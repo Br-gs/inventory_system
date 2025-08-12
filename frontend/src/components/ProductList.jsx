@@ -8,7 +8,10 @@ import {useProducts} from "../hooks";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { MoreHorizontal } from 'lucide-react';
+
+const PAGE_SIZE = 20
 
 const ProductList = ({onRefresh, refreshTrigger, onEditProduct}) => {
     const { user } = useContext(AuthContext);
@@ -16,14 +19,20 @@ const ProductList = ({onRefresh, refreshTrigger, onEditProduct}) => {
         search: '',
         is_active: ''
     });
+    const [currentPage, setCurrentPage] = useState(1);
 
-    const { products, loading, error } = useProducts(filters, refreshTrigger);
+    const { data, loading, error } = useProducts(filters, currentPage, refreshTrigger);
+
+    const products = data?.results ?? [];
+    const totalProducts = data?.count ?? 0;
+    const totalPages = Math.ceil(totalProducts / PAGE_SIZE);
 
     const handleSearchChange = (searchTerm) => {
         setFilters((prevFilters) => ({
             ...prevFilters,
             search: searchTerm
         }));
+        setCurrentPage(1); 
     };
 
     const handleFilterChange = (e) => {
@@ -32,6 +41,7 @@ const ProductList = ({onRefresh, refreshTrigger, onEditProduct}) => {
             ...prevFilters,
             [name]: value
         }));
+        setCurrentPage(1);
     };
 
     const handleDelete = async (productId) => {
@@ -114,6 +124,33 @@ const ProductList = ({onRefresh, refreshTrigger, onEditProduct}) => {
                     </TableBody>
                 </Table>
             </div>
+
+            <Pagination>
+                <PaginationContent>
+                    <PaginationItem>
+                        <PaginationPrevious 
+                            href="#" 
+                            onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.max(1, p - 1)); }}
+                            disabled={currentPage === 1}
+                        />
+                    </PaginationItem>
+                    
+                    <PaginationItem>
+                        <PaginationLink href="#">
+                            Page {currentPage} of {totalPages}
+                        </PaginationLink>
+                    </PaginationItem>
+
+                    <PaginationItem>
+                        <PaginationNext 
+                            href="#" 
+                            onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.min(totalPages, p + 1)); }}
+                            disabled={currentPage === totalPages}
+                        />
+                    </PaginationItem>
+                </PaginationContent>
+            </Pagination>
+
         </div>
     );
 };
