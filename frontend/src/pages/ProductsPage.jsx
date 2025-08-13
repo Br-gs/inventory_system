@@ -113,6 +113,11 @@ const ProductsPage = () => {
                 isOpen={sidebarContent !== null} 
                 onClose={closeSidebar}
                 title={sidebarContent === 'product' ? (productToEdit ? 'Edit Product' : 'Add Product') : 'Add Movement'}
+                description={
+                    sidebarContent === 'product' 
+                    ? "Complete the product details here." 
+                    : "Select a product and register a new stock transaction."
+                }
             >
                 {sidebarContent === 'product' && (
                     <ProductForm

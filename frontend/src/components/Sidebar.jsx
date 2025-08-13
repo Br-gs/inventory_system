@@ -11,11 +11,11 @@ const Sidebar = ({ isOpen, onClose, title, description, children }) => {
         <Sheet open={isOpen} onOpenChange={onClose}>
             <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
                 <SheetHeader>
-                <SheetTitle>{title}</SheetTitle>
-                {description && <SheetDescription>{description}</SheetDescription>}
+                  <SheetTitle>{title}</SheetTitle>
+                  {description && <SheetDescription>{description}</SheetDescription>}
                 </SheetHeader>
                 <div className="py-4">
-                {children}
+                  {children}
                 </div>
             </SheetContent>
         </Sheet>
