@@ -2,6 +2,8 @@ import SearchSuggestions from './SearchSuggestions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { X } from 'lucide-react';
+import { Checkbox } from "@/components/ui/checkbox"; // 1. Importar Checkbox
+import { Label } from "@/components/ui/label";
 
 const ProductFilters = ({filters, onFilterChange, searchValue, onSearchChange}) => {
       const handleStatusChange = (value) => {
@@ -20,7 +22,7 @@ const ProductFilters = ({filters, onFilterChange, searchValue, onSearchChange}) 
             </div>
 
             <div className="flex items-center gap-2">
-                <label htmlFor='status-filter' className="text-sm font-medium shrink-0">Status:</label>
+                <Label htmlFor='status-filter' className="text-sm font-medium shrink-0">Status:</Label>
                 <Select value={filters.is_active} onValueChange={handleStatusChange}>
                     <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="All" />
@@ -36,6 +38,17 @@ const ProductFilters = ({filters, onFilterChange, searchValue, onSearchChange}) 
                     </Button>
                 )}    
             </div>
+
+            <div className="flex items-center space-x-2">
+                <Checkbox 
+                id="low_stock"
+                name="low_stock"
+                checked={filters.low_stock === 'true'}
+                onCheckedChange={(checked) => onFilterChange({ target: { name: 'low_stock', type: 'checkbox', checked } })}
+                />
+                <Label htmlFor="low_stock" className="text-sm font-medium">Low Stock</Label>
+            </div>
+
         </div>
     );
 };

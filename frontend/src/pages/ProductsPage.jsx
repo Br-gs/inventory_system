@@ -1,19 +1,36 @@
 import { ProductList, MovementForm, Sidebar, ProductForm} from "../components";
-import { useState, useCallback, useContext} from "react";
+import { useState, useCallback, useContext, useEffect} from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import AuthContext from '../context/authContext';
+import { useSearchParams } from 'react-router-dom';
+
 import { CardContent, CardDescription, CardHeader, CardTitle, Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from 'lucide-react';
 
 const ProductsPage = () => {
     const { user } = useContext(AuthContext);
+    const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
     
     const [sidebarContent, setSidebarContent] = useState(null);
     const [productToEdit, setProductToEdit] = useState(null);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+    const [filters, setFilters] = useState({
+        search: searchParams.get('search') || '',
+        is_active: searchParams.get('is_active') || '',
+        low_stock: searchParams.get('low_stock') || '',
+    });
+
+    useEffect(() => {
+        const activeFilters = Object.fromEntries(
+        // eslint-disable-next-line no-unused-vars
+        Object.entries(filters).filter(([_, value]) => value)
+        );
+        setSearchParams(activeFilters, { replace: true });
+    }, [filters, setSearchParams]);
 
     const handleRefresh = useCallback(() => {
         setRefreshTrigger(prev => prev + 1);
@@ -83,7 +100,9 @@ const ProductsPage = () => {
                     )}
                 </CardHeader>
                 <CardContent>
-                    <ProductList 
+                    <ProductList
+                        filters={filters}
+                        setFilters={setFilters}
                         refreshTrigger={refreshTrigger} 
                         onEditProduct={openEditProductSidebar}
                         onRefresh={handleRefresh} />

@@ -13,12 +13,8 @@ import { MoreHorizontal } from 'lucide-react';
 
 const PAGE_SIZE = 10
 
-const ProductList = ({onRefresh, refreshTrigger, onEditProduct}) => {
+const ProductList = ({filters, setFilters, onRefresh, refreshTrigger, onEditProduct}) => {
     const { user } = useContext(AuthContext);
-    const [filters, setFilters] = useState({
-        search: '',
-        is_active: ''
-    });
     const [currentPage, setCurrentPage] = useState(1);
 
     const { data, loading, error } = useProducts(filters, currentPage, refreshTrigger);
@@ -36,10 +32,11 @@ const ProductList = ({onRefresh, refreshTrigger, onEditProduct}) => {
     };
 
     const handleFilterChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, type, checked } = e.target;
+        const filterValue = type === 'checkbox' ? (checked ? 'true' : '') : value;
         setFilters((prevFilters) => ({
             ...prevFilters,
-            [name]: value
+            [name]: filterValue
         }));
         setCurrentPage(1);
     };

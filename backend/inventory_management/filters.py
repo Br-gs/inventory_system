@@ -1,7 +1,7 @@
 from django_filters import rest_framework as filters
 from .models import InventoryMovement, Product
 
-class ProductFilter(filter.FilterSet):
+class ProductFilter(filters.FilterSet):
     """ 
     Custom FilterSet for the Product model.
     """
