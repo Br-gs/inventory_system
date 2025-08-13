@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from accounts.permissions import IsAdminOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
-from .filters import MovementFilter
+from .filters import MovementFilter, ProductFilter
 from rest_framework.views import APIView
 from django.db.models.functions import TruncMonth
 from django.db.models import Sum, Count
@@ -31,6 +31,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     search_fields = ["name", "description"]
     ordering_fields = ["name", "price", "quantity"]
     filterset_fields = ["is_active"]
+    filterset_class = ProductFilter
 
     @action(detail=False, methods=["get"])
     def suggestions(self, request):

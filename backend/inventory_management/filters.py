@@ -1,6 +1,19 @@
 from django_filters import rest_framework as filters
-from .models import InventoryMovement
+from .models import InventoryMovement, Product
 
+class ProductFilter(filter.FilterSet):
+    """ 
+    Custom FilterSet for the Product model.
+    """
+    low_stock = filters.BooleanFilter(method='filter_low_stock', label='low stock')
+    class Meta:
+        model = Product
+        fields = ['is_active']
+    
+    def filter_low_stock(self, queryset, name, value):
+        if value:
+            return queryset.filter(quantity__lte=10)
+        return queryset
 
 class MovementFilter(filters.FilterSet):
     """FilterSet for InventoryMovement model.
