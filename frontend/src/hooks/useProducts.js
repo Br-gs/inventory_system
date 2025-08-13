@@ -13,6 +13,7 @@ const useProducts = (filters, page, refreshTrigger) => {
             const params = new URLSearchParams();
             if (currentFilters.search) params.append('search', currentFilters.search);
             if (currentFilters.is_active) params.append('is_active', currentFilters.is_active);
+            if (currentFilters.low_stock) params.append('low_stock', currentFilters.low_stock);
             if (currentPage) params.append('page', currentPage);
 
             const response = await inventoryService.getProducts(params, signal);

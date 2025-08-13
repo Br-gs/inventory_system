@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from "react-router-dom";
 import { reportsService } from '@/api';
+import { LoadingSpinner } from '@/components';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -28,7 +29,7 @@ const DashboardPage = () => {
         fetchSummary();
     }, [fetchSummary]);
 
-    if (loading) return <p>Cargando dashboard...</p>;
+    if (loading) return <LoadingSpinner></LoadingSpinner>;
 
     const salesChange = summaryData?.kpis?.sales_percentage_change ?? 0;
 
@@ -46,16 +47,20 @@ const DashboardPage = () => {
                         <div className="text-2xl font-bold">{summaryData?.kpis?.total_products ?? 0}</div>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Products with Low Stock</CardTitle>
-                        <Archive className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{summaryData?.kpis?.low_stock_count ?? 0}</div>
-                        <p className="text-xs text-muted-foreground">Quantity less than or equal to 10</p>
-                    </CardContent>
-                </Card>
+
+                <Link to="/products?low_stock=true" >
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Products with Low Stock</CardTitle>
+                            <Archive className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{summaryData?.kpis?.low_stock_count ?? 0}</div>
+                            <p className="text-xs text-muted-foreground">Quantity less than or equal to 10</p>
+                        </CardContent>
+                    </Card>
+                </Link>
+
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Sales this month</CardTitle>
