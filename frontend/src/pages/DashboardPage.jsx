@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useContext } from 'react';
 import { Link } from "react-router-dom";
 import { reportsService } from '@/api';
 import { LoadingSpinner } from '@/components';
+import AuthContext from '@/context/authContext';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,7 +10,7 @@ import { Button } from '@/components/ui/button';
 
 import { Package, Archive, TrendingUp, ArrowRight } from 'lucide-react';
 
-const DashboardPage = () => {
+const AdminDashboard = () => {
     const [summaryData, setSummaryData] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -127,6 +128,46 @@ const DashboardPage = () => {
             </div>
         </div>
     );
+};
+
+const UserDashboard = () => {
+    return (
+        <div className="space-y-6">
+        <h1 className="text-3xl font-bold">Welcome</h1>
+        <p className="text-muted-foreground">
+            From here, you can navigate to the sections of the application to view the inventory.
+        </p>
+        <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+            <CardHeader>
+                <CardTitle>Products</CardTitle>
+                <CardDescription>Check out the complete product catalog and current stock.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Link to="/products">
+                <Button className="w-full">view Products <ArrowRight className="ml-2 h-4 w-4" /></Button>
+                </Link>
+            </CardContent>
+            </Card>
+            <Card>
+            <CardHeader>
+                <CardTitle>Movements</CardTitle>
+                <CardDescription>Review the detailed history of all stock transactions.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Link to="/movements">
+                <Button className="w-full">View Movements History <ArrowRight className="ml-2 h-4 w-4" /></Button>
+                </Link>
+            </CardContent>
+            </Card>
+        </div>
+        </div>
+    );
+};
+
+const DashboardPage = () => {
+  const { user } = useContext(AuthContext);
+  return user?.is_staff ? <AdminDashboard /> : <UserDashboard />;
 };
 
 export default DashboardPage;

@@ -93,11 +93,13 @@ const ProductsPage = () => {
                             <Button onClick={openCreateProductSidebar}>
                                 <PlusCircle className="mr-2 h-4 w-4" />Add New Product
                             </Button>
-                            <Button onClick={openMovementSidebar}>
-                                <PlusCircle className="mr-2 h-4 w-4" />Add New Movement
-                            </Button>
                         </div>
                     )}
+
+                    <Button onClick={openMovementSidebar}>
+                                <PlusCircle className="mr-2 h-4 w-4" />Add New Movement
+                            </Button>
+
                 </CardHeader>
                 <CardContent>
                     <ProductList
