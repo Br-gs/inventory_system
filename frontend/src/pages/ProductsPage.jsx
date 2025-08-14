@@ -60,7 +60,7 @@ const ProductsPage = () => {
         toast.success(`Product ${productToEdit ? 'update' : 'created'} with succesed.`);
     };
 
-    const handleMovementSuccess = () => {
+    const handleMovementSuccess = (newMovement) => {
         closeSidebar();
         handleRefresh();
 
@@ -69,13 +69,13 @@ const ProductsPage = () => {
                 <span>
                     Movement saved successfully!
                 <button onClick={() => {
-                    navigate("/movements");
+                    navigate(`/movements?product=${newMovement.product}`);
                     toast.dismiss(t.id);
                 }}
                 className="ml-2 p-1 border rounded hover:bg-gray-100 dark:hover:bg-gray-700">View Movements</button>
                 </span>
         ),
-            {duration: 5000,}
+            {duration: 6000,}
         );
     };
 

@@ -1,7 +1,10 @@
 import { MovementList } from "../components";
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const MovementsPage = () => {
+    const [searchParams] = useSearchParams();
+    const productFilterFromUrl = searchParams.get('product');
     return (
         <div className="space-y-6">
             <Card>
@@ -12,7 +15,7 @@ const MovementsPage = () => {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <MovementList />
+                    <MovementList initialProductFilter={productFilterFromUrl} />
                 </CardContent>
             </Card>
         </div>

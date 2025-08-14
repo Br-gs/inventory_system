@@ -42,9 +42,9 @@ const MovementForm = ({ onSuccess, onClose}) => {
     const onSubmit = async (data) => {
         try {
             const movementData = {...data, product : Number(data.product)};
-            await inventoryService.createInventoryMovement(movementData);
+            const response = await inventoryService.createInventoryMovement(movementData);
             reset();
-            onSuccess();
+            onSuccess(response.data);
         } catch (error) {
             const errorMessage = error.response?.data?.detail || 
                            (typeof error.response?.data === 'object' ? JSON.stringify(error.response.data) : 'No se pudo crear el movimiento.');

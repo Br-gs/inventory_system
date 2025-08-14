@@ -6,9 +6,9 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 
 const PAGE_SIZE = 10
 
-const MovementList = ({ refreshTrigger }) => {
+const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
     const [filters, setFilters] = useState({
-        product: '',
+        product: initialProductFilter || '',
         movementType: '',
         start_date: '',
         end_date: ''
