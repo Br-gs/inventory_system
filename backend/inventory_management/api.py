@@ -2,7 +2,7 @@ from .models import Product, InventoryMovement
 from rest_framework import viewsets, permissions, status, filters
 from .serializers import ProductSerializer, InventoryMovementSerializer
 from rest_framework.response import Response
-from accounts.permissions import IsAdminOrReadOnly
+from accounts.permissions import IsAdminOrReadOnly, CanCreateSalesOrAdminOnly
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from .filters import MovementFilter, ProductFilter
@@ -48,7 +48,7 @@ class InventoryMovementViewSet(viewsets.ModelViewSet):
 
     queryset = InventoryMovement.objects.all().order_by("-date")
     serializer_class = InventoryMovementSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdminOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated, CanCreateSalesOrAdminOnly]
 
     filterset_class = MovementFilter
 

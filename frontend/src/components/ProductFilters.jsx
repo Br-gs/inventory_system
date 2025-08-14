@@ -2,7 +2,7 @@ import SearchSuggestions from './SearchSuggestions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { X } from 'lucide-react';
-import { Checkbox } from "@/components/ui/checkbox"; // 1. Importar Checkbox
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
 const ProductFilters = ({filters, onFilterChange, searchValue, onSearchChange}) => {
