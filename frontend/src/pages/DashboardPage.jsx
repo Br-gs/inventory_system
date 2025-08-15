@@ -7,8 +7,8 @@ import AuthContext from '@/context/authContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Package, Archive, TrendingUp, ArrowRight, ShoppingCart, History } from 'lucide-react';
 
-import { Package, Archive, TrendingUp, ArrowRight } from 'lucide-react';
 
 const AdminDashboard = () => {
     const [summaryData, setSummaryData] = useState(null);
@@ -131,36 +131,57 @@ const AdminDashboard = () => {
 };
 
 const UserDashboard = () => {
+    const { user } = useContext(AuthContext);
     return (
         <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Welcome</h1>
-        <p className="text-muted-foreground">
-            From here, you can navigate to the sections of the application to view the inventory.
-        </p>
-        <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-            <CardHeader>
-                <CardTitle>Products</CardTitle>
-                <CardDescription>Check out the complete product catalog and current stock.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Link to="/products">
-                <Button className="w-full">view Products <ArrowRight className="ml-2 h-4 w-4" /></Button>
-                </Link>
-            </CardContent>
-            </Card>
-            <Card>
-            <CardHeader>
-                <CardTitle>Movements</CardTitle>
-                <CardDescription>Review the detailed history of all stock transactions.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Link to="/movements">
-                <Button className="w-full">View Movements History <ArrowRight className="ml-2 h-4 w-4" /></Button>
-                </Link>
-            </CardContent>
-            </Card>
-        </div>
+            <div className="space-y-2">
+                <h1 className="text-3xl font-bold">
+                    Welcome, {user?.first_name || user?.username}!
+                </h1>
+                <p className="text-muted-foreground">
+                    From here, you can navigate to the sections of the application to view the inventory.
+                </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+                <Card className="flex flex-col">
+                    <CardHeader>
+                        <div className="flex items-center gap-4">
+                            <ShoppingCart className="h-8 w-8 text-primary" />
+                            <div>
+                                <CardTitle>Products</CardTitle>
+                                <CardDescription>Check out the complete product catalog and current stock.
+                                </CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="flex-grow flex items-end">
+                        <Link to="/products" className="w-full">
+                            <Button className="w-full">View Products <ArrowRight className="ml-2 h-4 w-4" /></Button>
+                        </Link>
+                    </CardContent>
+                </Card>
+
+                <Card className="flex flex-col">
+                    <CardHeader>
+                        <div className="flex items-center gap-4">
+                            <History className="h-8 w-8 text-primary" />
+                            <div>
+                                <CardTitle>Movements</CardTitle>
+                                <CardDescription>Review the detailed history of all stock transactions.</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="flex-grow flex items-end">
+                        <Link to="/movements" className="w-full">
+                            <Button variant="secondary" className="w-full">
+                                View Movements History
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                            </Button>
+                        </Link>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 };

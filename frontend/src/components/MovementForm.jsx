@@ -35,7 +35,7 @@ const MovementForm = ({ onSuccess, onClose}) => {
         defaultValues: {
             product: '',
             quantity: 0,
-            movement_type: '',
+            movement_type: user?.is_staff ? '' : 'OUT',
         },
     });
 
@@ -66,7 +66,11 @@ const MovementForm = ({ onSuccess, onClose}) => {
             
             <div className="grid gap-2">
                 <Label htmlFor="movement_type">Movement Type</Label>
-                <Select onValueChange={(value) => setValue('movement_type', value)}>
+                <Select 
+                 onValueChange={(value) => setValue('movement_type', value, {shouldValidate: true })}
+                 defaultValue={user?.is_staff ? '' : 'OUT'}
+                 disabled={!user?.is_staff}
+                >
                     <SelectTrigger id="movement_type">
                         <SelectValue placeholder="-- Select a Movement --" />
                     </SelectTrigger>
