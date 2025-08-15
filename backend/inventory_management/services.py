@@ -1,10 +1,10 @@
 from django.db import transaction
 from .models import Product, InventoryMovement
-
+from django.contrib.auth.models import User
 
 @transaction.atomic
 def create_inventory_movement(
-    product: Product, quantity: int, movement_type: str
+    product: Product, quantity: int, movement_type: str, user: User
 ) -> InventoryMovement:
     """
     Create an inventory movement and update the product's stock accordingly.
@@ -34,6 +34,9 @@ def create_inventory_movement(
 
     # create inventory movement record
     movement = InventoryMovement.objects.create(
-        product=product, quantity=quantity, movement_type=movement_type
+        product=product, 
+        quantity=quantity, 
+        movement_type=movement_type,
+        user=user
     )
     return movement

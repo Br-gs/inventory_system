@@ -1,5 +1,6 @@
 from django.db import models, transaction
 from django.core.validators import MinValueValidator
+from django.conf import settings 
 
 
 class Product(models.Model):
@@ -19,6 +20,15 @@ class InventoryMovement(models.Model):
     )
     quantity = models.IntegerField(validators=[MinValueValidator(1)])
     date = models.DateTimeField(auto_now_add=True)
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="inventory_movements"
+    )
+
     MOVEMENT_INPUT = "IN"
     MOVEMENT_OUTPUT = "OUT"
     MOVEMENT_ADJUSTMENT = "ADJ"
@@ -34,4 +44,5 @@ class InventoryMovement(models.Model):
     )
 
     def __str__(self):
-        return f"{self.product.name} - {self.get_movement_type_display()} - {self.quantity}"
+        user_info = f" by {self.user.username}" if self.user else ""
+        return f"{self.product.name} - {self.get_movement_type_display()} - {self.quantity}{user_info}"
