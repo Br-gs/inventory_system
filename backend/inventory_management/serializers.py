@@ -67,6 +67,8 @@ class InventoryMovementSerializer(serializers.ModelSerializer):
     movement_type_display = serializers.CharField(
         source="get_movement_type_display", read_only=True
     )
+    user_username = serializers.CharField(source="user.username", read_only=True, allow_null=True)
+
 
     class Meta:
         model = InventoryMovement
@@ -78,8 +80,9 @@ class InventoryMovementSerializer(serializers.ModelSerializer):
             "movement_type",
             "movement_type_display",
             "date",
+            "user_username",
         ]
-        read_only_fields = ["date", "product_name", "movement_type_display"]
+        read_only_fields = ["date", "product_name", "movement_type_display", "user_username"]
 
     def validate_quantity(self, value):
         if not isinstance(value, int):
@@ -97,10 +100,12 @@ class InventoryMovementSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         try:
+            user = self.context['request'].user
             movement = create_inventory_movement(
                 product=validated_data["product"],
                 quantity=validated_data["quantity"],
                 movement_type=validated_data["movement_type"],
+                user=user,
             )
             return movement
         except ValueError as e:

@@ -56,6 +56,7 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
                             <TableHead>Type of Movement</TableHead>
                             <TableHead>Quantity</TableHead>
                             <TableHead>Date and Time</TableHead>
+                            <TableHead>Made By</TableHead> 
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -77,6 +78,8 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
                                             hour: '2-digit', minute: '2-digit', hour12: true,
                                         })}
                                     </TableCell>
+                                    <TableCell>{movement.user_username || 'System'}</TableCell>
+
                                 </TableRow>
                             ))
                         ) : (

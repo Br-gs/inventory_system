@@ -52,6 +52,9 @@ class InventoryMovementViewSet(viewsets.ModelViewSet):
 
     filterset_class = MovementFilter
 
+    def perform_create(self, serializer):
+        serializer.save()
+
 class InventoryReportsView(APIView):
 
     permission_classes = [permissions.IsAdminUser]
