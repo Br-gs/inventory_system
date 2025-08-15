@@ -14,6 +14,8 @@ import { Label } from "@/components/ui/label";
 const registerSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters long"),
   email: z.string().email("Invalid email address"),
+  first_name: z.string().optional(),
+  last_name: z.string().optional(),
   password: z.string().min(8, "Password must be at least 8 characters long"),
   password2: z.string().min(8, "Confirm Password must be at least 8 characters long"),
 }).refine((data) => data.password === data.password2, {
@@ -59,7 +61,7 @@ const RegisterPage = () => {
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-background">
-      <Card className="w-full max-w-sm">
+      <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Create an Account</CardTitle>
           <CardDescription>Enter your details to register.</CardDescription>
@@ -71,16 +73,30 @@ const RegisterPage = () => {
               <Input id="username" type="text" {...register("username")} />
               {errors.username && <p className="text-xs text-red-500 mt-1">{errors.username.message}</p>}
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="first_name">Name</Label>
+                <Input id="first_name" type="text" {...register("first_name")} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="last_name">Last Name</Label>
+                <Input id="last_name" type="text" {...register("last_name")} />
+              </div>
+            </div>
+
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" {...register("email")} />
               {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
             </div>
+
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" {...register("password")} />
               {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>}
             </div>
+
             <div className="grid gap-2">
               <Label htmlFor="password2">Confirm Password</Label>
               <Input id="password2" type="password" {...register("password2")} />
