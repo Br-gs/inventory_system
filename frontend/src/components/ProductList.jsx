@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import TableSkeleton from "./TableSkeleton";
 import { MoreHorizontal } from 'lucide-react';
 
 const PAGE_SIZE = 10
@@ -82,7 +83,7 @@ const ProductList = ({filters, setFilters, onRefresh, refreshTrigger, onEditProd
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={user?.is_staff ? 5 : 4} className="h-24 text-center">Loading products...</TableCell>
+                                <TableSkeleton columnCount={user?.is_staff ? 5 : 4} />
                             </TableRow>
                         ) : products.length > 0 ? (
                             products.map((product) => (
@@ -96,7 +97,7 @@ const ProductList = ({filters, setFilters, onRefresh, refreshTrigger, onEditProd
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
                                                             <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                <span className="sr-only">Open menú</span>
+                                                                <span className="sr-only">Open menu</span>
                                                                 <MoreHorizontal className="h-4 w-4" />
                                                             </Button>
                                                     </DropdownMenuTrigger>
@@ -115,7 +116,7 @@ const ProductList = ({filters, setFilters, onRefresh, refreshTrigger, onEditProd
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={user?.is_staff ? 5 : 4} className="text-center">No products found</TableCell>
+                                <TableCell colSpan={user?.is_staff ? 5 : 4} className="text-center">Don't products found</TableCell>
                             </TableRow>
                         )}
                     </TableBody>
