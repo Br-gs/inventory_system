@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import AuthContext from "../context/authContext";
-import { ChangepasswordForm } from "../components";
+import { ChangepasswordForm, EditProfileForm } from "../components";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
@@ -23,9 +23,10 @@ const ProfilePage = () => {
                 <CardContent className="space-y-2">
                     <p><strong>Username:</strong> {user.username}</p>
                     <p><strong>Email:</strong> {user.email}</p>
-                    <p><strong>First Name:</strong> {user.first_name || 'Not Specified'}</p>
+                    <p><strong>Name:</strong> {user.first_name || 'Not Specified'}</p>
                     <p><strong>Last Name:</strong> {user.last_name || 'Not Specified'}</p>
                     <p><strong>Rol:</strong> {user.is_staff ? 'Admin' : 'Regular User'}</p>
+                    <EditProfileForm/>
                 </CardContent>
             </Card>
             

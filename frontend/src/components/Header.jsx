@@ -41,7 +41,7 @@ const Header = () => {
           {user && (
             <>
               <NavLink to="/profile" className={getNavLinkClass}>
-                Hello, {user.username}!
+                Hello, {user.first_name || user.username}!
               </NavLink>
               <Button variant="ghost" size="icon" onClick={logoutUser}>
                   <LogOut className="h-4 w-4" />

@@ -15,6 +15,13 @@ export const AuthProvider = ({children}) => {
     const [initialLoading, setInitialLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    
+    const updateUserContext = useCallback((newUserData) => {
+        setUser((prevUser) => ({
+            ...prevUser,
+            ...newUserData
+        }));
+    }, []);
 
     const loginUser = useCallback(async (username, password) => {
         setError(null);
@@ -62,6 +69,7 @@ export const AuthProvider = ({children}) => {
         logoutUser,
         initialLoading,
         error,
+        updateUserContext,
     };
 
     return (

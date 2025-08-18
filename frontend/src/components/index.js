@@ -16,5 +16,6 @@ import { StockLevelsChart } from './charts/StockLevelsChart';
 import { TopProductsChart } from './charts/TopProductsChart';
 import { LoadingSpinner } from './LoadingSpinner';
 import ProductCombobox from './ProductCombobox';
+import EditProfileForm from './EditProfileForm';
 
-export { ProductList, MovementList, Modal, ProductForm, MovementForm, SearchSuggestions, ProductFilters, Layout, Sidebar, AdminRoute, ChangepasswordForm, ReportFilters, ChartContainer, SalesChart, StockLevelsChart, TopProductsChart, LoadingSpinner, ProductCombobox };
+export { ProductList, MovementList, Modal, ProductForm, MovementForm, SearchSuggestions, ProductFilters, Layout, Sidebar, AdminRoute, ChangepasswordForm, ReportFilters, ChartContainer, SalesChart, StockLevelsChart, TopProductsChart, LoadingSpinner, ProductCombobox, EditProfileForm };
