@@ -8,9 +8,9 @@ from drf_spectacular.views import (
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    
     path("api/", include("inventory_management.urls")),
     path("api/", include("accounts.urls")),
+    path("api/", include("suppliers.urls")),
     # urls for API documentation
     # endpoint for schema generation
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
