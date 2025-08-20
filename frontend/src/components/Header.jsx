@@ -22,11 +22,17 @@ const Header = () => {
             <NavLink to="/" className={getNavLinkClass}>
               Home
             </NavLink>
+
             <NavLink to="/products" className={getNavLinkClass}>
               Products
             </NavLink>
+
             <NavLink to="/movements" className={getNavLinkClass}>
               Movements
+            </NavLink>
+
+            <NavLink to="/suppliers" className={getNavLinkClass}>
+              Suppliers
             </NavLink>
             {user.is_staff && (
                 <>

@@ -14,10 +14,11 @@ class Supplier(models.Model):
     contact_person = models.CharField(
         max_length=100, blank=True, help_text="Main contact name"
     )
-    payment_terms = models.CharField(
-        max_length=100,
-        blank=True,
+    payment_terms = models.PositiveIntegerField(
+        default=30, 
+        help_text="Payment terms in days (default is 30 days)"
     )
+    last_invoice_date = models.DateField(null=True, blank=True)
 
     products = models.ManyToManyField(Product, related_name="suppliers", blank=True)
 

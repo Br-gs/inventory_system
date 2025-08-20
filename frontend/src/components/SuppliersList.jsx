@@ -141,8 +141,8 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
             <Sidebar 
                 isOpen={isSidebarOpen} 
                 onClose={() => setIsSidebarOpen(false)} 
-                title={supplierToEdit ? 'Editar Proveedor' : 'Nuevo Proveedor'}
-                description="Completa la información del proveedor."
+                title={supplierToEdit ? 'Edit Suppliers' : 'New Supplier'}
+                description="Complete the supplier information."
             >
                 <SupplierForm onSuccess={handleSuccess} onClose={() => setIsSidebarOpen(false)} supplierToEdit={supplierToEdit} />
             </Sidebar>

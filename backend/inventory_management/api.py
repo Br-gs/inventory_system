@@ -7,10 +7,11 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from .filters import MovementFilter, ProductFilter
 from rest_framework.views import APIView
-from django.db.models.functions import TruncMonth
-from django.db.models import Sum, Count
+from django.db.models.functions import TruncMonth, Cast
+from django.db.models import Sum, Count, F, DateField
 from datetime import datetime, timedelta
 from django.utils import timezone
+from suppliers.models import Supplier
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -70,6 +71,7 @@ class InventoryReportsView(APIView):
         current_month_start = today.replace(day=1)
         last_month_end = current_month_start - timedelta(days=1)
         last_month_start = last_month_end.replace(day=1)
+        due_date_threshold = today + timedelta(days=7)
 
         base_queryset = InventoryMovement.objects.filter(movement_type=InventoryMovement.MOVEMENT_OUTPUT)
 
@@ -142,6 +144,13 @@ class InventoryReportsView(APIView):
             .values('name', 'quantity')[:10]
         )
 
+        due_suppliers_count = Supplier.objects.annotate(
+            due_date=F('last_invoice_date') + F('payment_terms_days') * timedelta(days=1)
+        ).filter(
+            due_date__lte=due_date_threshold, # Expired or expiring in the next 7 days
+            due_date__gte=today
+        ).count()
+
         # The data is formatted so that it is easy to use on the frontend.
         report_data = {
             #Dashboard data
@@ -149,7 +158,8 @@ class InventoryReportsView(APIView):
                 'total_products': total_products,
                 'low_stock_count': low_stock_products_count,
                 'sales_current_month': sales_current_month,
-                'sales_percentage_change': round(percentage_change, 2)
+                'sales_percentage_change': round(percentage_change, 2),
+                'due_suppliers_count': due_suppliers_count,
             },
             'recent_movements': recent_movements_data,
 

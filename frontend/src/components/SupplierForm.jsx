@@ -69,7 +69,7 @@ const SupplierForm = ({ supplierToEdit, onSuccess, onClose }) => {
         {errors.tax_id && <p className="text-sm text-red-500 mt-1">{errors.tax_id.message}</p>}
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="contact_person">Main Contact</Label>
+        <Label htmlFor="contact_person">Main Contact Name</Label>
         <Input id="contact_person" {...register('contact_person')} />
       </div>
       <div className="grid grid-cols-2 gap-4">
