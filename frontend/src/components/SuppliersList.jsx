@@ -10,8 +10,30 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { cn } from "@/lib/utils";
+
 
 const PAGE_SIZE = 10;
+
+const getPaymentStatus = (invoiceDate, termDays) => {
+  if (!invoiceDate) return { text: 'N/A', className: '' };
+  
+  const dueDate = new Date(invoiceDate);
+  dueDate.setDate(dueDate.getDate() + termDays + 1);
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const daysDiff = (dueDate.getTime() - today.getTime()) / (1000 * 3600 * 24);
+
+  let status = { text: dueDate.toLocaleDateString(), className: '' };
+  if (daysDiff < 0) {
+    status = { text: `Expired ${Math.abs(Math.round(daysDiff))} days`, className: 'text-red-500 font-bold' };
+  } else if (daysDiff <= 7) {
+    status = { text: `Expires on ${Math.round(daysDiff)} days`, className: 'text-yellow-500 font-bold' };
+  }
+  return status;
+};
 
 const SupplierList = ({ refreshTrigger, onRefresh }) => {
     const { user } = useContext(AuthContext);
@@ -70,6 +92,7 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
                             <TableHead>Contact</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Phone</TableHead>
+                            <TableHead>Payment Due Date</TableHead>
                             {user?.is_staff && <TableHead className="text-right">Actions</TableHead>}
                         </TableRow>
                     </TableHeader>
@@ -77,12 +100,15 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
                         {loading ? (
                             <TableRow><TableCell colSpan={5} className="h-24 text-center">Loading suppliers</TableCell></TableRow>
                         ) : suppliers.length > 0 ? (
-                            suppliers.map((supplier) => (
-                                <TableRow key={supplier.id}>
-                                    <TableCell className="font-medium">{supplier.name}</TableCell>
-                                    <TableCell>{supplier.contact_person || 'N/A'}</TableCell>
-                                    <TableCell>{supplier.email || 'N/A'}</TableCell>
-                                    <TableCell>{supplier.phone_number || 'N/A'}</TableCell>
+                            suppliers.map((supplier) => {
+                                const paymentStatus = getPaymentStatus(supplier.last_invoice_date, supplier.payment_terms_days);
+                                return (
+                                    <TableRow key={supplier.id}>
+                                        <TableCell className="font-medium">{supplier.name}</TableCell>
+                                        <TableCell>{supplier.contact_person || 'N/A'}</TableCell>
+                                        <TableCell className={cn(paymentStatus.className)}>
+                                            {paymentStatus.text}
+                                        </TableCell>
                                     {user?.is_staff && (
                                         <TableCell className="text-right">
                                             <DropdownMenu>
@@ -97,7 +123,8 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
                                         </TableCell>
                                     )}
                                 </TableRow>
-                            ))
+                                );
+            })
                         ) : (
                             <TableRow><TableCell colSpan={5} className="h-24 text-center">Don't found suppliers.</TableCell></TableRow>
                         )}

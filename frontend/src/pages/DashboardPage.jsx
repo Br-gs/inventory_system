@@ -7,7 +7,8 @@ import AuthContext from '@/context/authContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Package, Archive, TrendingUp, ArrowRight, ShoppingCart, History } from 'lucide-react';
+import { Package, Archive, TrendingUp, ArrowRight, ShoppingCart, History, AlertTriangle } from 'lucide-react';
+import { cn } from "@/lib/utils";
 
 
 const AdminDashboard = () => {
@@ -33,6 +34,7 @@ const AdminDashboard = () => {
     if (loading) return <LoadingSpinner></LoadingSpinner>;
 
     const salesChange = summaryData?.kpis?.sales_percentage_change ?? 0;
+    const dueSuppliersCount = summaryData?.kpis?.due_suppliers_count ?? 0;
 
     return (
         <div className="space-y-6">
@@ -58,6 +60,19 @@ const AdminDashboard = () => {
                         <CardContent>
                             <div className="text-2xl font-bold">{summaryData?.kpis?.low_stock_count ?? 0}</div>
                             <p className="text-xs text-muted-foreground">Quantity less than or equal to 10</p>
+                        </CardContent>
+                    </Card>
+                </Link>
+
+                <Link to="/suppliers"> {/* Enlaza a la página de proveedores */}
+                    <Card className={cn(dueSuppliersCount > 0 && "border-red-500/50 bg-red-500/10 hover:bg-red-500/20")}>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Payments Due</CardTitle>
+                            <AlertTriangle className={cn("h-4 w-4", dueSuppliersCount > 0 ? "text-red-500" : "text-muted-foreground")} />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{dueSuppliersCount}</div>
+                            <p className="text-xs text-muted-foreground">Suppliers with payments due or due within 7 days.</p>
                         </CardContent>
                     </Card>
                 </Link>

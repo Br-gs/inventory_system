@@ -8,7 +8,7 @@ from rest_framework.decorators import action
 from .filters import MovementFilter, ProductFilter
 from rest_framework.views import APIView
 from django.db.models.functions import TruncMonth, Cast
-from django.db.models import Sum, Count, F, DateField
+from django.db.models import Sum, Count, F, DateField, ExpressionWrapper
 from datetime import datetime, timedelta
 from django.utils import timezone
 from suppliers.models import Supplier
@@ -144,11 +144,14 @@ class InventoryReportsView(APIView):
             .values('name', 'quantity')[:10]
         )
 
+        # We count suppliers with invoices that are past due or about to become past due.
         due_suppliers_count = Supplier.objects.annotate(
-            due_date=F('last_invoice_date') + F('payment_terms_days') * timedelta(days=1)
+            due_date=ExpressionWrapper(
+                F('last_invoice_date') + timedelta(days=1) * F('payment_terms'),
+                output_field=DateField()
+                )
         ).filter(
-            due_date__lte=due_date_threshold, # Expired or expiring in the next 7 days
-            due_date__gte=today
+            due_date__lte=due_date_threshold
         ).count()
 
         # The data is formatted so that it is easy to use on the frontend.
