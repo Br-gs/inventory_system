@@ -7,5 +7,6 @@ import ProfilePage from "./ProfilePage";
 import UserAdminPage from "./UserAdminPage";
 import ReportsPage from "./ReportsPage";
 import SuppliersPage from "./SuppliersPage";
+import PurchaseOrdersPage from "./PurchaseOrdersPage";
 
-export { LoginPage, RegisterPage, DashboardPage, ProductsPage, MovementsPage, ProfilePage, UserAdminPage, ReportsPage, SuppliersPage };
+export { LoginPage, RegisterPage, DashboardPage, ProductsPage, MovementsPage, ProfilePage, UserAdminPage, ReportsPage, SuppliersPage, PurchaseOrdersPage };
