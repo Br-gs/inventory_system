@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
 import AuthContext from './context/authContext';
-import { LoginPage, RegisterPage, DashboardPage, ProductsPage, MovementsPage, ProfilePage, UserAdminPage, ReportsPage, SuppliersPage} from './pages';
+import { LoginPage, RegisterPage, DashboardPage, ProductsPage, MovementsPage, ProfilePage, UserAdminPage, ReportsPage, SuppliersPage, PurchaseOrdersPage} from './pages';
 import { Toaster } from 'react-hot-toast';
 import {Layout, AdminRoute} from './components';
 
@@ -35,6 +35,7 @@ function App() {
           <Route element={<AdminRoute />}>
             <Route path="admin/users" element={<UserAdminPage />} />
             <Route path="reports" element={<ReportsPage />} />
+            <Route path="purchase-order" element={<PurchaseOrdersPage />} />
           </Route>          
         </Route>
 

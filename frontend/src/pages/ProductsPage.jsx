@@ -96,7 +96,7 @@ const ProductsPage = () => {
                         </div>
                     )}
 
-                    <Button onClick={openMovementSidebar}>
+                            <Button onClick={openMovementSidebar}>
                                 <PlusCircle className="mr-2 h-4 w-4" />Add New Movement
                             </Button>
 

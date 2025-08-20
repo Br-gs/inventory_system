@@ -1,6 +1,6 @@
 import { useState, useContext } from 'react';
 import {usePurchaseOrders} from '../hooks';
-import AuthContext from '../context/AuthContext';
+import AuthContext from '../context/authContext';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -31,11 +31,10 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
         onRefresh();
     };
 
-    // Mapeo de colores para los estados
     const statusVariant = {
         pending: 'secondary',
         approved: 'default',
-        received: 'success', // Necesitarás definir este estilo en tu tailwind.config.js
+        received: 'success',
         canceled: 'destructive',
     };
 
@@ -113,7 +112,7 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
             <Sidebar 
                 isOpen={isSidebarOpen} 
                 onClose={() => setIsSidebarOpen(false)} 
-                title="Crear Nueva Orden de Compra"
+                title="Create New Purchase Order"
             >
                 <PurchaseOrderForm onSuccess={handleSuccess} onClose={() => setIsSidebarOpen(false)} />
             </Sidebar>

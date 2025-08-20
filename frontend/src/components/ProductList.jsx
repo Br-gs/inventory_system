@@ -82,9 +82,8 @@ const ProductList = ({filters, setFilters, onRefresh, refreshTrigger, onEditProd
                     </TableHeader>
                     <TableBody>
                         {loading ? (
-                            <TableRow>
                                 <TableSkeleton columnCount={user?.is_staff ? 5 : 4} />
-                            </TableRow>
+                          
                         ) : products.length > 0 ? (
                             products.map((product) => (
                                 <TableRow key={product.id}>

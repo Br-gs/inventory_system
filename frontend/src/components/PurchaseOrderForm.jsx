@@ -6,8 +6,8 @@ import toast from 'react-hot-toast';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import SupplierCombobox from './SupplierCombobox';
 import ProductCombobox from './ProductCombobox';
+import SupplierCombobox from './SupplierCombobox';
 import { Trash2 } from 'lucide-react';
 
 const poItemSchema = z.object({
@@ -49,12 +49,12 @@ const PurchaseOrderForm = ({ onSuccess, onClose }) => {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
-        <Label>Proveedor</Label>
+        <Label>Supplier</Label>
         <SupplierCombobox onChange={(e) => setValue('supplier_id', e.target.value, { shouldValidate: true })} />
         {errors.supplier_id && <p className="text-sm text-red-500 mt-1">{errors.supplier_id.message}</p>}
       </div>
 
-      <Label>Ítems de la Orden</Label>
+      <Label>Items in the Order</Label>
       <div className="space-y-4 rounded-md border p-4">
         {fields.map((field, index) => (
           <div key={field.id} className="flex gap-2 items-end">
@@ -90,7 +90,7 @@ const PurchaseOrderForm = ({ onSuccess, onClose }) => {
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Creando..." : "Crear Orden"}
+          {isSubmitting ? "Creating..." : "Create Order"}
         </Button>
       </div>
     </form>
