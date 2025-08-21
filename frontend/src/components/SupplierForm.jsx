@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const supplierSchema = z.object({
   name: z.string().min(3, { message: 'Name is required.' }),
@@ -25,10 +26,13 @@ const SupplierForm = ({ supplierToEdit, onSuccess, onClose }) => {
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(supplierSchema),
   });
+
+  const currentPaymentTerms = watch('payment_terms_days');
 
   useEffect(() => {
     if (supplierToEdit) {
@@ -92,12 +96,14 @@ const SupplierForm = ({ supplierToEdit, onSuccess, onClose }) => {
           <Label htmlFor="phone_number">Phone</Label>
           <Input id="phone_number" {...register('phone_number')} />
         </div>
-
       </div>
       
       <div className="grid gap-2">
         <Label htmlFor="payment_terms_days">Payment Terms</Label>
-        <Select onValueChange={(value) => setValue('payment_terms_days', parseInt(value))} defaultValue="30">
+        <Select 
+          onValueChange={(value) => setValue('payment_terms_days', parseInt(value))} 
+          value={currentPaymentTerms?.toString() || "30"}
+        >
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="0">Cash</SelectItem>
@@ -107,6 +113,7 @@ const SupplierForm = ({ supplierToEdit, onSuccess, onClose }) => {
           </SelectContent>
         </Select>
       </div>
+      
       <div className="grid gap-2">
         <Label htmlFor="last_invoice_date">Date of Last Invoice (Simulation)</Label>
         <Input id="last_invoice_date" type="date" {...register('last_invoice_date')} />

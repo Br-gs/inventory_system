@@ -12,7 +12,7 @@ const Sidebar = ({ isOpen, onClose, title, description, children }) => {
             <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
                 <SheetHeader>
                   <SheetTitle>{title}</SheetTitle>
-                  {description && <SheetDescription>{description}</SheetDescription>}
+                  <SheetDescription>{description || "Complete the form below"}</SheetDescription>
                 </SheetHeader>
                 <div className="py-4">
                   {children}

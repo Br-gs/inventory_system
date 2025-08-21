@@ -12,7 +12,6 @@ import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { cn } from "@/lib/utils";
 
-
 const PAGE_SIZE = 10;
 
 const getPaymentStatus = (invoiceDate, termDays) => {
@@ -30,7 +29,7 @@ const getPaymentStatus = (invoiceDate, termDays) => {
   if (daysDiff < 0) {
     status = { text: `Expired ${Math.abs(Math.round(daysDiff))} days`, className: 'text-red-500 font-bold' };
   } else if (daysDiff <= 7) {
-    status = { text: `Expires on ${Math.round(daysDiff)} days`, className: 'text-yellow-500 font-bold' };
+    status = { text: `Expires in ${Math.round(daysDiff)} days`, className: 'text-yellow-500 font-bold' };
   }
   return status;
 };
@@ -66,12 +65,12 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
     const handleDelete = async (supplierId) => {
         if (window.confirm("Are you sure you want to delete this supplier?")) {
             try {
-                
                 await suppliersService.deleteSupplier(supplierId); 
                 toast.success("Supplier successfully deleted.");
                 onRefresh();
             } catch (err) {
-                toast.error("The supplier could not be deleted.", err);
+                toast.error("The supplier could not be deleted.");
+                console.error(err);
             }
         }
     };
@@ -98,7 +97,11 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
                     </TableHeader>
                     <TableBody>
                         {loading ? (
-                            <TableRow><TableCell colSpan={5} className="h-24 text-center">Loading suppliers</TableCell></TableRow>
+                            <TableRow>
+                                <TableCell colSpan={user?.is_staff ? 6 : 5} className="h-24 text-center">
+                                    Loading suppliers...
+                                </TableCell>
+                            </TableRow>
                         ) : suppliers.length > 0 ? (
                             suppliers.map((supplier) => {
                                 const paymentStatus = getPaymentStatus(supplier.last_invoice_date, supplier.payment_terms_days);
@@ -106,27 +109,43 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
                                     <TableRow key={supplier.id}>
                                         <TableCell className="font-medium">{supplier.name}</TableCell>
                                         <TableCell>{supplier.contact_person || 'N/A'}</TableCell>
+                                        <TableCell>{supplier.email || 'N/A'}</TableCell>
+                                        <TableCell>{supplier.phone_number || 'N/A'}</TableCell>
                                         <TableCell className={cn(paymentStatus.className)}>
                                             {paymentStatus.text}
                                         </TableCell>
-                                    {user?.is_staff && (
-                                        <TableCell className="text-right">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem onClick={() => handleEdit(supplier)}>Edit</DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleDelete(supplier.id)} className="text-red-500 focus:text-red-500">Delete</DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
-                                    )}
-                                </TableRow>
+                                        {user?.is_staff && (
+                                            <TableCell className="text-right">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                                            <span className="sr-only">Open menu</span>
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem onClick={() => handleEdit(supplier)}>
+                                                            Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem 
+                                                            onClick={() => handleDelete(supplier.id)} 
+                                                            className="text-red-500 focus:text-red-500"
+                                                        >
+                                                            Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
+                                        )}
+                                    </TableRow>
                                 );
-            })
+                            })
                         ) : (
-                            <TableRow><TableCell colSpan={5} className="h-24 text-center">Don't found suppliers.</TableCell></TableRow>
+                            <TableRow>
+                                <TableCell colSpan={user?.is_staff ? 6 : 5} className="h-24 text-center">
+                                    Don't found suppliers.
+                                </TableCell>
+                            </TableRow>
                         )}
                     </TableBody>
                 </Table>

@@ -9,7 +9,7 @@ const PAGE_SIZE = 10
 const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
     const [filters, setFilters] = useState({
         product: initialProductFilter || '',
-        movementType: '',
+        movement_type: '',
         start_date: '',
         end_date: ''
     });
@@ -32,7 +32,7 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
     const handleClearFilters = () => {
         setFilters({
             product: '',
-            movementType: '',
+            movement_type: '',
             start_date: '',
             end_date: ''
         });

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import ProductCombobox from './ProductCombobox';
 
 const MovementFilters = ({ filters, onFilterChange, onClearFilters}) => {
-    const handleTypeChange = (value) => onFilterChange({ target: { name: 'movementType', value } });
+    const handleTypeChange = (value) => onFilterChange({ target: { name: 'movement_type', value } });
 
     return (
         <div className="flex flex-col sm:flex-row gap-2 items-center">

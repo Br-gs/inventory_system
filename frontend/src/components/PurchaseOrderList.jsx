@@ -4,6 +4,7 @@ import AuthContext from '../context/authContext';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { PlusCircle } from 'lucide-react';
 
 import Sidebar from './Sidebar';
@@ -43,7 +44,12 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
     return (
         <div className="space-y-4">
             <div className="flex justify-end">
-                {user?.is_staff && <Button onClick={handleCreate}><PlusCircle className="mr-2 h-4 w-4" />Crear Purchase Orders</Button>}
+                {user?.is_staff && (
+                    <Button onClick={handleCreate}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Create Purchase Order
+                    </Button>
+                )}
             </div>
             <div className="rounded-md border">
                 <Table>
@@ -53,66 +59,75 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
                             <TableHead>Supplier</TableHead>
                             <TableHead>Order Date</TableHead>
                             <TableHead>Total Cost</TableHead>
-                            <TableHead>status</TableHead>
+                            <TableHead>Status</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {loading ? (
-                            <TableRow><TableCell colSpan={5} className="h-24 text-center">Cargando...</TableCell></TableRow>
-                        ) : purchaseOrders.map((po) => (
-                            <TableRow key={po.id}>
-                                <TableCell className="font-medium">PO #{po.id}</TableCell>
-                                <TableCell>{po.supplier.name}</TableCell>
-                                <TableCell>{new Date(po.order_date).toLocaleDateString()}</TableCell>
-                                <TableCell>${Number(po.total_cost).toFixed(2)}</TableCell>
-                                <TableCell>
-                                    <Badge variant={statusVariant[po.status] || 'outline'}>
-                                        {po.status_display}
-                                    </Badge>
-                                </TableCell>
+                            <TableRow>
+                                <TableCell colSpan={5} className="h-24 text-center">Loading...</TableCell>
                             </TableRow>
-                        ))}
+                        ) : purchaseOrders.length > 0 ? (
+                            purchaseOrders.map((po) => (
+                                <TableRow key={po.id}>
+                                    <TableCell className="font-medium">PO #{po.id}</TableCell>
+                                    <TableCell>{po.supplier.name}</TableCell>
+                                    <TableCell>{new Date(po.order_date).toLocaleDateString()}</TableCell>
+                                    <TableCell>${Number(po.total_cost).toFixed(2)}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={statusVariant[po.status] || 'outline'}>
+                                            {po.status_display}
+                                        </Badge>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={5} className="h-24 text-center">No purchase orders found.</TableCell>
+                            </TableRow>
+                        )}
                     </TableBody>
                 </Table>
             </div>
 
             {totalPages > 1 && (
-                            <Pagination>
-                                <PaginationContent className="space-x-1"> 
-                                    <PaginationItem>
-                                        <PaginationPrevious 
-                                            href="#" 
-                                            onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.max(1, p - 1)); }}
-                                            disabled={currentPage === 1}
-                                            className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                                        />
-                                    </PaginationItem>
-                                    
-                                    <PaginationItem>
-                                        <PaginationLink href="#" isActive>
-                                            {currentPage}
-                                        </PaginationLink>
-                                    </PaginationItem>
-                                    <PaginationItem>
-                                        <span className="p-2 text-sm text-muted-foreground">of {totalPages}</span>
-                                    </PaginationItem>
-            
-                                    <PaginationItem>
-                                        <PaginationNext 
-                                            href="#" 
-                                            onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.min(totalPages, p + 1)); }}
-                                            disabled={currentPage >= totalPages}
-                                            className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
-                                        />
-                                    </PaginationItem>
-                                </PaginationContent>
-                            </Pagination>
-                        )}
+                <Pagination>
+                    <PaginationContent className="space-x-1"> 
+                        <PaginationItem>
+                            <PaginationPrevious 
+                                href="#" 
+                                onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.max(1, p - 1)); }}
+                                disabled={currentPage === 1}
+                                className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                            />
+                        </PaginationItem>
+                        
+                        <PaginationItem>
+                            <PaginationLink href="#" isActive>
+                                {currentPage}
+                            </PaginationLink>
+                        </PaginationItem>
+                        <PaginationItem>
+                            <span className="p-2 text-sm text-muted-foreground">of {totalPages}</span>
+                        </PaginationItem>
+
+                        <PaginationItem>
+                            <PaginationNext 
+                                href="#" 
+                                onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.min(totalPages, p + 1)); }}
+                                disabled={currentPage >= totalPages}
+                                className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
+            )}
             
             <Sidebar 
                 isOpen={isSidebarOpen} 
                 onClose={() => setIsSidebarOpen(false)} 
                 title="Create New Purchase Order"
+                description="Fill out the form to create a new purchase order."
             >
                 <PurchaseOrderForm onSuccess={handleSuccess} onClose={() => setIsSidebarOpen(false)} />
             </Sidebar>

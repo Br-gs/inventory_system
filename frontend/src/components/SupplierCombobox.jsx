@@ -6,11 +6,12 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { suppliersService } from "../api";
 
-const SupplierCombobox = ({ value, onChange, placeholder = "Selecciona un proveedor..." }) => {
+const SupplierCombobox = ({ value, onChange, placeholder = "Select a supplier..." }) => {
   const [open, setOpen] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+
 
   useEffect(() => {
     if (value && !selectedSupplier) {
@@ -46,6 +47,19 @@ const SupplierCombobox = ({ value, onChange, placeholder = "Selecciona un provee
     };
   }, [searchTerm, open]);
 
+  const handleSelect = (supplier) => {
+    onChange({ target: { name: 'supplier_id', value: String(supplier.id) } });
+    setSelectedSupplier(supplier);
+    setOpen(false);
+    setSearchTerm("");
+  };
+
+  const handleClear = () => {
+    onChange({ target: { name: 'supplier_id', value: '' } });
+    setSelectedSupplier(null);
+    setSearchTerm("");
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -62,22 +76,28 @@ const SupplierCombobox = ({ value, onChange, placeholder = "Selecciona un provee
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
         <Command>
           <CommandInput 
-            placeholder="Search Suplliers..." 
+            placeholder="Search suppliers..." 
             value={searchTerm}
             onValueChange={setSearchTerm}
           />
           <CommandList>
-            <CommandEmpty>Don't found suppliers.</CommandEmpty>
+            <CommandEmpty>No suppliers found.</CommandEmpty>
             <CommandGroup>
+              {selectedSupplier && (
+                <CommandItem
+                  value=""
+                  onSelect={handleClear}
+                  className="text-muted-foreground"
+                >
+                  <Check className="mr-2 h-4 w-4 opacity-0" />
+                  Clear selection
+                </CommandItem>
+              )}
               {suppliers.map((supplier) => (
                 <CommandItem
                   key={supplier.id}
                   value={supplier.name}
-                  onSelect={() => {
-                    onChange({ target: { name: 'supplier_id', value: String(supplier.id) } });
-                    setSelectedSupplier(supplier);
-                    setOpen(false);
-                  }}
+                  onSelect={() => handleSelect(supplier)}
                 >
                   <Check
                     className={cn(
