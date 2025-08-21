@@ -8,15 +8,15 @@ const ReportFilters = ({ filters, onFilterChange, onClearFilters }) => {
             <ProductCombobox 
                 value={filters.product_id}
                 onChange={onFilterChange}
+                name="product_id"
+                placeholder="Filter by product..."
             />
-            
 
             <div className="flex items-center gap-2">
                 <Input type="date" name="start_date" value={filters.start_date} onChange={onFilterChange} />
                 <span className="text-muted-foreground">To</span>
                 <Input type="date" name="end_date" value={filters.end_date} onChange={onFilterChange} />
             </div>
-      
 
             <Button variant="ghost" onClick={onClearFilters}>Clear</Button>
         </div>

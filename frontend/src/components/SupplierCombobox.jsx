@@ -12,7 +12,6 @@ const SupplierCombobox = ({ value, onChange, placeholder = "Select a supplier...
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-
   useEffect(() => {
     if (value && !selectedSupplier) {
       suppliersService.getSupplierById(value)
@@ -22,6 +21,7 @@ const SupplierCombobox = ({ value, onChange, placeholder = "Select a supplier...
       setSelectedSupplier(null);
     }
   }, [value, selectedSupplier]);
+
 
   useEffect(() => {
     if (!open) {
@@ -83,6 +83,7 @@ const SupplierCombobox = ({ value, onChange, placeholder = "Select a supplier...
           <CommandList>
             <CommandEmpty>No suppliers found.</CommandEmpty>
             <CommandGroup>
+              
               {selectedSupplier && (
                 <CommandItem
                   value=""

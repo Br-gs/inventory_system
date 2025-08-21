@@ -18,20 +18,23 @@ const getPaymentStatus = (invoiceDate, termDays) => {
   if (!invoiceDate) return { text: 'N/A', className: '' };
   
   const dueDate = new Date(invoiceDate);
-  dueDate.setDate(dueDate.getDate() + termDays + 1);
+  dueDate.setDate(dueDate.getDate() + termDays);
   
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  dueDate.setHours(0, 0, 0, 0);
 
-  const daysDiff = (dueDate.getTime() - today.getTime()) / (1000 * 3600 * 24);
+  const daysDiff = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 3600 * 24));
 
-  let status = { text: dueDate.toLocaleDateString(), className: '' };
   if (daysDiff < 0) {
-    status = { text: `Expired ${Math.abs(Math.round(daysDiff))} days`, className: 'text-red-500 font-bold' };
+    return { text: `Expired ${Math.abs(daysDiff)} days ago`, className: 'text-red-500 font-bold' };
+  } else if (daysDiff === 0) {
+    return { text: 'Due today', className: 'text-yellow-500 font-bold' };
   } else if (daysDiff <= 7) {
-    status = { text: `Expires in ${Math.round(daysDiff)} days`, className: 'text-yellow-500 font-bold' };
+    return { text: `Due in ${daysDiff} days`, className: 'text-yellow-500 font-bold' };
+  } else {
+    return { text: `Due ${dueDate.toLocaleDateString()}`, className: '' };
   }
-  return status;
 };
 
 const SupplierList = ({ refreshTrigger, onRefresh }) => {
@@ -105,6 +108,15 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
                         ) : suppliers.length > 0 ? (
                             suppliers.map((supplier) => {
                                 const paymentStatus = getPaymentStatus(supplier.last_invoice_date, supplier.payment_terms_days);
+                                // Debug log
+                                console.log('Supplier data:', {
+                                    name: supplier.name,
+                                    email: supplier.email,
+                                    phone: supplier.phone_number,
+                                    invoiceDate: supplier.last_invoice_date,
+                                    termDays: supplier.payment_terms_days,
+                                    paymentStatus
+                                });
                                 return (
                                     <TableRow key={supplier.id}>
                                         <TableCell className="font-medium">{supplier.name}</TableCell>

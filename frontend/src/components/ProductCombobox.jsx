@@ -18,7 +18,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-const ProductCombobox = ({ value, onChange, placeholder = "Select a product..." }) => {
+const ProductCombobox = ({ value, onChange, placeholder = "Select a product...", name = "product" }) => {
     const [open, setOpen] = useState(false);
     const [products, setProducts] = useState([]);
     const [selectedProduct, setSelectedProduct] = useState(null);
@@ -59,17 +59,14 @@ const ProductCombobox = ({ value, onChange, placeholder = "Select a product..." 
     }, [searchTerm, open]);
 
     const handleSelect = (product) => {
-        // Usar el name correcto según el contexto
-        const targetName = onChange.toString().includes('product_id') ? 'product_id' : 'product';
-        onChange({ target: { name: targetName, value: String(product.id) } });
+        onChange({ target: { name, value: String(product.id) } });
         setSelectedProduct(product);
         setOpen(false);
         setSearchTerm("");
     };
 
     const handleClear = () => {
-        const targetName = onChange.toString().includes('product_id') ? 'product_id' : 'product';
-        onChange({ target: { name: targetName, value: '' } });
+        onChange({ target: { name, value: '' } });
         setSelectedProduct(null);
         setSearchTerm("");
     };
@@ -97,7 +94,6 @@ const ProductCombobox = ({ value, onChange, placeholder = "Select a product..." 
                     <CommandList>
                         <CommandEmpty>No products found.</CommandEmpty>
                         <CommandGroup>
-                            {/* Opción para limpiar selección */}
                             {selectedProduct && (
                                 <CommandItem
                                     value=""

@@ -22,7 +22,7 @@ const purchaseOrderSchema = z.object({
 });
 
 const PurchaseOrderForm = ({ onSuccess, onClose }) => {
-  const { register, control, handleSubmit, formState: { errors, isSubmitting }, setValue } = useForm({
+  const { register, control, handleSubmit, formState: { errors, isSubmitting }, setValue, watch } = useForm({
     resolver: zodResolver(purchaseOrderSchema),
     defaultValues: {
       supplier_id: "",
@@ -34,6 +34,9 @@ const PurchaseOrderForm = ({ onSuccess, onClose }) => {
     control,
     name: "items",
   });
+
+  const watchedSupplier = watch('supplier_id');
+  const watchedItems = watch('items');
 
   const onSubmit = async (data) => {
     try {
@@ -50,7 +53,10 @@ const PurchaseOrderForm = ({ onSuccess, onClose }) => {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
         <Label>Supplier</Label>
-        <SupplierCombobox onChange={(e) => setValue('supplier_id', e.target.value, { shouldValidate: true })} />
+        <SupplierCombobox 
+          value={watchedSupplier}
+          onChange={(e) => setValue('supplier_id', e.target.value, { shouldValidate: true })} 
+        />
         {errors.supplier_id && <p className="text-sm text-red-500 mt-1">{errors.supplier_id.message}</p>}
       </div>
 
@@ -61,18 +67,35 @@ const PurchaseOrderForm = ({ onSuccess, onClose }) => {
             <div className="flex-grow">
               <Label>Product</Label>
               <ProductCombobox 
+                value={watchedItems[index]?.product_id}
+                name="product_id"
                 onChange={(e) => setValue(`items.${index}.product_id`, e.target.value, { shouldValidate: true })}
               />
+              {errors.items?.[index]?.product_id && (
+                <p className="text-sm text-red-500 mt-1">{errors.items[index].product_id.message}</p>
+              )}
             </div>
             <div>
               <Label>Quantity</Label>
               <Input type="number" {...register(`items.${index}.quantity`)} />
+              {errors.items?.[index]?.quantity && (
+                <p className="text-sm text-red-500 mt-1">{errors.items[index].quantity.message}</p>
+              )}
             </div>
             <div>
               <Label>Cost/Unit</Label>
               <Input type="number" step="0.01" {...register(`items.${index}.cost_per_unit`)} />
+              {errors.items?.[index]?.cost_per_unit && (
+                <p className="text-sm text-red-500 mt-1">{errors.items[index].cost_per_unit.message}</p>
+              )}
             </div>
-            <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
+            <Button 
+              type="button" 
+              variant="destructive" 
+              size="icon" 
+              onClick={() => remove(index)}
+              disabled={fields.length === 1}
+            >
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>

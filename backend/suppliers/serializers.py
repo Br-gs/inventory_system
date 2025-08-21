@@ -15,6 +15,8 @@ class SupplierSerializer(serializers.ModelSerializer):
         required=False,
     )
 
+    payment_terms_days = serializers.IntegerField(source='payment_terms', read_only=True)
+
     class Meta:
         model = Supplier
         fields = [
@@ -25,6 +27,8 @@ class SupplierSerializer(serializers.ModelSerializer):
             "email",
             "contact_person",
             "payment_terms",
+            "payment_terms_days",
+            "last_invoice_date",
             "products",
             "product_ids",
         ]
