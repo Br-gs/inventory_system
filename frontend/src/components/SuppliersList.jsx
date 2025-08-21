@@ -107,16 +107,9 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
                             </TableRow>
                         ) : suppliers.length > 0 ? (
                             suppliers.map((supplier) => {
-                                const paymentStatus = getPaymentStatus(supplier.last_invoice_date, supplier.payment_terms_days);
-                                // Debug log
-                                console.log('Supplier data:', {
-                                    name: supplier.name,
-                                    email: supplier.email,
-                                    phone: supplier.phone_number,
-                                    invoiceDate: supplier.last_invoice_date,
-                                    termDays: supplier.payment_terms_days,
-                                    paymentStatus
-                                });
+                                const paymentTerms = supplier.payment_terms_days || supplier.payment_terms || 30;
+                                const paymentStatus = getPaymentStatus(supplier.last_invoice_date, paymentTerms);
+                                
                                 return (
                                     <TableRow key={supplier.id}>
                                         <TableCell className="font-medium">{supplier.name}</TableCell>

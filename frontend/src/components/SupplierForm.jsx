@@ -16,7 +16,7 @@ const supplierSchema = z.object({
   contact_person: z.string().optional(),
   email: z.string().email({ message: 'It must be a valid email address..' }).optional().or(z.literal('')),
   phone_number: z.string().optional(),
-  payment_terms_days: z.coerce.number().int().nonnegative(),
+  payment_terms: z.coerce.number().int().nonnegative(),
   last_invoice_date: z.string().optional(),
 });
 
@@ -32,7 +32,7 @@ const SupplierForm = ({ supplierToEdit, onSuccess, onClose }) => {
     resolver: zodResolver(supplierSchema),
   });
 
-  const currentPaymentTerms = watch('payment_terms_days');
+  const currentPaymentTerms = watch('payment_terms');
 
   useEffect(() => {
     if (supplierToEdit) {
@@ -42,7 +42,7 @@ const SupplierForm = ({ supplierToEdit, onSuccess, onClose }) => {
       };
       reset(formattedSupplier);
     } else {
-      reset({ name: '', tax_id: '', contact_person: '', email: '', phone_number: '', payment_terms_days: 30, last_invoice_date: '' });
+      reset({ name: '', tax_id: '', contact_person: '', email: '', phone_number: '', payment_terms: 30, last_invoice_date: '' });
     }
   }, [supplierToEdit, reset]);
 
@@ -101,7 +101,7 @@ const SupplierForm = ({ supplierToEdit, onSuccess, onClose }) => {
       <div className="grid gap-2">
         <Label htmlFor="payment_terms_days">Payment Terms</Label>
         <Select 
-          onValueChange={(value) => setValue('payment_terms_days', parseInt(value))} 
+          onValueChange={(value) => setValue('payment_terms', parseInt(value))} 
           value={currentPaymentTerms?.toString() || "30"}
         >
           <SelectTrigger><SelectValue /></SelectTrigger>
