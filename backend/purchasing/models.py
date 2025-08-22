@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from inventory_management.models import Product
 from django.db.models import Sum
 from django.utils import timezone
+from datetime import timedelta
 
 class PurchaseOrder(models.Model):
     STATUS_CHOICES = [
@@ -37,6 +38,13 @@ class PurchaseOrder(models.Model):
     @property
     def status_display(self):
         return dict(self.STATUS_CHOICES)[self.status]
+
+    def save(self, *args, **kwargs):
+        # Auto-calculate payment due date if not set
+        if not self.payment_due_date and self.supplier and self.supplier.payment_terms:
+            if self.order_date:
+                self.payment_due_date = self.order_date.date() + timedelta(days=self.supplier.payment_terms)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"PO #{self.id} - {self.supplier.name}"
