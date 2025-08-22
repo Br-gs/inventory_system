@@ -4,6 +4,7 @@ from inventory_management.models import Product
 from django.db.models import Sum
 from django.utils import timezone
 from datetime import timedelta
+from suppliers.models import Supplier
 
 class PurchaseOrder(models.Model):
     STATUS_CHOICES = [
@@ -14,13 +15,13 @@ class PurchaseOrder(models.Model):
     ]
 
     supplier = models.ForeignKey(
-        'suppliers.Supplier', 
-        on_delete=models.CASCADE, 
+        Supplier, 
+        on_delete=models.PROTECT, 
         related_name='purchase_orders'
     )
     order_date = models.DateTimeField(default=timezone.now)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -28,6 +29,12 @@ class PurchaseOrder(models.Model):
     received_date = models.DateField(null=True, blank=True)
     payment_due_date = models.DateField(null=True, blank=True)
     is_paid = models.BooleanField(default=False)
+    payment_terms = models.PositiveIntegerField(
+        default=30,
+        null=True, 
+        blank=True,
+        help_text="Payment terms in days for this specific order"
+    )
 
     @property
     def total_cost(self):
@@ -40,10 +47,14 @@ class PurchaseOrder(models.Model):
         return dict(self.STATUS_CHOICES)[self.status]
 
     def save(self, *args, **kwargs):
-        # Auto-calculate payment due date if not set
-        if not self.payment_due_date and self.supplier and self.supplier.payment_terms:
+        # Use order-specific payment terms if set, otherwise use supplier default
+        if not self.payment_terms and self.supplier:
+            self.payment_terms = self.supplier.payment_terms
+        
+        # Auto-calculate payment due date based on payment terms
+        if not self.payment_due_date and self.payment_terms:
             if self.order_date:
-                self.payment_due_date = self.order_date.date() + timedelta(days=self.supplier.payment_terms)
+                self.payment_due_date = self.order_date.date() + timedelta(days=self.payment_terms)
         super().save(*args, **kwargs)
 
     def __str__(self):

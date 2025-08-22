@@ -9,6 +9,10 @@ const suppliersService = {
   getSupplierById: (id) => {
     return axiosClient.get(`/api/suppliers/${id}/`);
   },
+  
+  getSupplier: (id) => {
+    return axiosClient.get(`/api/suppliers/${id}/`);
+  },
 
   createSupplier: (supplierData) => {
     return axiosClient.post('/api/suppliers/', supplierData);

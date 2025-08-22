@@ -42,6 +42,10 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
             "created_by",
             "total_cost",
             "items",
+            "payment_terms",
+            "payment_due_date",
+            "is_paid",
+            "received_date",
         ]
         read_only_fields = ["created_by", "total_cost", "order_date"]
 
@@ -64,3 +68,29 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
 
         # total_cost is automatically calculated by the property
         return purchase_order
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        # Handle items update if provided
+        items_data = validated_data.pop("items", None)
+        
+        # Update supplier if provided
+        supplier_id = validated_data.pop("supplier_id", None)
+        if supplier_id:
+            validated_data["supplier_id"] = supplier_id
+        
+        # Update the purchase order fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # If items are provided, update them
+        if items_data is not None:
+            # Delete existing items and recreate
+            instance.items.all().delete()
+            for item_data in items_data:
+                PurchaseOrderItem.objects.create(
+                    purchase_order=instance, **item_data
+                )
+        
+        return instance
