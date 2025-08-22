@@ -8,33 +8,44 @@ import SupplierForm from './SupplierForm';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableCaption } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { MoreHorizontal, PlusCircle, AlertCircle, Clock, Calendar, CheckCircle } from 'lucide-react';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 10;
 
-const getPaymentStatus = (invoiceDate, termDays) => {
-  if (!invoiceDate) return { text: 'N/A', className: '' };
-  
-  const dueDate = new Date(invoiceDate);
-  dueDate.setDate(dueDate.getDate() + termDays);
-  
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  dueDate.setHours(0, 0, 0, 0);
+const statusIcons = {
+  overdue: AlertCircle,
+  due_today: Clock,
+  due_soon: Calendar, 
+  due_week: Calendar,
+  current: CheckCircle,
+  no_invoices: Calendar,
+};
 
-  const daysDiff = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 3600 * 24));
+const statusVariants = {
+  overdue: 'destructive',
+  due_today: 'destructive', 
+  due_soon: 'default',
+  due_week: 'secondary',
+  current: 'outline',
+  no_invoices: 'outline',
+};
 
-  if (daysDiff < 0) {
-    return { text: `Expired ${Math.abs(daysDiff)} days ago`, className: 'text-red-500 font-bold' };
-  } else if (daysDiff === 0) {
-    return { text: 'Due today', className: 'text-yellow-500 font-bold' };
-  } else if (daysDiff <= 7) {
-    return { text: `Due in ${daysDiff} days`, className: 'text-yellow-500 font-bold' };
-  } else {
-    return { text: `Due ${dueDate.toLocaleDateString()}`, className: '' };
+const PaymentStatusBadge = ({ paymentStatus }) => {
+  if (!paymentStatus || !paymentStatus.status) {
+    return <span className="text-gray-500">N/A</span>;
   }
+
+  const Icon = statusIcons[paymentStatus.status] || Calendar;
+  const variant = statusVariants[paymentStatus.status] || 'outline';
+
+  return (
+    <Badge variant={variant} className="flex items-center gap-1">
+      <Icon className="h-3 w-3" />
+      {paymentStatus.text}
+    </Badge>
+  );
 };
 
 const SupplierList = ({ refreshTrigger, onRefresh }) => {
@@ -78,77 +89,104 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
         }
     };
 
+    const paymentSummary = suppliers.reduce((acc, supplier) => {
+        const status = supplier.payment_status?.status;
+        if (status === 'overdue') acc.overdue++;
+        else if (status === 'due_today' || status === 'due_soon') acc.dueSoon++;
+        return acc;
+    }, { overdue: 0, dueSoon: 0 });
+
     if (error) return <p className="text-red-500 text-center p-4">{error}</p>;
 
     return (
         <div className="space-y-4">
+            {/* Payment Summary Alert */}
+            {(paymentSummary.overdue > 0 || paymentSummary.dueSoon > 0) && (
+                <div className="flex gap-4 p-4 bg-gray-50 rounded-lg">
+                    {paymentSummary.overdue > 0 && (
+                        <div className="flex items-center gap-2 text-red-600">
+                            <AlertCircle className="h-4 w-4" />
+                            <span className="font-medium">{paymentSummary.overdue} overdue payments</span>
+                        </div>
+                    )}
+                    {paymentSummary.dueSoon > 0 && (
+                        <div className="flex items-center gap-2 text-yellow-600">
+                            <Clock className="h-4 w-4" />
+                            <span className="font-medium">{paymentSummary.dueSoon} due soon</span>
+                        </div>
+                    )}
+                </div>
+            )}
+
             <div className="flex justify-end">
-                {user?.is_staff && <Button onClick={handleCreate}><PlusCircle className="mr-2 h-4 w-4" />Add Suppliers</Button>}
+                {user?.is_staff && (
+                    <Button onClick={handleCreate}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Supplier
+                    </Button>
+                )}
             </div>
+
             <div className="rounded-md border">
                 <Table>
-                    <TableCaption>A list of your registered suppliers.</TableCaption>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Name / Company Name</TableHead>
+                            <TableHead>Name / Company</TableHead>
                             <TableHead>Contact</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Phone</TableHead>
-                            <TableHead>Payment Due Date</TableHead>
+                            <TableHead>Payment Terms</TableHead>
+                            <TableHead>Payment Status</TableHead>
                             {user?.is_staff && <TableHead className="text-right">Actions</TableHead>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={user?.is_staff ? 6 : 5} className="h-24 text-center">
+                                <TableCell colSpan={user?.is_staff ? 7 : 6} className="h-24 text-center">
                                     Loading suppliers...
                                 </TableCell>
                             </TableRow>
                         ) : suppliers.length > 0 ? (
-                            suppliers.map((supplier) => {
-                                const paymentTerms = supplier.payment_terms_days || supplier.payment_terms || 30;
-                                const paymentStatus = getPaymentStatus(supplier.last_invoice_date, paymentTerms);
-                                
-                                return (
-                                    <TableRow key={supplier.id}>
-                                        <TableCell className="font-medium">{supplier.name}</TableCell>
-                                        <TableCell>{supplier.contact_person || 'N/A'}</TableCell>
-                                        <TableCell>{supplier.email || 'N/A'}</TableCell>
-                                        <TableCell>{supplier.phone_number || 'N/A'}</TableCell>
-                                        <TableCell className={cn(paymentStatus.className)}>
-                                            {paymentStatus.text}
+                            suppliers.map((supplier) => (
+                                <TableRow key={supplier.id}>
+                                    <TableCell className="font-medium">{supplier.name}</TableCell>
+                                    <TableCell>{supplier.contact_person || 'N/A'}</TableCell>
+                                    <TableCell>{supplier.email || 'N/A'}</TableCell>
+                                    <TableCell>{supplier.phone_number || 'N/A'}</TableCell>
+                                    <TableCell>{supplier.payment_terms} days</TableCell>
+                                    <TableCell>
+                                        <PaymentStatusBadge paymentStatus={supplier.payment_status} />
+                                    </TableCell>
+                                    {user?.is_staff && (
+                                        <TableCell className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                                        <span className="sr-only">Open menu</span>
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => handleEdit(supplier)}>
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem 
+                                                        onClick={() => handleDelete(supplier.id)} 
+                                                        className="text-red-500 focus:text-red-500"
+                                                    >
+                                                        Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </TableCell>
-                                        {user?.is_staff && (
-                                            <TableCell className="text-right">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" className="h-8 w-8 p-0">
-                                                            <span className="sr-only">Open menu</span>
-                                                            <MoreHorizontal className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem onClick={() => handleEdit(supplier)}>
-                                                            Edit
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem 
-                                                            onClick={() => handleDelete(supplier.id)} 
-                                                            className="text-red-500 focus:text-red-500"
-                                                        >
-                                                            Delete
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </TableCell>
-                                        )}
-                                    </TableRow>
-                                );
-                            })
+                                    )}
+                                </TableRow>
+                            ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={user?.is_staff ? 6 : 5} className="h-24 text-center">
-                                    Don't found suppliers.
+                                <TableCell colSpan={user?.is_staff ? 7 : 6} className="h-24 text-center">
+                                    No suppliers found.
                                 </TableCell>
                             </TableRow>
                         )}
@@ -192,10 +230,14 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
             <Sidebar 
                 isOpen={isSidebarOpen} 
                 onClose={() => setIsSidebarOpen(false)} 
-                title={supplierToEdit ? 'Edit Suppliers' : 'New Supplier'}
+                title={supplierToEdit ? 'Edit Supplier' : 'New Supplier'}
                 description="Complete the supplier information."
             >
-                <SupplierForm onSuccess={handleSuccess} onClose={() => setIsSidebarOpen(false)} supplierToEdit={supplierToEdit} />
+                <SupplierForm 
+                    onSuccess={handleSuccess} 
+                    onClose={() => setIsSidebarOpen(false)} 
+                    supplierToEdit={supplierToEdit} 
+                />
             </Sidebar>
         </div>
     );

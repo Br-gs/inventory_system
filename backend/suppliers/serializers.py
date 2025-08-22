@@ -16,14 +16,34 @@ class SupplierSerializer(serializers.ModelSerializer):
     )
 
     payment_terms_days = serializers.IntegerField(source='payment_terms', read_only=True)
-    last_purchase_date = serializers.DateField(read_only=True)
-    payment_due_date = serializers.DateField(read_only=True)
+    last_purchase_date = serializers.SerializerMethodField()
+    payment_due_date = serializers.SerializerMethodField()
     payment_status = serializers.SerializerMethodField()
     total_outstanding_amount = serializers.DecimalField(
         max_digits=10, 
         decimal_places=2, 
         read_only=True
     )
+
+    def get_last_purchase_date(self, obj):
+        """Return last purchase date as date (not datetime)"""
+        last_date = obj.last_purchase_date
+        if last_date:
+            # Convert datetime to date to avoid timezone issues
+            if hasattr(last_date, 'date'):
+                return last_date.date()
+            return last_date
+        return None
+
+    def get_payment_due_date(self, obj):
+        """Return payment due date as date (not datetime)"""
+        due_date = obj.payment_due_date
+        if due_date:
+            # Convert datetime to date to avoid timezone issues
+            if hasattr(due_date, 'date'):
+                return due_date.date()
+            return due_date
+        return None
 
     def get_payment_status(self, obj):
         """Return payment status information"""

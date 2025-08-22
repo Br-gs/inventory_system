@@ -39,7 +39,6 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
             "status",
             "status_display",
             "order_date",
-            "expected_delivery_date",
             "created_by",
             "total_cost",
             "items",
@@ -57,15 +56,11 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
 
         purchase_order = PurchaseOrder.objects.create(**validated_data)
 
-        total_cost = 0
+        # Create the purchase order items
         for item_data in items_data:
-            item = PurchaseOrderItem.objects.create(
+            PurchaseOrderItem.objects.create(
                 purchase_order=purchase_order, **item_data
             )
-            total_cost += item.quantity * item.cost_per_unit
 
-        # We update the total cost of the order.
-        purchase_order.total_cost = total_cost
-        purchase_order.save()
-
+        # total_cost is automatically calculated by the property
         return purchase_order
