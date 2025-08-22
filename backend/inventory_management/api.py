@@ -12,6 +12,7 @@ from django.db.models import Sum, Count, F, DateField, ExpressionWrapper
 from datetime import datetime, timedelta
 from django.utils import timezone
 from suppliers.models import Supplier
+from purchasing.models import PurchaseOrder
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -145,13 +146,23 @@ class InventoryReportsView(APIView):
         )
 
         # We count suppliers with invoices that are past due or about to become past due.
+        # Use subquery to get the latest purchase order date for each supplier
+        from django.db.models import Subquery, OuterRef
+        
         due_suppliers_count = Supplier.objects.annotate(
+            latest_order_date=Subquery(
+                PurchaseOrder.objects.filter(
+                    supplier=OuterRef('pk')
+                ).order_by('-order_date').values('order_date')[:1]
+            )
+        ).annotate(
             due_date=ExpressionWrapper(
-                F('last_invoice_date') + timedelta(days=1) * F('payment_terms'),
+                F('latest_order_date') + timedelta(days=1) * F('payment_terms'),
                 output_field=DateField()
-                )
+            )
         ).filter(
-            due_date__lte=due_date_threshold
+            due_date__lte=due_date_threshold,
+            latest_order_date__isnull=False  # Only count suppliers with at least one purchase order
         ).count()
 
         # The data is formatted so that it is easy to use on the frontend.
