@@ -24,6 +24,10 @@ class PurchaseOrder(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    received_date = models.DateField(null=True, blank=True)
+    payment_due_date = models.DateField(null=True, blank=True)
+    is_paid = models.BooleanField(default=False)
+
     @property
     def total_cost(self):
         return self.items.aggregate(

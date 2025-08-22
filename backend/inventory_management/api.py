@@ -8,12 +8,11 @@ from rest_framework.decorators import action
 from .filters import MovementFilter, ProductFilter
 from rest_framework.views import APIView
 from django.db.models.functions import TruncMonth, Cast
-from django.db.models import Sum, Count, F, DateField, ExpressionWrapper
+from django.db.models import Sum, Count, F, DateField, ExpressionWrapper, Subquery, OuterRef
 from datetime import datetime, timedelta
 from django.utils import timezone
 from suppliers.models import Supplier
 from purchasing.models import PurchaseOrder
-
 
 class ProductViewSet(viewsets.ModelViewSet):
     """ViewSet for handling products.
@@ -147,7 +146,7 @@ class InventoryReportsView(APIView):
 
         # We count suppliers with invoices that are past due or about to become past due.
         # Use subquery to get the latest purchase order date for each supplier
-        from django.db.models import Subquery, OuterRef
+
         
         due_suppliers_count = Supplier.objects.annotate(
             latest_order_date=Subquery(
@@ -165,6 +164,13 @@ class InventoryReportsView(APIView):
             latest_order_date__isnull=False  # Only count suppliers with at least one purchase order
         ).count()
 
+        # We count unpaid purchase orders that are past due or about to become past due.
+        due_pos_count = PurchaseOrder.objects.filter(
+            is_paid=False,
+            payment_due_date__isnull=False, # Asegurarse de que tenga fecha de vencimiento
+            payment_due_date__lte=due_date_threshold
+        ).count()
+
         # The data is formatted so that it is easy to use on the frontend.
         report_data = {
             #Dashboard data
@@ -174,6 +180,7 @@ class InventoryReportsView(APIView):
                 'sales_current_month': sales_current_month,
                 'sales_percentage_change': round(percentage_change, 2),
                 'due_suppliers_count': due_suppliers_count,
+                'due_purchase_orders_count': due_pos_count,
             },
             'recent_movements': recent_movements_data,
 
