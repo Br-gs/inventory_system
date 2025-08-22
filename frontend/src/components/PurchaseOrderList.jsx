@@ -5,10 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { PlusCircle } from 'lucide-react';
-
+import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Sidebar from './Sidebar';
+import TableSkeleton from './TableSkeleton';
 import PurchaseOrderForm from './PurchaseOrderForm';
+import toast from 'react-hot-toast';
+import { purchasingService } from '../api';
+
 
 const PAGE_SIZE = 10;
 
@@ -18,6 +22,7 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
     const { data, loading, error } = usePurchaseOrders(currentPage, refreshTrigger);
     
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [orderToEdit, setOrderToEdit] = useState(null);
 
     const purchaseOrders = data?.results ?? [];
     const totalPurchaseOrders = data?.count ?? 0;
@@ -31,13 +36,23 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
         setIsSidebarOpen(false);
         onRefresh();
     };
-
-    const statusVariant = {
-        pending: 'secondary',
-        approved: 'default',
-        received: 'success',
-        canceled: 'destructive',
+    const handleEdit = (po) => {
+        setOrderToEdit(po);
+        setIsSidebarOpen(true);
     };
+
+     const handleDelete = async (poId) => {
+        if (window.confirm("Are you sure you want to delete this purchase order?")) {
+            try {
+                await purchasingService.deletePurchaseOrder(poId);
+                toast.success("Purchase order deleted.");
+                onRefresh();
+            } catch {
+                toast.error("The order could not be deleted.");
+            }
+        }
+    };
+
 
     if (error) return <p className="text-red-500 text-center p-4">{error}</p>;
 
@@ -60,24 +75,34 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
                             <TableHead>Order Date</TableHead>
                             <TableHead>Total Cost</TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead>Payment</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {loading ? (
-                            <TableRow>
-                                <TableCell colSpan={5} className="h-24 text-center">Loading...</TableCell>
-                            </TableRow>
+                            <TableSkeleton columnCount={user?.is_staff ? 5 : 4} />
                         ) : purchaseOrders.length > 0 ? (
                             purchaseOrders.map((po) => (
                                 <TableRow key={po.id}>
                                     <TableCell className="font-medium">PO #{po.id}</TableCell>
                                     <TableCell>{po.supplier.name}</TableCell>
-                                    <TableCell>{new Date(po.order_date).toLocaleDateString()}</TableCell>
+                                    <TableCell>{po.payment_due_date ? new Date(po.payment_due_date).toLocaleDateString() : 'N/A'}</TableCell>
                                     <TableCell>${Number(po.total_cost).toFixed(2)}</TableCell>
+                                    <TableCell><Badge>{po.status_display}</Badge></TableCell>
                                     <TableCell>
-                                        <Badge variant={statusVariant[po.status] || 'outline'}>
-                                            {po.status_display}
+                                        <Badge variant={po.is_paid ? 'success' : 'destructive'}>
+                                            {po.is_paid ? 'Paid' : 'Pending'}
                                         </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal /></Button></DropdownMenuTrigger>
+                                            <DropdownMenuContent>
+                                                <DropdownMenuItem onSelect={() => handleEdit(po)}>Edit</DropdownMenuItem>
+                                                <DropdownMenuItem onSelect={() => handleDelete(po.id)} className="text-red-500">Delete</DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -126,10 +151,10 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
             <Sidebar 
                 isOpen={isSidebarOpen} 
                 onClose={() => setIsSidebarOpen(false)} 
-                title="Create New Purchase Order"
+                title={ orderToEdit ? 'Edit Order' : "Create New Purchase Order"}
                 description="Fill out the form to create a new purchase order."
             >
-                <PurchaseOrderForm onSuccess={handleSuccess} onClose={() => setIsSidebarOpen(false)} />
+                <PurchaseOrderForm onSuccess={handleSuccess} onClose={() => setIsSidebarOpen(false)} orderToEdit={orderToEdit} />
             </Sidebar>
         </div>
     );

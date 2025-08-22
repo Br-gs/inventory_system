@@ -11,6 +11,7 @@ import ProductCombobox from './ProductCombobox';
 import SupplierCombobox from './SupplierCombobox';
 import { Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const poItemSchema = z.object({
   product_id: z.string().min(1, "Select a product."),
@@ -29,10 +30,17 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
   const [supplierDefaultTerms, setSupplierDefaultTerms] = useState(null);
   const [useCustomTerms, setUseCustomTerms] = useState(false);
   
-  const { register, control, handleSubmit, formState: { errors, isSubmitting }, setValue, watch } = useForm({
+  const { 
+    register, 
+    control, 
+    handleSubmit, 
+    formState: { errors, isSubmitting }, 
+    setValue, 
+    watch 
+  } = useForm({
     resolver: zodResolver(purchaseOrderSchema),
     defaultValues: orderToEdit ? {
-      supplier_id: orderToEdit.supplier.id.toString(),
+      supplier_id: orderToEdit.supplier.id.toString() || "",
       items: orderToEdit.items.map(item => ({
         product_id: item.product.id.toString(),
         quantity: item.quantity,
@@ -55,7 +63,6 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
 
   const watchedSupplier = watch('supplier_id');
   const watchedItems = watch('items');
-  const watchedPaymentTerms = watch('payment_terms');
   const watchedIsPaid = watch('is_paid');
 
   // Initialize useCustomTerms based on whether editing and has custom terms
@@ -86,7 +93,6 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
 
   const onSubmit = async (data) => {
     try {
-      // If not using custom terms, ensure we use supplier default
       if (!useCustomTerms) {
         data.payment_terms = supplierDefaultTerms;
       }
@@ -167,27 +173,17 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="custom-terms"
-              checked={useCustomTerms}
-              onCheckedChange={setUseCustomTerms}
-              disabled={!watchedSupplier}
-            />
-            <Label htmlFor="custom-terms">Use custom payment terms</Label>
-          </div>
-          <div className="flex items-center gap-2">
-            <Input 
-              type="number" 
-              {...register('payment_terms')}
-              placeholder={supplierDefaultTerms ? `Default: ${supplierDefaultTerms} days` : 'Payment terms'}
-              disabled={!useCustomTerms || !watchedSupplier}
-              className="w-32"
-            />
-            <span className="text-sm text-muted-foreground">days</span>
-          </div>
-          {errors.payment_terms && <p className="text-sm text-red-500">{errors.payment_terms.message}</p>}
+        <div className="grid gap-2">
+          <Label>Payment Terms</Label>
+          <Select onValueChange={(value) => setValue('payment_terms', parseInt(value))} defaultValue={String(orderToEdit?.payment_terms || 30)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="0">Cash</SelectItem>
+              <SelectItem value="15">15 Days</SelectItem>
+              <SelectItem value="30">30 Days</SelectItem>
+              <SelectItem value="60">60 Days</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {orderToEdit && (
@@ -205,7 +201,7 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? (orderToEdit ? "Updating..." : "Creating...") : (orderToEdit ? "Update Order" : "Create Order")}
+          {isSubmitting ? "Saving..." : (orderToEdit ? "Updating..." : "Creating...")}
         </Button>
       </div>
     </form>

@@ -16,32 +16,18 @@ const supplierSchema = z.object({
   contact_person: z.string().optional(),
   email: z.string().email({ message: 'It must be a valid email address..' }).optional().or(z.literal('')),
   phone_number: z.string().optional(),
-  payment_terms: z.coerce.number().int().nonnegative({ message: 'Payment terms must be a positive number.' }),
 });
-
-const PAYMENT_TERMS_OPTIONS = [
-  { value: 0, label: 'Cash (0 days)' },
-  { value: 7, label: '7 days' },
-  { value: 15, label: '15 days' },
-  { value: 30, label: '30 days' },
-  { value: 45, label: '45 days' },
-  { value: 60, label: '60 days' },
-  { value: 90, label: '90 days' },
-];
 
 const SupplierForm = ({ supplierToEdit, onSuccess, onClose }) => {
   const {
     register,
     handleSubmit,
     reset,
-    setValue,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(supplierSchema),
+    mode: 'onBlur',
   });
-
-  const currentPaymentTerms = watch('payment_terms');
 
   useEffect(() => {
     if (supplierToEdit) {
@@ -51,7 +37,6 @@ const SupplierForm = ({ supplierToEdit, onSuccess, onClose }) => {
         contact_person: supplierToEdit.contact_person || '',
         email: supplierToEdit.email || '',
         phone_number: supplierToEdit.phone_number || '',
-        payment_terms: supplierToEdit.payment_terms || 30,
       };
       reset(formData);
     } else {
@@ -61,7 +46,6 @@ const SupplierForm = ({ supplierToEdit, onSuccess, onClose }) => {
         contact_person: '', 
         email: '', 
         phone_number: '', 
-        payment_terms: 30 
       });
     }
 
@@ -120,24 +104,6 @@ const SupplierForm = ({ supplierToEdit, onSuccess, onClose }) => {
             <Label htmlFor="phone_number">Phone</Label>
             <Input id="phone_number" {...register('phone_number')} />
           </div>
-        </div>
-        
-        <div className="grid gap-2">
-          <Label htmlFor="payment_terms">Payment Terms</Label>
-          <Select 
-            onValueChange={(value) => setValue('payment_terms', parseInt(value))} 
-            value={currentPaymentTerms?.toString() || "30"}
-          >
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {PAYMENT_TERMS_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value.toString()}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.payment_terms && <p className="text-sm text-red-500 mt-1">{errors.payment_terms.message}</p>}
         </div>
 
         <div className="flex justify-end gap-2 mt-4">

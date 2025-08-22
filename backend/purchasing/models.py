@@ -5,6 +5,7 @@ from django.db.models import Sum
 from django.utils import timezone
 from datetime import timedelta
 from suppliers.models import Supplier
+from django.conf import settings
 
 class PurchaseOrder(models.Model):
     STATUS_CHOICES = [
