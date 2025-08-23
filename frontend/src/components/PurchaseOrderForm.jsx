@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import ProductCombobox from './ProductCombobox';
 import SupplierCombobox from './SupplierCombobox';
 import { Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect} from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const poItemSchema = z.object({
@@ -24,10 +24,10 @@ const purchaseOrderSchema = z.object({
   items: z.array(poItemSchema).min(1, "You must add at least one product."),
   payment_terms: z.coerce.number().positive("Payment terms must be positive").optional(),
   is_paid: z.boolean().optional(),
+  status: z.string().optional(),
 });
 
 const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
-  const [supplierDefaultTerms, setSupplierDefaultTerms] = useState(null);
   
   const { 
     register, 
@@ -70,14 +70,10 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
   // Fetch supplier data when supplier changes
   useEffect(() => {
     const fetchSupplierData = async () => {
-      if (watchedSupplier) {
+      if (watchedSupplier && !orderToEdit) {
         try {
           const response = await suppliersService.getSupplier(watchedSupplier);
-          setSupplierDefaultTerms(response.data.payment_terms);
-          // Set payment terms to supplier default if creating new order
-          if (!orderToEdit) {
-            setValue('payment_terms', response.data.payment_terms);
-          }
+          setValue('payment_terms', response.data.payment_terms);
         } catch (error) {
           console.error('Failed to fetch supplier data:', error);
         }
@@ -103,7 +99,7 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
     }
   };
 
-return (
+  return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
         <Label>Supplier</Label>

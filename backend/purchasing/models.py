@@ -53,9 +53,10 @@ class PurchaseOrder(models.Model):
             self.payment_terms = self.supplier.payment_terms
         
         # Auto-calculate payment due date based on payment terms
-        if not self.payment_due_date and self.payment_terms:
+        if self.payment_terms:
             if self.order_date:
                 self.payment_due_date = self.order_date.date() + timedelta(days=self.payment_terms)
+                
         super().save(*args, **kwargs)
 
     def __str__(self):

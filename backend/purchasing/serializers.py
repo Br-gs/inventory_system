@@ -4,7 +4,6 @@ from .models import PurchaseOrder, PurchaseOrderItem
 from suppliers.serializers import SupplierSerializer
 from inventory_management.serializers import ProductSerializer
 
-
 class PurchaseOrderItemSerializer(serializers.ModelSerializer):
 
     product = ProductSerializer(read_only=True)
@@ -88,9 +87,16 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
         if items_data is not None:
             # Delete existing items and recreate
             instance.items.all().delete()
+            
+            items_to_create = []
             for item_data in items_data:
-                PurchaseOrderItem.objects.create(
-                    purchase_order=instance, **item_data
+                items_to_create.append(
+                    PurchaseOrderItem(
+                        purchase_order=instance, 
+                        **item_data
+                    )
                 )
+            
+            PurchaseOrderItem.objects.bulk_create(items_to_create)
         
         return instance

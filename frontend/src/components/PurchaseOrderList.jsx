@@ -16,7 +16,7 @@ import { purchasingService } from '../api';
 const PAGE_SIZE = 10;
 
 const getPaymentBadgeVariant = (paymentDueDate, isPaid) => {
-    if (isPaid) return 'success';
+    if (isPaid) return 'default';
     
     if (!paymentDueDate) return 'secondary';
     
@@ -27,7 +27,7 @@ const getPaymentBadgeVariant = (paymentDueDate, isPaid) => {
     
     if (diffDays < 0) return 'destructive';
     if (diffDays <= 7) return 'destructive';
-    return 'secondary'; // Más de 7 días
+    return 'secondary';
 };
 
 const getPaymentBadgeText = (paymentDueDate, isPaid) => {
@@ -106,7 +106,7 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
     if (error) return <p className="text-red-500 text-center p-4">{error}</p>;
 
     return (
-         <div className="space-y-4">
+        <div className="space-y-4">
             <div className="flex justify-end">
                 {user?.is_staff && (
                     <Button onClick={handleCreate}>
@@ -139,12 +139,18 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
                                     <TableCell>{new Date(po.order_date).toLocaleDateString()}</TableCell>
                                     <TableCell>${Number(po.total_cost).toFixed(2)}</TableCell>
                                     <TableCell>
-                                        <Badge variant={po.status === 'received' ? 'success' : 'secondary'}>
+                                        <Badge 
+                                            variant={po.status === 'received' ? 'default' : 'secondary'}
+                                            className={po.status === 'received' ? 'bg-green-500 text-white hover:bg-green-600' : ''}
+                                        >
                                             {po.status_display}
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant={getPaymentBadgeVariant(po.payment_due_date, po.is_paid)}>
+                                        <Badge 
+                                            variant={getPaymentBadgeVariant(po.payment_due_date, po.is_paid)}
+                                            className={po.is_paid ? 'bg-green-500 text-white hover:bg-green-600' : ''}
+                                        >
                                             {getPaymentBadgeText(po.payment_due_date, po.is_paid)}
                                         </Badge>
                                     </TableCell>
