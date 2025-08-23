@@ -5,48 +5,13 @@ import AuthContext from '../context/authContext';
 import toast from 'react-hot-toast';
 import Sidebar from './Sidebar';
 import SupplierForm from './SupplierForm';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableCaption } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, PlusCircle, AlertCircle, Clock, Calendar, CheckCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 const PAGE_SIZE = 10;
-
-const statusIcons = {
-  overdue: AlertCircle,
-  due_today: Clock,
-  due_soon: Calendar, 
-  due_week: Calendar,
-  current: CheckCircle,
-  no_invoices: Calendar,
-};
-
-const statusVariants = {
-  overdue: 'destructive',
-  due_today: 'destructive', 
-  due_soon: 'default',
-  due_week: 'secondary',
-  current: 'outline',
-  no_invoices: 'outline',
-};
-
-const PaymentStatusBadge = ({ paymentStatus }) => {
-  if (!paymentStatus || !paymentStatus.status) {
-    return <span className="text-gray-500">N/A</span>;
-  }
-
-  const Icon = statusIcons[paymentStatus.status] || Calendar;
-  const variant = statusVariants[paymentStatus.status] || 'outline';
-
-  return (
-    <Badge variant={variant} className="flex items-center gap-1">
-      <Icon className="h-3 w-3" />
-      {paymentStatus.text}
-    </Badge>
-  );
-};
 
 const SupplierList = ({ refreshTrigger, onRefresh }) => {
     const { user } = useContext(AuthContext);
@@ -72,8 +37,9 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
 
     const handleSuccess = () => {
         setIsSidebarOpen(false);
+        setSupplierToEdit(null);
         onRefresh();
-        toast.success(`Supplier ${supplierToEdit ? 'Updated' : 'created'} successfully.`);
+        toast.success(`Supplier ${supplierToEdit ? 'updated' : 'created'} successfully.`);
     };
 
     const handleDelete = async (supplierId) => {
@@ -89,35 +55,15 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
         }
     };
 
-    const paymentSummary = suppliers.reduce((acc, supplier) => {
-        const status = supplier.payment_status?.status;
-        if (status === 'overdue') acc.overdue++;
-        else if (status === 'due_today' || status === 'due_soon') acc.dueSoon++;
-        return acc;
-    }, { overdue: 0, dueSoon: 0 });
+    const handleCloseSidebar = () => {
+        setIsSidebarOpen(false);
+        setSupplierToEdit(null);
+    };
 
     if (error) return <p className="text-red-500 text-center p-4">{error}</p>;
 
     return (
         <div className="space-y-4">
-            {/* Payment Summary Alert */}
-            {(paymentSummary.overdue > 0 || paymentSummary.dueSoon > 0) && (
-                <div className="flex gap-4 p-4 bg-gray-50 rounded-lg">
-                    {paymentSummary.overdue > 0 && (
-                        <div className="flex items-center gap-2 text-red-600">
-                            <AlertCircle className="h-4 w-4" />
-                            <span className="font-medium">{paymentSummary.overdue} overdue payments</span>
-                        </div>
-                    )}
-                    {paymentSummary.dueSoon > 0 && (
-                        <div className="flex items-center gap-2 text-yellow-600">
-                            <Clock className="h-4 w-4" />
-                            <span className="font-medium">{paymentSummary.dueSoon} due soon</span>
-                        </div>
-                    )}
-                </div>
-            )}
-
             <div className="flex justify-end">
                 {user?.is_staff && (
                     <Button onClick={handleCreate}>
@@ -135,15 +81,14 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
                             <TableHead>Contact</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Phone</TableHead>
-                            <TableHead>Payment Terms</TableHead>
-                            <TableHead>Payment Status</TableHead>
+                            <TableHead>Default Payment Terms</TableHead>
                             {user?.is_staff && <TableHead className="text-right">Actions</TableHead>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={user?.is_staff ? 7 : 6} className="h-24 text-center">
+                                <TableCell colSpan={user?.is_staff ? 6 : 5} className="h-24 text-center">
                                     Loading suppliers...
                                 </TableCell>
                             </TableRow>
@@ -155,9 +100,6 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
                                     <TableCell>{supplier.email || 'N/A'}</TableCell>
                                     <TableCell>{supplier.phone_number || 'N/A'}</TableCell>
                                     <TableCell>{supplier.payment_terms} days</TableCell>
-                                    <TableCell>
-                                        <PaymentStatusBadge paymentStatus={supplier.payment_status} />
-                                    </TableCell>
                                     {user?.is_staff && (
                                         <TableCell className="text-right">
                                             <DropdownMenu>
@@ -185,7 +127,7 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={user?.is_staff ? 7 : 6} className="h-24 text-center">
+                                <TableCell colSpan={user?.is_staff ? 6 : 5} className="h-24 text-center">
                                     No suppliers found.
                                 </TableCell>
                             </TableRow>
@@ -229,13 +171,13 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
 
             <Sidebar 
                 isOpen={isSidebarOpen} 
-                onClose={() => setIsSidebarOpen(false)} 
+                onClose={handleCloseSidebar} 
                 title={supplierToEdit ? 'Edit Supplier' : 'New Supplier'}
                 description="Complete the supplier information."
             >
                 <SupplierForm 
                     onSuccess={handleSuccess} 
-                    onClose={() => setIsSidebarOpen(false)} 
+                    onClose={handleCloseSidebar} 
                     supplierToEdit={supplierToEdit} 
                 />
             </Sidebar>

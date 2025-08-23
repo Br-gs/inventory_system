@@ -78,7 +78,7 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
             try {
                 await purchasingService.deletePurchaseOrder(poId);
                 toast.success("Purchase order deleted.");
-                onRefresh();
+                setTimeout(() => onRefresh(), 100);
             } catch {
                 toast.error("The order could not be deleted.");
             }
@@ -90,7 +90,7 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
             try {
                 await purchasingService.receivePurchaseOrder(poId);
                 toast.success("Order marked as received.");
-                onRefresh();
+                setTimeout(() => onRefresh(), 100);
             } catch (error) {
                 toast.error("Could not update order status.", error);
             }

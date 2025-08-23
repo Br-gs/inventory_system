@@ -8,14 +8,14 @@ import toast from 'react-hot-toast';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const supplierSchema = z.object({
   name: z.string().min(3, { message: 'Name is required.' }),
   tax_id: z.string().min(1, { message: 'Identification is required.' }),
   contact_person: z.string().optional(),
-  email: z.string().email({ message: 'It must be a valid email address..' }).optional().or(z.literal('')),
+  email: z.string().email({ message: 'It must be a valid email address.' }).optional().or(z.literal('')),
   phone_number: z.string().optional(),
+  payment_terms: z.coerce.number().positive({ message: 'Payment terms must be positive.' }),
 });
 
 const SupplierForm = ({ supplierToEdit, onSuccess, onClose }) => {
@@ -27,6 +27,9 @@ const SupplierForm = ({ supplierToEdit, onSuccess, onClose }) => {
   } = useForm({
     resolver: zodResolver(supplierSchema),
     mode: 'onBlur',
+    defaultValues: {
+      payment_terms: 30,
+    }
   });
 
   useEffect(() => {
@@ -37,6 +40,7 @@ const SupplierForm = ({ supplierToEdit, onSuccess, onClose }) => {
         contact_person: supplierToEdit.contact_person || '',
         email: supplierToEdit.email || '',
         phone_number: supplierToEdit.phone_number || '',
+        payment_terms: supplierToEdit.payment_terms || 30,
       };
       reset(formData);
     } else {
@@ -46,6 +50,7 @@ const SupplierForm = ({ supplierToEdit, onSuccess, onClose }) => {
         contact_person: '', 
         email: '', 
         phone_number: '', 
+        payment_terms: 30,
       });
     }
 
@@ -106,6 +111,17 @@ const SupplierForm = ({ supplierToEdit, onSuccess, onClose }) => {
           </div>
         </div>
 
+        <div className="grid gap-2">
+          <Label htmlFor="payment_terms">Default Payment Terms (Days)</Label>
+          <Input 
+            id="payment_terms" 
+            type="number" 
+            {...register('payment_terms')} 
+            placeholder="30"
+          />
+          {errors.payment_terms && <p className="text-sm text-red-500 mt-1">{errors.payment_terms.message}</p>}
+        </div>
+
         <div className="flex justify-end gap-2 mt-4">
           <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
           <Button type="submit" disabled={isSubmitting}>
@@ -113,46 +129,6 @@ const SupplierForm = ({ supplierToEdit, onSuccess, onClose }) => {
           </Button>
         </div>
       </form>
-
-      {supplierToEdit && (
-        <div className="border-t pt-4">
-          <h4 className="font-medium mb-2">Payment Information</h4>
-          <div className="grid gap-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Last Purchase Date:</span>
-              <span>
-                {supplierToEdit.last_purchase_date 
-                  ? new Date(supplierToEdit.last_purchase_date).toLocaleDateString()
-                  : 'No purchases yet'
-                }
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Payment Due Date:</span>
-              <span>
-                {supplierToEdit.payment_due_date 
-                  ? new Date(supplierToEdit.payment_due_date).toLocaleDateString()
-                  : 'N/A'
-                }
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Payment Status:</span>
-              <span className={supplierToEdit.payment_status?.css_class || ''}>
-                {supplierToEdit.payment_status?.text || 'N/A'}
-              </span>
-            </div>
-            {supplierToEdit.total_outstanding_amount > 0 && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Outstanding Amount:</span>
-                <span className="font-medium">
-                  ${Number(supplierToEdit.total_outstanding_amount).toFixed(2)}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
