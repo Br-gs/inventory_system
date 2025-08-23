@@ -8,6 +8,15 @@ def create_inventory_movement(
 ) -> InventoryMovement:
     """
     Create an inventory movement and update the product's stock accordingly.
+
+    Args:
+        product (Product): The product to move
+        quantity (int): Quantity to move
+        movement_type (str): Type of movement (IN, OUT, ADJ)
+        user (User, optional): User performing the movement
+    
+    Returns:
+        InventoryMovement: Created movement record
     """
     # validate movement type
     if not product.is_active:
