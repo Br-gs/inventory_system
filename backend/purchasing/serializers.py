@@ -85,18 +85,19 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
         
         # If items are provided, update them
         if items_data is not None:
-            # Delete existing items and recreate
+
             instance.items.all().delete()
-            
-            items_to_create = []
+
+            new_items = []
             for item_data in items_data:
-                items_to_create.append(
+                new_items.append(
                     PurchaseOrderItem(
-                        purchase_order=instance, 
-                        **item_data
+                        purchase_order=instance,
+                        product_id=item_data['product_id'],
+                        quantity=item_data['quantity'],
+                        cost_per_unit=item_data['cost_per_unit']
                     )
                 )
-            
-            PurchaseOrderItem.objects.bulk_create(items_to_create)
-        
+            PurchaseOrderItem.objects.bulk_create(new_items, ignore_conflicts=True)
+
         return instance

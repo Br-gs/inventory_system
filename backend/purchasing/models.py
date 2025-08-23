@@ -84,4 +84,5 @@ class PurchaseOrderItem(models.Model):
         return f"{self.product.name} - {self.quantity} units"
 
     class Meta:
-        unique_together = ['purchase_order', 'product']
+        # Remove unique_together constraint to allow same product with different prices/quantities
+        pass

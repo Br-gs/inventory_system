@@ -65,7 +65,7 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
   const watchedSupplier = watch('supplier_id');
   const watchedItems = watch('items');
   const watchedIsPaid = watch('is_paid');
-  const watchedStatus = watch('status');;
+  const watchedStatus = watch('status');
 
   // Fetch supplier data when supplier changes
   useEffect(() => {
@@ -82,9 +82,11 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
     fetchSupplierData();
   }, [watchedSupplier, setValue, orderToEdit]);
 
-
   const onSubmit = async (data) => {
     try {
+      // Debug: Log the data being sent
+      console.log('Submitting purchase order data:', data);
+      
       if (orderToEdit) {
         await purchasingService.updatePurchaseOrder(orderToEdit.id, data);
         toast.success("Purchase order successfully updated.");
@@ -94,8 +96,11 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
       }
       onSuccess();
     } catch (error) {
-      toast.error(`The purchase order could not be ${orderToEdit ? 'updated' : 'created'}.`);
-      console.error(error);
+      console.error('Error submitting purchase order:', error);
+      const errorMessage = error.response?.data?.detail || 
+                          error.response?.data?.message || 
+                          `The purchase order could not be ${orderToEdit ? 'updated' : 'created'}.`;
+      toast.error(errorMessage);
     }
   };
 
@@ -111,56 +116,154 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
       </div>
 
       <Label>Items in the Order</Label>
-      <div className="space-y-4 rounded-md border p-4">
-        {fields.map((field, index) => (
-          <div key={field.id} className="flex gap-2 items-end">
-            <div className="flex-grow">
-              <Label>Product</Label>
-              <ProductCombobox 
-                value={watchedItems[index]?.product_id}
-                name="product_id"
-                onChange={(e) => setValue(`items.${index}.product_id`, e.target.value, { shouldValidate: true })}
-              />
-              {errors.items?.[index]?.product_id && (
-                <p className="text-sm text-red-500 mt-1">{errors.items[index].product_id.message}</p>
-              )}
+      <div className="space-y-4 rounded-md border p-4 max-h-96 overflow-y-auto">
+        {/* Desktop Header - only show on larger screens */}
+        <div className="hidden lg:grid grid-cols-12 gap-2 text-sm font-medium text-gray-600 pb-2 border-b">
+          <div className="col-span-5">Product</div>
+          <div className="col-span-2">Quantity</div>
+          <div className="col-span-3">Cost/Unit</div>
+          <div className="col-span-2">Total</div>
+        </div>
+        
+        {fields.map((field, index) => {
+          const quantity = watchedItems[index]?.quantity || 0;
+          const costPerUnit = watchedItems[index]?.cost_per_unit || 0;
+          const itemTotal = quantity * costPerUnit;
+          
+          return (
+            <div key={field.id} className="space-y-3 lg:space-y-0">
+              {/* Mobile/Small screens - Stacked layout */}
+              <div className="lg:hidden space-y-3 p-3 bg-gray-50 rounded-md">
+                <div className="flex justify-between items-center">
+                  <Label className="text-sm font-medium">Product</Label>
+                  <Button 
+                    type="button" 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={() => remove(index)}
+                    disabled={fields.length === 1}
+                    className="h-7 w-7 p-0"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+                <ProductCombobox 
+                  value={watchedItems[index]?.product_id}
+                  name="product_id"
+                  onChange={(e) => setValue(`items.${index}.product_id`, e.target.value, { shouldValidate: true })}
+                />
+                {errors.items?.[index]?.product_id && (
+                  <p className="text-xs text-red-500">{errors.items[index].product_id.message}</p>
+                )}
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-sm">Quantity</Label>
+                    <Input 
+                      type="number" 
+                      {...register(`items.${index}.quantity`)}
+                      className="text-center"
+                    />
+                    {errors.items?.[index]?.quantity && (
+                      <p className="text-xs text-red-500 mt-1">{errors.items[index].quantity.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label className="text-sm">Cost/Unit</Label>
+                    <Input 
+                      type="number" 
+                      step="0.01" 
+                      {...register(`items.${index}.cost_per_unit`)}
+                      className="text-right"
+                    />
+                    {errors.items?.[index]?.cost_per_unit && (
+                      <p className="text-xs text-red-500 mt-1">{errors.items[index].cost_per_unit.message}</p>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex justify-between items-center pt-2 border-t">
+                  <span className="text-sm text-gray-600">Item Total:</span>
+                  <span className="font-semibold">${itemTotal.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Desktop/Large screens - Grid layout */}
+              <div className="hidden lg:grid grid-cols-12 gap-2 items-center py-2 border-b border-gray-100 last:border-b-0">
+                <div className="col-span-5">
+                  <ProductCombobox 
+                    value={watchedItems[index]?.product_id}
+                    name="product_id"
+                    onChange={(e) => setValue(`items.${index}.product_id`, e.target.value, { shouldValidate: true })}
+                  />
+                  {errors.items?.[index]?.product_id && (
+                    <p className="text-xs text-red-500 mt-1">{errors.items[index].product_id.message}</p>
+                  )}
+                </div>
+                <div className="col-span-2">
+                  <Input 
+                    type="number" 
+                    {...register(`items.${index}.quantity`)}
+                    className="text-center"
+                  />
+                  {errors.items?.[index]?.quantity && (
+                    <p className="text-xs text-red-500 mt-1">{errors.items[index].quantity.message}</p>
+                  )}
+                </div>
+                <div className="col-span-3">
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    {...register(`items.${index}.cost_per_unit`)}
+                    className="text-right"
+                  />
+                  {errors.items?.[index]?.cost_per_unit && (
+                    <p className="text-xs text-red-500 mt-1">{errors.items[index].cost_per_unit.message}</p>
+                  )}
+                </div>
+                <div className="col-span-1 text-right font-medium">
+                  ${itemTotal.toFixed(2)}
+                </div>
+                <div className="col-span-1 flex justify-end">
+                  <Button 
+                    type="button" 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={() => remove(index)}
+                    disabled={fields.length === 1}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
             </div>
-            <div>
-              <Label>Quantity</Label>
-              <Input type="number" {...register(`items.${index}.quantity`)} />
-              {errors.items?.[index]?.quantity && (
-                <p className="text-sm text-red-500 mt-1">{errors.items[index].quantity.message}</p>
-              )}
-            </div>
-            <div>
-              <Label>Cost/Unit</Label>
-              <Input type="number" step="0.01" {...register(`items.${index}.cost_per_unit`)} />
-              {errors.items?.[index]?.cost_per_unit && (
-                <p className="text-sm text-red-500 mt-1">{errors.items[index].cost_per_unit.message}</p>
-              )}
-            </div>
-            <Button 
-              type="button" 
-              variant="destructive" 
-              size="icon" 
-              onClick={() => remove(index)}
-              disabled={fields.length === 1}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+          );
+        })}
+        
+        <div className="flex justify-between items-center pt-3 border-t bg-gray-50 -mx-4 px-4 py-3">
+          <div className="text-lg font-bold">
+            Total: ${fields.reduce((sum, _, index) => {
+              const quantity = watchedItems[index]?.quantity || 0;
+              const costPerUnit = watchedItems[index]?.cost_per_unit || 0;
+              return sum + (quantity * costPerUnit);
+            }, 0).toFixed(2)}
           </div>
-        ))}
+        </div>
+        
         {errors.items && <p className="text-sm text-red-500">{errors.items.message || errors.items.root?.message}</p>}
+        
         <Button
           type="button"
           variant="outline"
           onClick={() => append({ product_id: "", quantity: 1, cost_per_unit: 0 })}
+          className="w-full"
         >
           Add Product
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="grid gap-2">
           <Label>Payment Terms (Days)</Label>
           <Input 
