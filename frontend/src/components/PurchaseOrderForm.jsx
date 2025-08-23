@@ -116,13 +116,14 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
       </div>
 
       <Label>Items in the Order</Label>
-      <div className="space-y-4 rounded-md border p-4 max-h-96 overflow-y-auto">
+      <div className="space-y-3 rounded-md border p-4 max-h-96 overflow-y-auto">
         {/* Desktop Header - only show on larger screens */}
-        <div className="hidden lg:grid grid-cols-12 gap-2 text-sm font-medium text-gray-600 pb-2 border-b">
+        <div className="hidden lg:grid grid-cols-12 gap-2 text-sm font-medium text-gray-600 pb-2 border-b border-gray-200">
           <div className="col-span-5">Product</div>
-          <div className="col-span-2">Quantity</div>
-          <div className="col-span-3">Cost/Unit</div>
-          <div className="col-span-2">Total</div>
+          <div className="col-span-2 text-center">Quantity</div>
+          <div className="col-span-2 text-center">Cost/Unit</div>
+          <div className="col-span-2 text-center">Total</div>
+          <div className="col-span-1"></div>
         </div>
         
         {fields.map((field, index) => {
@@ -182,14 +183,14 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
                   </div>
                 </div>
                 
-                <div className="flex justify-between items-center pt-2 border-t">
+                <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                   <span className="text-sm text-gray-600">Item Total:</span>
-                  <span className="font-semibold">${itemTotal.toFixed(2)}</span>
+                  <span className="font-semibold text-sm">${itemTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
 
               {/* Desktop/Large screens - Grid layout */}
-              <div className="hidden lg:grid grid-cols-12 gap-2 items-center py-2 border-b border-gray-100 last:border-b-0">
+              <div className="hidden lg:grid grid-cols-12 gap-2 items-center py-3 border-b border-gray-100 last:border-b-0">
                 <div className="col-span-5">
                   <ProductCombobox 
                     value={watchedItems[index]?.product_id}
@@ -200,31 +201,35 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
                     <p className="text-xs text-red-500 mt-1">{errors.items[index].product_id.message}</p>
                   )}
                 </div>
-                <div className="col-span-2">
-                  <Input 
-                    type="number" 
-                    {...register(`items.${index}.quantity`)}
-                    className="text-center"
-                  />
-                  {errors.items?.[index]?.quantity && (
-                    <p className="text-xs text-red-500 mt-1">{errors.items[index].quantity.message}</p>
-                  )}
+                <div className="col-span-2 flex justify-center">
+                  <div className="w-20">
+                    <Input 
+                      type="number" 
+                      {...register(`items.${index}.quantity`)}
+                      className="text-center"
+                    />
+                    {errors.items?.[index]?.quantity && (
+                      <p className="text-xs text-red-500 mt-1 text-center">{errors.items[index].quantity.message}</p>
+                    )}
+                  </div>
                 </div>
-                <div className="col-span-3">
-                  <Input 
-                    type="number" 
-                    step="0.01" 
-                    {...register(`items.${index}.cost_per_unit`)}
-                    className="text-right"
-                  />
-                  {errors.items?.[index]?.cost_per_unit && (
-                    <p className="text-xs text-red-500 mt-1">{errors.items[index].cost_per_unit.message}</p>
-                  )}
+                <div className="col-span-2 flex justify-center">
+                  <div className="w-30">
+                    <Input 
+                      type="number" 
+                      step="0.01" 
+                      {...register(`items.${index}.cost_per_unit`)}
+                      className="text-right text-sm"
+                    />
+                    {errors.items?.[index]?.cost_per_unit && (
+                      <p className="text-xs text-red-500 mt-1 text-center">{errors.items[index].cost_per_unit.message}</p>
+                    )}
+                  </div>
                 </div>
-                <div className="col-span-1 text-right font-medium">
-                  ${itemTotal.toFixed(2)}
+                <div className="col-span-2 text-center font-medium text-sm">
+                  ${itemTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
-                <div className="col-span-1 flex justify-end">
+                <div className="col-span-1 flex justify-center">
                   <Button 
                     type="button" 
                     variant="destructive" 
@@ -241,13 +246,13 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
           );
         })}
         
-        <div className="flex justify-between items-center pt-3 border-t bg-gray-50 -mx-4 px-4 py-3">
+        <div className="flex justify-between items-center pt-2 border-t border-gray-200 -mx-4 px-4 py-2 mt-3">
           <div className="text-lg font-bold">
             Total: ${fields.reduce((sum, _, index) => {
               const quantity = watchedItems[index]?.quantity || 0;
               const costPerUnit = watchedItems[index]?.cost_per_unit || 0;
               return sum + (quantity * costPerUnit);
-            }, 0).toFixed(2)}
+            }, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
         </div>
         

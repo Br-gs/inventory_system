@@ -33,6 +33,12 @@ const Sidebar = ({ isOpen, onClose, title, description, children }) => {
 
     const getSidebarWidth = () => {
         if (isMobile) return 'w-full';
+        
+        if (title.includes('Purchase Order')) {
+            if (isExpanded) return 'w-full sm:max-w-6xl';
+            return 'w-full sm:max-w-3xl'; 
+        }
+        
         if (isExpanded) return 'w-full sm:max-w-5xl';
         return 'w-full sm:max-w-2xl';
     };
