@@ -28,7 +28,6 @@ const purchaseOrderSchema = z.object({
 
 const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
   const [supplierDefaultTerms, setSupplierDefaultTerms] = useState(null);
-  const [useCustomTerms, setUseCustomTerms] = useState(false);
   
   const { 
     register, 
@@ -46,13 +45,15 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
         quantity: item.quantity,
         cost_per_unit: item.cost_per_unit,
       })),
-      payment_terms: orderToEdit.payment_terms,
-      is_paid: orderToEdit.is_paid,
+      payment_terms: orderToEdit.payment_terms || 30,
+      is_paid: orderToEdit.is_paid || false,
+      status: orderToEdit.status || 'pending',
     } : {
       supplier_id: "",
       items: [{ product_id: "", quantity: 1, cost_per_unit: 0 }],
-      payment_terms: undefined,
+      payment_terms: 30,
       is_paid: false,
+      status: 'pending',
     },
   });
 
@@ -64,13 +65,7 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
   const watchedSupplier = watch('supplier_id');
   const watchedItems = watch('items');
   const watchedIsPaid = watch('is_paid');
-
-  // Initialize useCustomTerms based on whether editing and has custom terms
-  useEffect(() => {
-    if (orderToEdit && orderToEdit.payment_terms !== orderToEdit.supplier.payment_terms) {
-      setUseCustomTerms(true);
-    }
-  }, [orderToEdit]);
+  const watchedStatus = watch('status');;
 
   // Fetch supplier data when supplier changes
   useEffect(() => {
@@ -79,8 +74,8 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
         try {
           const response = await suppliersService.getSupplier(watchedSupplier);
           setSupplierDefaultTerms(response.data.payment_terms);
-          // Set payment terms to supplier default if not using custom terms
-          if (!useCustomTerms && !orderToEdit) {
+          // Set payment terms to supplier default if creating new order
+          if (!orderToEdit) {
             setValue('payment_terms', response.data.payment_terms);
           }
         } catch (error) {
@@ -89,14 +84,11 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
       }
     };
     fetchSupplierData();
-  }, [watchedSupplier, setValue, useCustomTerms, orderToEdit]);
+  }, [watchedSupplier, setValue, orderToEdit]);
+
 
   const onSubmit = async (data) => {
     try {
-      if (!useCustomTerms) {
-        data.payment_terms = supplierDefaultTerms;
-      }
-      
       if (orderToEdit) {
         await purchasingService.updatePurchaseOrder(orderToEdit.id, data);
         toast.success("Purchase order successfully updated.");
@@ -111,7 +103,7 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
     }
   };
 
-  return (
+return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
         <Label>Supplier</Label>
@@ -174,34 +166,48 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
-          <Label>Payment Terms</Label>
-          <Select onValueChange={(value) => setValue('payment_terms', parseInt(value))} defaultValue={String(orderToEdit?.payment_terms || 30)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="0">Cash</SelectItem>
-              <SelectItem value="15">15 Days</SelectItem>
-              <SelectItem value="30">30 Days</SelectItem>
-              <SelectItem value="60">60 Days</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label>Payment Terms (Days)</Label>
+          <Input 
+            type="number" 
+            {...register('payment_terms')} 
+            placeholder="30"
+          />
+          {errors.payment_terms && <p className="text-sm text-red-500 mt-1">{errors.payment_terms.message}</p>}
         </div>
 
         {orderToEdit && (
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="is-paid"
-              checked={watchedIsPaid}
-              onCheckedChange={(checked) => setValue('is_paid', checked)}
-            />
-            <Label htmlFor="is-paid">Mark as paid</Label>
+          <div className="grid gap-2">
+            <Label>Status</Label>
+            <Select value={watchedStatus} onValueChange={(value) => setValue('status', value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="received">Received</SelectItem>
+                <SelectItem value="canceled">Canceled</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         )}
       </div>
 
+      {orderToEdit && (
+        <div className="flex items-center space-x-2">
+          <Checkbox 
+            id="is-paid"
+            checked={watchedIsPaid}
+            onCheckedChange={(checked) => setValue('is_paid', checked)}
+          />
+          <Label htmlFor="is-paid">Mark as paid</Label>
+        </div>
+      )}
+
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Saving..." : (orderToEdit ? "Updating..." : "Creating...")}
+          {isSubmitting ? "Saving..." : (orderToEdit ? "Update Order" : "Create Order")}
         </Button>
       </div>
     </form>
