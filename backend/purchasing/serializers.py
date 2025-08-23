@@ -3,6 +3,10 @@ from django.db import transaction
 from .models import PurchaseOrder, PurchaseOrderItem
 from suppliers.serializers import SupplierSerializer
 from inventory_management.serializers import ProductSerializer
+from .services import calculate_weighted_average_cost
+from inventory_management.services import create_inventory_movement
+from django.utils import timezone
+from datetime import timedelta
 
 class PurchaseOrderItemSerializer(serializers.ModelSerializer):
 
@@ -70,6 +74,9 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
+        # Store the old status to detect changes
+        old_status = instance.status
+        
         # Handle items update if provided
         items_data = validated_data.pop("items", None)
         
@@ -81,11 +88,9 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
         # Update the purchase order fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-        instance.save()
         
         # If items are provided, update them
         if items_data is not None:
-
             instance.items.all().delete()
 
             new_items = []
@@ -100,4 +105,51 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
                 )
             PurchaseOrderItem.objects.bulk_create(new_items, ignore_conflicts=True)
 
+        # Check if status changed to 'received' and process inventory
+        new_status = validated_data.get('status', instance.status)
+        if old_status != 'received' and new_status == 'received':
+            # Set received_date if not already set
+            if not instance.received_date:
+                instance.received_date = timezone.now().date()
+            
+            # Calculate payment due date if not set
+            if not instance.payment_due_date:
+                payment_terms = instance.payment_terms or instance.supplier.payment_terms
+                instance.payment_due_date = instance.received_date + timedelta(days=payment_terms)
+            
+            # Process inventory updates
+            self._process_received_inventory(instance, self.context["request"].user)
+        
+        instance.save()
         return instance
+
+    def _process_received_inventory(self, purchase_order, user):
+        """
+        Process inventory updates when purchase order is marked as received
+        """
+        for item in purchase_order.items.all():
+            # Get current product data before creating movement
+            product = item.product
+            current_quantity = product.quantity
+            current_price = product.price
+            
+            # Calculate new weighted average cost
+            new_avg_cost = calculate_weighted_average_cost(
+                current_quantity=current_quantity,
+                current_price=current_price,
+                new_quantity=item.quantity,
+                new_price=item.cost_per_unit
+            )
+            
+            # Create inventory movement (this will update the quantity)
+            create_inventory_movement(
+                product=product, 
+                quantity=item.quantity, 
+                movement_type="IN", 
+                user=user
+            )
+            
+            # Update the product price to the new weighted average
+            product.refresh_from_db()  # Get updated quantity after movement
+            product.price = new_avg_cost
+            product.save()
