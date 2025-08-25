@@ -5,6 +5,7 @@ import AuthContext from '../context/authContext';
 import toast from 'react-hot-toast';
 import Sidebar from './Sidebar';
 import SupplierForm from './SupplierForm';
+import TableSkeleton from './TableSkeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -85,10 +86,10 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
                             {user?.is_staff && <TableHead className="text-right">Actions</TableHead>}
                         </TableRow>
                     </TableHeader>
-                    <TableBody>
+                    <TableBody> 
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={user?.is_staff ? 6 : 5} className="h-24 text-center">
+                                <TableCell  className="h-24 text-center">
                                     Loading suppliers...
                                 </TableCell>
                             </TableRow>
@@ -126,11 +127,7 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
                                 </TableRow>
                             ))
                         ) : (
-                            <TableRow>
-                                <TableCell colSpan={user?.is_staff ? 6 : 5} className="h-24 text-center">
-                                    No suppliers found.
-                                </TableCell>
-                            </TableRow>
+                            <TableSkeleton columnCount={user?.is_staff ? 6 : 5} />
                         )}
                     </TableBody>
                 </Table>

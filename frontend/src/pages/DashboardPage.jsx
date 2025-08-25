@@ -64,7 +64,7 @@ const AdminDashboard = () => {
                     </Card>
                 </Link>
 
-                <Link to="/suppliers">
+                <Link to="/purchase-order">
                     <Card className={cn(dueOrdersCount > 0 && "border-red-500/50 bg-red-500/10 hover:bg-red-500/20")}>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Payments Due</CardTitle>

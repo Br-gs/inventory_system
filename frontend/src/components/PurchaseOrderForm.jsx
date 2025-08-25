@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import ProductCombobox from './ProductCombobox';
 import SupplierCombobox from './SupplierCombobox';
-import { Trash2 } from 'lucide-react';
+import { Trash2, ExternalLink } from 'lucide-react';
 import { useEffect} from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -84,14 +84,41 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
 
   const onSubmit = async (data) => {
     try {
-      // Debug: Log the data being sent
       console.log('Submitting purchase order data:', data);
       
+      let response;
       if (orderToEdit) {
-        await purchasingService.updatePurchaseOrder(orderToEdit.id, data);
-        toast.success("Purchase order successfully updated.");
+        response = await purchasingService.updatePurchaseOrder(orderToEdit.id, data);
+        console.log('Update response:', response.data); // Debug log
+        
+        if (response.data.inventory_processed) {
+          const totalItems = response.data.items_processed || 0;
+          toast.success(
+            (t) => (
+              <div className="flex flex-col gap-2">
+                <span className="font-semibold">Purchase order updated successfully!</span>
+                <span className="text-sm text-gray-600">
+                  {totalItems} items added to inventory with updated prices
+                </span>
+                <button 
+                  onClick={() => {
+                    window.open('/movements', '_blank');
+                    toast.dismiss(t.id);
+                  }}
+                  className="flex items-center gap-1 px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors self-start"
+                >
+                  <ExternalLink size={14} />
+                  View Inventory Movements
+                </button>
+              </div>
+            ),
+            { duration: 4000 }
+          );
+        } else {
+          toast.success("Purchase order successfully updated.");
+        }
       } else {
-        await purchasingService.createPurchaseOrder(data);
+        response = await purchasingService.createPurchaseOrder(data);
         toast.success("Purchase order successfully created.");
       }
       onSuccess();
@@ -118,7 +145,7 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
       <Label>Items in the Order</Label>
       <div className="space-y-3 rounded-md border p-4 max-h-96 overflow-y-auto">
         {/* Desktop Header - only show on larger screens */}
-        <div className="hidden lg:grid grid-cols-12 gap-2 text-sm font-medium text-gray-600 pb-2 border-b border-gray-200">
+        <div className="hidden lg:grid grid-cols-12 gap-2 text-sm font-medium text-white-600 pb-2 border-b border-gray-200">
           <div className="col-span-5">Product</div>
           <div className="col-span-2 text-center">Quantity</div>
           <div className="col-span-2 text-center">Cost/Unit</div>
@@ -183,9 +210,9 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
                   </div>
                 </div>
                 
-                <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                <div className="flex justify-between items-center pt-2 border-t">
                   <span className="text-sm text-gray-600">Item Total:</span>
-                  <span className="font-semibold text-sm">${itemTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span className="font-semibold">${itemTotal.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -227,7 +254,7 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
                   </div>
                 </div>
                 <div className="col-span-2 text-center font-medium text-sm">
-                  ${itemTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ${itemTotal.toFixed(2)}
                 </div>
                 <div className="col-span-1 flex justify-center">
                   <Button 
@@ -252,7 +279,7 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
               const quantity = watchedItems[index]?.quantity || 0;
               const costPerUnit = watchedItems[index]?.cost_per_unit || 0;
               return sum + (quantity * costPerUnit);
-            }, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            }, 0).toFixed(2)}
           </div>
         </div>
         
@@ -282,17 +309,41 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
         {orderToEdit && (
           <div className="grid gap-2">
             <Label>Status</Label>
-            <Select value={watchedStatus} onValueChange={(value) => setValue('status', value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="received">Received</SelectItem>
-                <SelectItem value="canceled">Canceled</SelectItem>
-              </SelectContent>
-            </Select>
+            {orderToEdit.status === 'received' ? (
+              <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded">
+                <span className="text-green-700 font-medium">✓ Received</span>
+                <span className="text-sm text-green-600">(Status cannot be changed)</span>
+              </div>
+            ) : (
+              <Select 
+                value={watchedStatus} 
+                onValueChange={(value) => {
+                  if (value === 'received') {
+                    if (window.confirm(
+                      "⚠️ IMPORTANT: Once you mark this order as 'Received':\n\n" +
+                      "• Inventory will be automatically updated\n" +
+                      "• Product prices will be recalculated\n" +
+                      "• Status CANNOT be changed again\n\n" +
+                      "Are you sure you want to mark this order as received?"
+                    )) {
+                      setValue('status', value);
+                    }
+                  } else {
+                    setValue('status', value);
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="received">Received</SelectItem>
+                  <SelectItem value="canceled">Canceled</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
         )}
       </div>
