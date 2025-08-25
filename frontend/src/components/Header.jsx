@@ -36,9 +36,9 @@ const Header = () => {
             </NavLink>
             {user.is_staff && (
                 <>
+                  <NavLink to="/purchase-order" className={getNavLinkClass}>Purchases</NavLink>
                   <NavLink to="/reports" className={getNavLinkClass}>Reports</NavLink>
                   <NavLink to="/admin/users" className={getNavLinkClass}>Users</NavLink>
-                  <NavLink to="/purchase-order" className={getNavLinkClass}>Purchases</NavLink>
                 </>
               )}
             </nav>

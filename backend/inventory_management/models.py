@@ -21,6 +21,14 @@ class InventoryMovement(models.Model):
     quantity = models.IntegerField(validators=[MinValueValidator(1)])
     date = models.DateTimeField(auto_now_add=True)
 
+    unit_price = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        null=True, 
+        blank=True,
+        help_text="Unit price at the time of the movement (mainly for INPUT movements)"
+    )
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -43,6 +51,14 @@ class InventoryMovement(models.Model):
         default=MOVEMENT_INPUT,
     )
 
+    @property
+    def total_value(self):
+        """Calculate total value of the movement"""
+        if self.unit_price:
+            return self.quantity * self.unit_price
+        return None
+
     def __str__(self):
         user_info = f" by {self.user.username}" if self.user else ""
-        return f"{self.product.name} - {self.get_movement_type_display()} - {self.quantity}{user_info}"
+        price_info = f" at ${self.unit_price}" if self.unit_price else ""
+        return f"{self.product.name} - {self.get_movement_type_display()} - {self.quantity}{price_info}{user_info}"

@@ -55,7 +55,8 @@ class ProductSerializer(serializers.ModelSerializer):
             create_inventory_movement(
                 product=product,
                 quantity=initial_quantity,
-                movement_type=InventoryMovement.MOVEMENT_INPUT
+                movement_type=InventoryMovement.MOVEMENT_INPUT,
+                unit_price=product.price
             )
         
         product.refresh_from_db()  # Ensure the product has the latest data
@@ -68,7 +69,9 @@ class InventoryMovementSerializer(serializers.ModelSerializer):
         source="get_movement_type_display", read_only=True
     )
     user_username = serializers.CharField(source="user.username", read_only=True, allow_null=True)
-
+    total_value = serializers.DecimalField(
+        max_digits=12, decimal_places=2, read_only=True
+    )
 
     class Meta:
         model = InventoryMovement
@@ -77,12 +80,14 @@ class InventoryMovementSerializer(serializers.ModelSerializer):
             "product",
             "product_name",
             "quantity",
+            "unit_price",
+            "total_value",
             "movement_type",
             "movement_type_display",
             "date",
             "user_username",
         ]
-        read_only_fields = ["date", "product_name", "movement_type_display", "user_username"]
+        read_only_fields = ["date", "product_name", "movement_type_display", "user_username", "total_value"]
 
     def validate_quantity(self, value):
         if not isinstance(value, int):
@@ -106,6 +111,7 @@ class InventoryMovementSerializer(serializers.ModelSerializer):
                 quantity=validated_data["quantity"],
                 movement_type=validated_data["movement_type"],
                 user=user,
+                unit_price=validated_data.get("unit_price")
             )
             return movement
         except ValueError as e:

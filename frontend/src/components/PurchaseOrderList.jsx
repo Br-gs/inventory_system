@@ -85,47 +85,18 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
         }
     };
 
-     const handleReceive = async (poId) => {
-        if (window.confirm("Mark this order as received?")) {
-            try {
-                const response = await purchasingService.receivePurchaseOrder(poId);
-                console.log('Receive response:', response.data); // Debug log
-                
-                // Check if inventory was processed
-                if (response.data.inventory_processed) {
-                    const totalItems = response.data.items_processed || 0;
-                    toast.success(
-                        (t) => (
-                            <div className="flex flex-col gap-2">
-                                <span className="font-semibold">Order marked as received!</span>
-                                <span className="text-sm text-gray-600">
-                                    {totalItems} items added to inventory with updated prices
-                                </span>
-                                <button 
-                                    onClick={() => {
-                                        window.open('/movements', '_blank');
-                                        toast.dismiss(t.id);
-                                    }}
-                                    className="flex items-center gap-1 px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors self-start"
-                                >
-                                    <ExternalLink size={14} />
-                                    View Inventory Movements
-                                </button>
-                            </div>
-                        ),
-                        { duration: 8000 }
-                    );
-                } else {
-                    toast.success("Order marked as received.");
-                }
-                
-                setTimeout(() => onRefresh(), 100);
-            } catch (error) {
-                console.error('Error receiving order:', error);
-                toast.error("Could not update order status.");
-            }
+    const handleReceive = async (poId) => {
+    if (window.confirm("Mark this order as received?")) {
+        try {
+            await purchasingService.receivePurchaseOrder(poId);
+            toast.success("Order marked as received successfully!");
+            setTimeout(() => onRefresh(), 100);
+        } catch (error) {
+            console.error('Error receiving order:', error);
+            toast.error("Could not update order status.");
         }
     }
+}
 
     const handleCloseSidebar = () => {
         setIsSidebarOpen(false);

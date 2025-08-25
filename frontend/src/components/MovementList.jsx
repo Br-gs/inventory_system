@@ -3,6 +3,7 @@ import { useMovements } from "../hooks";
 import MovementFilters from "./MovementFilters";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import TableSkeleton from "./TableSkeleton";
 
 const PAGE_SIZE = 10
 
@@ -38,6 +39,11 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
         });
     };
 
+    const formatCurrency = (value) => {
+        if (value === null || value === undefined) return 'N/A';
+        return `$${Number(value).toFixed(2)}`;
+    };
+
     if (error) return <p className="text-red-500 text-center p-4">{error}</p>;
 
     return (
@@ -54,24 +60,38 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
                         <TableRow>
                             <TableHead>Product</TableHead>
                             <TableHead>Type of Movement</TableHead>
-                            <TableHead>Quantity</TableHead>
+                            <TableHead className="text-center">Quantity</TableHead>
+                            <TableHead className="text-center">Unit Price</TableHead>
+                            <TableHead className="text-center">Total Value</TableHead>
                             <TableHead>Date and Time</TableHead>
                             <TableHead>Made By</TableHead> 
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {loading ? (
-                            <TableRow>
-                                <TableCell colSpan="4" className="h-24 text-center">
-                                    Loading history...
-                                </TableCell>
-                            </TableRow>
+                            <TableSkeleton columns={6} />
                         ) : movements.length > 0 ? (
                             movements.map((movement) => (
                                 <TableRow key={movement.id}>
                                     <TableCell className="font-medium">{movement.product_name}</TableCell>
-                                    <TableCell>{movement.movement_type_display}</TableCell>
-                                    <TableCell>{movement.quantity}</TableCell>
+                                    <TableCell>
+                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                                            ${movement.movement_type === 'IN' 
+                                                ? 'bg-green-100 text-green-800' 
+                                                : movement.movement_type === 'OUT' 
+                                                ? 'bg-red-100 text-red-800'
+                                                : 'bg-yellow-100 text-yellow-800'
+                                            }`}>
+                                            {movement.movement_type_display}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell className="text-center font-mono">{movement.quantity}</TableCell>
+                                    <TableCell className="text-center font-mono">
+                                        {formatCurrency(movement.unit_price)}
+                                    </TableCell>
+                                    <TableCell className="text-center font-mono font-semibold">
+                                        {formatCurrency(movement.total_value)}
+                                    </TableCell>
                                     <TableCell>
                                         {new Date(movement.date).toLocaleString('es-CO', {
                                             year: 'numeric', month: 'short', day: 'numeric',
@@ -84,7 +104,7 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan="4" className="h-24 text-center">
+                                <TableCell colSpan="7" className="h-24 text-center">
                                     Don't found movements.
                                 </TableCell>
                             </TableRow>

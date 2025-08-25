@@ -68,7 +68,8 @@ def receive_purchase_order(purchase_order: PurchaseOrder, user):
             product=product, 
             quantity=item.quantity, 
             movement_type="IN", 
-            user=user
+            user=user,
+            unit_price=item.cost_per_unit  # Use purchase price
         )
         
         # Update the product price to the new weighted average

@@ -171,6 +171,7 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
                 quantity=item.quantity,
                 movement_type="IN",
                 user=user,
+                unit_price=item.cost_per_unit 
             )
 
             # Update product price

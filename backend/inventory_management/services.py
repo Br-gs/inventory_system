@@ -4,7 +4,11 @@ from django.contrib.auth.models import User
 
 @transaction.atomic
 def create_inventory_movement(
-    product: Product, quantity: int, movement_type: str, user: User
+    product: Product,
+     quantity: int,
+     movement_type: str,
+     user: User,
+     unit_price: float = None
 ) -> InventoryMovement:
     """
     Create an inventory movement and update the product's stock accordingly.
@@ -14,6 +18,7 @@ def create_inventory_movement(
         quantity (int): Quantity to move
         movement_type (str): Type of movement (IN, OUT, ADJ)
         user (User, optional): User performing the movement
+        unit_price (float, optional): Unit price for INPUT movements
     
     Returns:
         InventoryMovement: Created movement record
@@ -24,6 +29,9 @@ def create_inventory_movement(
 
     if quantity <= 0:
         raise ValueError("Quantity must be greater than zero.")
+
+    if unit_price is None and movement_type in [InventoryMovement.MOVEMENT_INPUT, InventoryMovement.MOVEMENT_OUTPUT]:
+        unit_price = product.price
 
     # update product stock
     if movement_type == InventoryMovement.MOVEMENT_INPUT:
@@ -41,11 +49,11 @@ def create_inventory_movement(
 
     product.save()
 
-    # create inventory movement record
     movement = InventoryMovement.objects.create(
         product=product, 
         quantity=quantity, 
         movement_type=movement_type,
-        user=user
+        user=user,
+        unit_price=unit_price
     )
     return movement
