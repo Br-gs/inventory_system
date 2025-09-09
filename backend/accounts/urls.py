@@ -7,9 +7,10 @@ from .user_api import (
     UserListView,
     MyTokenObtainPairView,
     MyTokenRefreshView,
-    UserAdminDetailView
+    UserAdminDetailView,
+    UserAccessibleLocationsView,
 )
-from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
+from rest_framework_simplejwt.views import TokenVerifyView
 
 app_name = "accounts"
 
@@ -23,6 +24,12 @@ urlpatterns = [
     path("register/", RegisterView.as_view(), name="register"),
     path("user/profile/", UserDetailView.as_view(), name="user_profile"),
     path("user/change-password/", ChangePasswordView.as_view(), name="change_password"),
+    path(
+        "user/accessible-locations/",
+        UserAccessibleLocationsView.as_view(),
+        name="user_accessible_locations",
+    ),
+    # Admin user management
     path("users/", UserListView.as_view(), name="user_list"),
-    path('users/<int:pk>/', UserAdminDetailView.as_view(), name='user_admin_detail'),
+    path("users/<int:pk>/", UserAdminDetailView.as_view(), name="user_admin_detail"),
 ]

@@ -1,6 +1,7 @@
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView
+from rest_framework.decorators import action
 from django.contrib.auth.models import User
 from rest_framework.views import APIView
 from .serializers import (
@@ -8,7 +9,8 @@ from .serializers import (
     RegisterSerializer,
     ChangePasswordSerializer,
     MyTokenObtainPairSerializer,
-    UserAdminSerializer
+    UserAdminSerializer,
+    UserCreateSerializer,
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
@@ -55,29 +57,25 @@ class RegisterView(generics.CreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# Allows authenticated users to view and update their information.
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
-    # queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    # returns the current user authenticated
     def get_object(self):
         return self.request.user
 
-    # register when a user deletes their account
     def perform_destroy(self, instance):
         logger.info(
             f"User {instance.username} (ID: {instance.id}) deleted their account."
         )
         super().perform_destroy(instance)
 
-    # register when a user updates their profile
     def perform_update(self, serializer):
         logger.info(
             f"User {self.request.user.username} (ID: {self.request.user.id}) updated their profile."
         )
         serializer.save()
+
 
 class ChangePasswordView(GenericAPIView):
     serializer_class = ChangePasswordSerializer
@@ -143,7 +141,6 @@ class MyTokenRefreshView(TokenRefreshView):
             return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
 
 
-# view to handle user logout and blacklist the refresh token
 class LogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -188,18 +185,95 @@ class LogoutView(APIView):
             )
 
 
-class UserListView(generics.ListAPIView):
-    serializer_class = UserSerializer
+class UserListView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return UserCreateSerializer
+        return UserSerializer
 
     def get_queryset(self):
         return (
             User.objects.filter(is_active=True)
-            .select_related("profile")
+            .select_related("profile", "profile__default_location")
+            .prefetch_related("profile__allowed_locations")
             .order_by("-date_joined")
         )
 
+    def create(self, request, *args, **kwargs):
+        """Create a new user (admin only)"""
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            logger.info(
+                f"New user created by admin {request.user.username}: {user.username}"
+            )
+
+            # Return the created user with full details
+            response_serializer = UserSerializer(user)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class UserAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.all()
+    queryset = User.objects.select_related(
+        "profile", "profile__default_location"
+    ).prefetch_related("profile__allowed_locations")
     serializer_class = UserAdminSerializer
     permission_classes = [permissions.IsAdminUser]
+
+    def perform_update(self, serializer):
+        user = serializer.save()
+        logger.info(
+            f"User {user.username} updated by admin {self.request.user.username}"
+        )
+
+    def perform_destroy(self, instance):
+        logger.info(
+            f"User {instance.username} deleted by admin {self.request.user.username}"
+        )
+        super().perform_destroy(instance)
+
+
+# View to get accessible locations for the current user
+class UserAccessibleLocationsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        """Get locations accessible to the current user"""
+        user = request.user
+
+        if not hasattr(user, "profile"):
+            return Response(
+                {"error": "User profile not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        accessible_locations = user.profile.get_accessible_locations()
+        locations_data = [
+            {
+                "id": location.id,
+                "name": location.name,
+                "address": location.address,
+                "is_default": location.id
+                == (
+                    user.profile.default_location.id
+                    if user.profile.default_location
+                    else None
+                ),
+            }
+            for location in accessible_locations
+        ]
+
+        return Response(
+            {
+                "locations": locations_data,
+                "can_change_location": user.profile.can_change_location,
+                "default_location_id": (
+                    user.profile.default_location.id
+                    if user.profile.default_location
+                    else None
+                ),
+            }
+        )
