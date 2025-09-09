@@ -18,5 +18,6 @@ import { LoadingSpinner } from './LoadingSpinner';
 import ProductCombobox from './ProductCombobox';
 import SupplierList from './SuppliersList';
 import PurchaseOrderList from './PurchaseOrderList';
+import UserCreateForm from './UserCreateForm';
 
-export { ProductList, MovementList, Modal, ProductForm, MovementForm, SearchSuggestions, ProductFilters, Layout, Sidebar, AdminRoute, ChangepasswordForm, ReportFilters, ChartContainer, SalesChart, StockLevelsChart, TopProductsChart, LoadingSpinner, ProductCombobox, SupplierList, PurchaseOrderList};
+export { ProductList, MovementList, Modal, ProductForm, MovementForm, SearchSuggestions, ProductFilters, Layout, Sidebar, AdminRoute, ChangepasswordForm, ReportFilters, ChartContainer, SalesChart, StockLevelsChart, TopProductsChart, LoadingSpinner, ProductCombobox, SupplierList, PurchaseOrderList, UserCreateForm };
