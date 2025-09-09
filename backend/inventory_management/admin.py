@@ -3,9 +3,14 @@ from .models import Product, InventoryMovement
 
 
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'price', 'quantity', 'is_active')
+    list_display = ('name', 'price', 'total_quantity', 'is_active')
     list_filter = ('is_active',)
     search_fields = ('name', 'description')
+    
+    def total_quantity(self, obj):
+        """Display total quantity across all locations"""
+        return obj.get_total_quantity()
+    total_quantity.short_description = 'Total Quantity'
 
 
 class InventoryMovementAdmin(admin.ModelAdmin):

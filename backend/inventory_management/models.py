@@ -34,7 +34,9 @@ class ProductLocationStock(models.Model):
         Product, on_delete=models.CASCADE, related_name="stock_locations"
     )
     location = models.ForeignKey(
-        "locations.Location", on_delete=models.CASCADE, related_name="product_stocks"
+        "location.Location", 
+        on_delete=models.CASCADE, 
+        related_name="product_stocks",
     )
     quantity = models.IntegerField(default=0)
 
@@ -51,7 +53,7 @@ class InventoryMovement(models.Model):
         Product, on_delete=models.CASCADE, related_name="movements"
     )
     location = models.ForeignKey(
-        "locations.Location",
+        "location.Location",
         on_delete=models.CASCADE,
         related_name="inventory_movements",
     )
@@ -91,7 +93,7 @@ class InventoryMovement(models.Model):
     )
 
     destination_location = models.ForeignKey(
-        "locations.Location",
+        "location.Location",
         on_delete=models.CASCADE,
         related_name="incoming_transfers",
         null=True,

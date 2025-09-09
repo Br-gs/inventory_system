@@ -7,16 +7,14 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from .filters import MovementFilter, ProductFilter
 from rest_framework.views import APIView
-from django.db.models.functions import TruncMonth, Cast
+from django.db.models.functions import TruncMonth
 from django.db.models import (
     Sum,
-    Count,
     F,
     DateField,
     ExpressionWrapper,
     Subquery,
     OuterRef,
-    Q,
 )
 from datetime import datetime, timedelta
 from django.utils import timezone

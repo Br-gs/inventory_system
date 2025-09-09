@@ -3,7 +3,9 @@ from django.db import transaction
 from .models import PurchaseOrder, PurchaseOrderItem
 from suppliers.serializers import SupplierSerializer
 from inventory_management.serializers import ProductSerializer
-from .services import calculate_weighted_average_cost, receive_purchase_order
+from location.serializers import LocationSerializer
+from location.models import Location
+from .services import calculate_weighted_average_cost
 from inventory_management.services import create_inventory_movement
 from django.utils import timezone
 from datetime import timedelta
@@ -20,19 +22,14 @@ class PurchaseOrderItemSerializer(serializers.ModelSerializer):
 
 class PurchaseOrderSerializer(serializers.ModelSerializer):
     """
-    Serializer for purchase orders. Handles nested item creation and updates.
+    Serializer for purchase orders with location support.
     """
 
-    # For reading, show nested items
     items = PurchaseOrderItemSerializer(many=True)
-
-    # For reading, show supplier details
     supplier = SupplierSerializer(read_only=True)
-
-    # For writing, only need supplier_id
     supplier_id = serializers.IntegerField(write_only=True)
-
-    # For reading, display status name
+    destination_location = LocationSerializer(read_only=True)
+    destination_location_id = serializers.IntegerField(write_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
 
     class Meta:
@@ -41,6 +38,8 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
             "id",
             "supplier",
             "supplier_id",
+            "destination_location",
+            "destination_location_id",
             "status",
             "status_display",
             "order_date",
@@ -54,10 +53,24 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["created_by", "total_cost", "order_date"]
 
+    def validate_destination_location_id(self, value):
+        """Validate that the user has access to the destination location"""
+        user = self.context["request"].user
+
+        if not user.is_staff and hasattr(user, "profile"):
+            try:
+                location = Location.objects.get(id=value)
+                if not user.profile.can_access_location(location):
+                    raise serializers.ValidationError(
+                        "You don't have permission to create purchase orders for this location"
+                    )
+            except Location.DoesNotExist:
+                raise serializers.ValidationError("Location not found")
+
+        return value
+
     def validate_status(self, value):
-        """
-        Validate that status cannot be changed once it's 'received'.
-        """
+        """Validate that status cannot be changed once it's 'received'."""
         if self.instance and self.instance.status == "received" and value != "received":
             raise serializers.ValidationError(
                 "Cannot change status of a received purchase order. Once received, the status is final."
@@ -68,34 +81,41 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         items_data = validated_data.pop("items")
         supplier_id = validated_data.pop("supplier_id")
+        destination_location_id = validated_data.pop("destination_location_id")
 
-        # Assign supplier and user
+        # Set default location if not provided
+        if not destination_location_id:
+            user = self.context["request"].user
+            if hasattr(user, "profile") and user.profile.default_location:
+                destination_location_id = user.profile.default_location.id
+            else:
+                raise serializers.ValidationError("destination_location_id is required")
+
         validated_data["supplier_id"] = supplier_id
+        validated_data["destination_location_id"] = destination_location_id
         validated_data["created_by"] = self.context["request"].user
 
         purchase_order = PurchaseOrder.objects.create(**validated_data)
 
         # Create items
         for item_data in items_data:
-            PurchaseOrderItem.objects.create(
-                purchase_order=purchase_order, **item_data
-            )
+            PurchaseOrderItem.objects.create(purchase_order=purchase_order, **item_data)
 
         return purchase_order
 
     @transaction.atomic
     def update(self, instance, validated_data):
         old_status = instance.status
-        print(f"DEBUG: Old status: {old_status}")
-
         items_data = validated_data.pop("items", None)
-
         supplier_id = validated_data.pop("supplier_id", None)
+        destination_location_id = validated_data.pop("destination_location_id", None)
+
         if supplier_id:
             validated_data["supplier_id"] = supplier_id
+        if destination_location_id:
+            validated_data["destination_location_id"] = destination_location_id
 
         new_status = validated_data.get("status", instance.status)
-        print(f"DEBUG: New status: {new_status}")
 
         # Update fields
         for attr, value in validated_data.items():
@@ -118,8 +138,6 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
         # Handle inventory if received
         inventory_processed = False
         if old_status != "received" and new_status == "received":
-            print("DEBUG: Processing inventory for received order")
-
             if not instance.received_date:
                 instance.received_date = timezone.now().date()
 
@@ -135,7 +153,6 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
                 instance, self.context["request"].user
             )
             inventory_processed = True
-            print(f"DEBUG: Inventory processed, total items: {total_items}")
 
         instance.save()
 
@@ -148,13 +165,22 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
         return instance
 
     def _process_received_inventory(self, purchase_order, user):
-        """
-        Process inventory updates when purchase order is marked as received.
-        """
+        """Process inventory updates when purchase order is marked as received."""
         total_items = 0
         for item in purchase_order.items.all():
             product = item.product
-            current_quantity = product.quantity
+
+            # Get current stock at destination location
+            from inventory_management.models import ProductLocationStock
+
+            try:
+                location_stock = ProductLocationStock.objects.get(
+                    product=product, location=purchase_order.destination_location
+                )
+                current_quantity = location_stock.quantity
+            except ProductLocationStock.DoesNotExist:
+                current_quantity = 0
+
             current_price = product.price
 
             # Calculate new weighted average cost
@@ -165,16 +191,18 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
                 new_price=item.cost_per_unit,
             )
 
-            # Create inventory movement (updates quantity)
+            # Create inventory movement (updates quantity at location)
             create_inventory_movement(
                 product=product,
+                location=purchase_order.destination_location,
                 quantity=item.quantity,
                 movement_type="IN",
                 user=user,
-                unit_price=item.cost_per_unit 
+                unit_price=item.cost_per_unit,
+                notes=f"Purchase Order #{purchase_order.id} - {purchase_order.supplier.name}",
             )
 
-            # Update product price
+            # Update product price (global price)
             product.refresh_from_db()
             product.price = new_avg_cost
             product.save()

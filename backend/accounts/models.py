@@ -39,7 +39,7 @@ class UserProfile(models.Model):
     )
 
     default_location = models.ForeignKey(
-        "locations.Location",
+        Location,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -52,7 +52,7 @@ class UserProfile(models.Model):
     )
 
     allowed_locations = models.ManyToManyField(
-        "locations.Location",
+        Location,
         blank=True,
         related_name="allowed_users",
         help_text="Locations this user is allowed to operate in",

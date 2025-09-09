@@ -38,7 +38,7 @@ class PurchaseOrder(models.Model):
         help_text="Payment terms in days for this specific order",
     )
     destination_location = models.ForeignKey(
-        "locations.Location",
+        "location.Location",
         on_delete=models.PROTECT,
         related_name="purchase_orders",
         help_text="Location where products will be received",
