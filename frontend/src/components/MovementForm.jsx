@@ -6,7 +6,7 @@ import inventoryService from "../api/inventoryService";
 import toast from "react-hot-toast";
 import AuthContext from '../context/authContext';
 import ProductCombobox from "./ProductCombobox";
-import LocationSelector from "./LocationSelector";
+import LocationSelector from "./locations/LocationSelector";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

@@ -1,10 +1,10 @@
 import { useContext, useState} from "react";
-import { inventoryService} from "../api";
+import { inventoryService } from "../api";
 import AuthContext from "../context/authContext";
 import toast from "react-hot-toast";
 import ProductFilters from "./ProductFilters";
 import ProductStockCard from "./locations/ProductStockCard";
-import {useProducts} from "../hooks";
+import { useProducts } from "../hooks";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -12,9 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import TableSkeleton from "./TableSkeleton";
-import { MoreHorizontal, Package} from 'lucide-react';
+import { MoreHorizontal, Package } from 'lucide-react';
 
-const PAGE_SIZE = 10
+const PAGE_SIZE = 10;
 
 const ProductList = ({ filters, setFilters, onRefresh, refreshTrigger, onEditProduct }) => {
     const { user } = useContext(AuthContext);
@@ -147,43 +147,72 @@ const ProductList = ({ filters, setFilters, onRefresh, refreshTrigger, onEditPro
                             ))}
                         </div>
                     ) : (
-                        <TableSkeleton columnCount={user?.is_staff ? 6 : 5} />
+                        <div className="rounded-md border">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead className="hidden md:table-cell">Description</TableHead>
+                                        <TableHead>Price</TableHead>
+                                        <TableHead>Stock</TableHead>
+                                        <TableHead className="hidden lg:table-cell">Status</TableHead>
+                                        {user?.is_staff && <TableHead className="text-right">Actions</TableHead>}
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    <TableSkeleton columnCount={user?.is_staff ? 6 : 5} />
+                                </TableBody>
+                            </Table>
+                        </div>
                     )}
                 </div>
             ) : (
                 <>
                     {viewMode === 'cards' ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {products.map((product) => (
-                                <div key={product.id} className="relative">
-                                    <ProductStockCard 
-                                        product={product} 
-                                        selectedLocation={selectedLocation}
-                                    />
-                                    {user?.is_staff && (
-                                        <div className="absolute top-2 right-2">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem onClick={() => onEditProduct(product)}>
-                                                        Edit
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem 
-                                                        onClick={() => handleDelete(product.id)} 
-                                                        className="text-red-500 focus:text-red-500"
-                                                    >
-                                                        Delete
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </div>
-                                    )}
+                            {products.length > 0 ? (
+                                products.map((product) => (
+                                    <div key={product.id} className="relative">
+                                        <ProductStockCard 
+                                            product={product} 
+                                            selectedLocation={selectedLocation}
+                                        />
+                                        {user?.is_staff && (
+                                            <div className="absolute top-2 right-2">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem onClick={() => onEditProduct(product)}>
+                                                            Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem 
+                                                            onClick={() => handleDelete(product.id)} 
+                                                            className="text-red-500 focus:text-red-500"
+                                                        >
+                                                            Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="col-span-full flex flex-col items-center justify-center py-12">
+                                    <Package className="h-12 w-12 text-muted-foreground mb-4" />
+                                    <p className="text-lg font-medium mb-2">No products found</p>
+                                    <p className="text-sm text-muted-foreground text-center">
+                                        {selectedLocation 
+                                            ? "No products available at the selected location"
+                                            : "Try adjusting your search criteria"
+                                        }
+                                    </p>
                                 </div>
-                            ))}
+                            )}
                         </div>
                     ) : (
                         <div className="rounded-md border">
