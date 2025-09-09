@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "accounts",
     "suppliers",
     "purchasing",
+    "location",
 ]
 
 MIDDLEWARE = [
@@ -165,7 +166,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # CORS authorization
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  
+    "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://172.27.185.111:5173",
 ]

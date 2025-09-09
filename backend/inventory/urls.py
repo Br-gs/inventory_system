@@ -11,7 +11,8 @@ urlpatterns = [
     path("api/", include("inventory_management.urls")),
     path("api/", include("accounts.urls")),
     path("api/", include("suppliers.urls")),
-    path("api/", include("purchasing.urls")), 
+    path("api/", include("purchasing.urls")),
+    path("api/locations/", include("locations.urls")),
     # urls for API documentation
     # endpoint for schema generation
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
