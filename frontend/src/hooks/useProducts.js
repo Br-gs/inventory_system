@@ -12,7 +12,7 @@ const useProducts = (filters, page, refreshTrigger) => {
         const requestKey = JSON.stringify({ ...currentFilters, page: currentPage });
         
         // Skip if this is the same request as the previous one
-        if (previousRequestRef.current === requestKey) {
+        if (previousRequestRef.current === requestKey && refreshTrigger === 0) {
             return;
         }
         
@@ -22,11 +22,15 @@ const useProducts = (filters, page, refreshTrigger) => {
         
         try {
             const params = new URLSearchParams();
+            
+            // Add filters
             if (currentFilters.search) params.append('search', currentFilters.search);
-            if (currentFilters.is_active) params.append('is_active', currentFilters.is_active);
-            if (currentFilters.low_stock) params.append('low_stock', currentFilters.low_stock);
-            if (currentFilters.location) params.append('location', currentFilters.location);
-            if (currentPage) params.append('page', currentPage);
+            if (currentFilters.is_active === 'true') params.append('is_active', 'true');
+            if (currentFilters.low_stock === 'true') params.append('low_stock', 'true');
+            if (currentFilters.location) params.append('has_stock_at_location', currentFilters.location);
+            
+            // Add pagination
+            if (currentPage > 1) params.append('page', currentPage);
 
             const response = await inventoryService.getProducts(params, signal);
             
@@ -43,7 +47,7 @@ const useProducts = (filters, page, refreshTrigger) => {
                 setLoading(false);
             }
         }
-    }, []);
+    }, [refreshTrigger]);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -61,7 +65,7 @@ const useProducts = (filters, page, refreshTrigger) => {
             clearTimeout(debounceTimer);
             controller.abort();
         };
-    }, [fetchProducts, refreshTrigger, filters, page]);
+    }, [fetchProducts, filters, page, refreshTrigger]);
 
     return {
         data,
@@ -72,4 +76,3 @@ const useProducts = (filters, page, refreshTrigger) => {
 };
 
 export default useProducts;
-
