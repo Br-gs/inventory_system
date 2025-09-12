@@ -12,7 +12,8 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
         product: initialProductFilter || '',
         movement_type: '',
         start_date: '',
-        end_date: ''
+        end_date: '',
+        location: ''
     });
     const [currentPage, setCurrentPage] = useState(1);
     
@@ -28,6 +29,15 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
             ...prevFilters,
             [name]: value
         }));
+        setCurrentPage(1); // Reset to first page when filters change
+    };
+
+    const handleLocationChange = (locationId) => {
+        setFilters((prevFilters) => ({
+            ...prevFilters,
+            location: locationId
+        }));
+        setCurrentPage(1); // Reset to first page when location changes
     };
 
     const handleClearFilters = () => {
@@ -35,8 +45,10 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
             product: '',
             movement_type: '',
             start_date: '',
-            end_date: ''
+            end_date: '',
+            location: ''
         });
+        setCurrentPage(1); // Reset to first page
     };
 
     const formatCurrency = (value) => {
@@ -50,7 +62,9 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
         <div className="space-y-4">
             <MovementFilters 
                 filters={filters} 
-                onFilterChange={handleFilterChange} 
+                onFilterChange={handleFilterChange}
+                onLocationChange={handleLocationChange}
+                selectedLocation={filters.location}
                 onClearFilters={handleClearFilters}
             />
             
@@ -59,6 +73,7 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Product</TableHead>
+                            <TableHead>Location</TableHead>
                             <TableHead>Type of Movement</TableHead>
                             <TableHead className="text-center">Quantity</TableHead>
                             <TableHead className="text-center">Unit Price</TableHead>
@@ -69,17 +84,27 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
                     </TableHeader>
                     <TableBody>
                         {loading ? (
-                            <TableSkeleton columns={6} />
+                            <TableSkeleton columns={8} />
                         ) : movements.length > 0 ? (
                             movements.map((movement) => (
                                 <TableRow key={movement.id}>
                                     <TableCell className="font-medium">{movement.product_name}</TableCell>
+                                    <TableCell className="text-sm">
+                                        {movement.location_name}
+                                        {movement.destination_location_name && (
+                                            <span className="text-muted-foreground">
+                                                {' → ' + movement.destination_location_name}
+                                            </span>
+                                        )}
+                                    </TableCell>
                                     <TableCell>
                                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
                                             ${movement.movement_type === 'IN' 
                                                 ? 'bg-green-100 text-green-800' 
                                                 : movement.movement_type === 'OUT' 
                                                 ? 'bg-red-100 text-red-800'
+                                                : movement.movement_type === 'TRF'
+                                                ? 'bg-blue-100 text-blue-800'
                                                 : 'bg-yellow-100 text-yellow-800'
                                             }`}>
                                             {movement.movement_type_display}
@@ -104,7 +129,7 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan="7" className="h-24 text-center">
+                                <TableCell colSpan="8" className="h-24 text-center">
                                     Don't found movements.
                                 </TableCell>
                             </TableRow>
@@ -119,7 +144,12 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
                         <PaginationItem>
                             <PaginationPrevious 
                                 href="#" 
-                                onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.max(1, p - 1)); }}
+                                onClick={(e) => { 
+                                    e.preventDefault(); 
+                                    if (currentPage > 1) {
+                                        setCurrentPage(p => p - 1); 
+                                    }
+                                }}
                                 disabled={currentPage === 1}
                                 className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
                             />
@@ -137,7 +167,12 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
                         <PaginationItem>
                             <PaginationNext 
                                 href="#" 
-                                onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.min(totalPages, p + 1)); }}
+                                onClick={(e) => { 
+                                    e.preventDefault(); 
+                                    if (currentPage < totalPages) {
+                                        setCurrentPage(p => p + 1); 
+                                    }
+                                }}
                                 disabled={currentPage >= totalPages}
                                 className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
                             />

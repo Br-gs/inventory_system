@@ -73,18 +73,24 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
         }
     }, [onRefresh]);
 
-    const getStockDisplay = useCallback((product) => {
+    const getStockInfo = useCallback((product) => {
         if (selectedLocation) {
+            // Find stock for selected location
             const locationStock = product.stock_locations?.find(
                 stock => stock.location.id.toString() === selectedLocation
             );
             return {
                 quantity: locationStock?.quantity || 0,
-                locationName: locationStock?.location.name || 'N/A'
+                showTotal: true,
+                totalQuantity: product.total_quantity || 0,
+                locationName: locationStock?.location.name || 'Unknown Location'
             };
         }
+        // Show total stock across all locations
         return {
             quantity: product.total_quantity || 0,
+            showTotal: false,
+            totalQuantity: product.total_quantity || 0,
             locationName: 'All Locations'
         };
     }, [selectedLocation]);
@@ -93,6 +99,12 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
         if (quantity === 0) return 'destructive';
         if (quantity <= 10) return 'secondary';
         return 'default';
+    }, []);
+
+    const getStockBadgeText = useCallback((quantity) => {
+        if (quantity === 0) return 'Out of Stock';
+        if (quantity <= 10) return 'Low Stock';
+        return 'In Stock';
     }, []);
 
     if (error) {
@@ -232,7 +244,7 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
                                 <TableBody>
                                     {products.length > 0 ? (
                                         products.map((product) => {
-                                            const stockInfo = getStockDisplay(product);
+                                            const stockInfo = getStockInfo(product);
                                             return (
                                                 <TableRow key={product.id}>
                                                     <TableCell className="font-medium">
@@ -242,10 +254,10 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="hidden md:table-cell max-w-xs truncate">
-                                                        {product.description}
+                                                        {product.description || 'No description'}
                                                     </TableCell>
                                                     <TableCell className="font-mono">
-                                                        ${Number(product.price).toFixed(2)}
+                                                        ${Number(product.price || 0).toFixed(2)}
                                                     </TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center gap-2">
@@ -253,17 +265,12 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
                                                                 {stockInfo.quantity}
                                                             </span>
                                                             <Badge variant={getStockBadgeVariant(stockInfo.quantity)}>
-                                                                {stockInfo.quantity === 0 
-                                                                    ? 'Out of Stock' 
-                                                                    : stockInfo.quantity <= 10 
-                                                                    ? 'Low Stock' 
-                                                                    : 'In Stock'
-                                                                }
+                                                                {getStockBadgeText(stockInfo.quantity)}
                                                             </Badge>
                                                         </div>
-                                                        {selectedLocation && (
+                                                        {stockInfo.showTotal && (
                                                             <div className="text-xs text-muted-foreground mt-1">
-                                                                Total: {product.total_quantity}
+                                                                Total: {stockInfo.totalQuantity}
                                                             </div>
                                                         )}
                                                     </TableCell>
@@ -332,7 +339,9 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
                                 href="#"
                                 onClick={(e) => { 
                                     e.preventDefault(); 
-                                    setCurrentPage(p => Math.max(1, p - 1)); 
+                                    if (currentPage > 1) {
+                                        setCurrentPage(p => p - 1); 
+                                    }
                                 }}
                                 disabled={currentPage === 1}
                                 className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
@@ -353,7 +362,9 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
                                 href="#"
                                 onClick={(e) => { 
                                     e.preventDefault(); 
-                                    setCurrentPage(p => Math.min(totalPages, p + 1)); 
+                                    if (currentPage < totalPages) {
+                                        setCurrentPage(p => p + 1); 
+                                    }
                                 }}
                                 disabled={currentPage >= totalPages}
                                 className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
@@ -369,4 +380,3 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
 ProductList.displayName = 'ProductList';
 
 export default ProductList;
-    

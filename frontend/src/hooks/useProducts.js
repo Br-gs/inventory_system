@@ -1,77 +1,61 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect} from "react";
 import { inventoryService } from "../api";
-
 const useProducts = (filters, page, refreshTrigger) => {
     const [data, setData] = useState({ results: [], count: 0 });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const previousRequestRef = useRef(null);
-
-    const fetchProducts = useCallback(async (signal, currentFilters, currentPage) => {
-        // Create a unique key for this request
-        const requestKey = JSON.stringify({ ...currentFilters, page: currentPage });
-        
-        // Skip if this is the same request as the previous one
-        if (previousRequestRef.current === requestKey && refreshTrigger === 0) {
-            return;
-        }
-        
-        previousRequestRef.current = requestKey;
-        setLoading(true);
-        setError(null);
-        
-        try {
-            const params = new URLSearchParams();
-            
-            // Add filters
-            if (currentFilters.search) params.append('search', currentFilters.search);
-            if (currentFilters.is_active === 'true') params.append('is_active', 'true');
-            if (currentFilters.low_stock === 'true') params.append('low_stock', 'true');
-            if (currentFilters.location) params.append('has_stock_at_location', currentFilters.location);
-            
-            // Add pagination
-            if (currentPage > 1) params.append('page', currentPage);
-
-            const response = await inventoryService.getProducts(params, signal);
-            
-            if (!signal.aborted) {
-                setData(response.data);
-            }
-        } catch (err) {
-            if (err.name !== 'CanceledError' && !signal.aborted) {
-                setError("Failed to fetch products");
-                console.error("Error fetching products:", err);
-            }
-        } finally {
-            if (!signal.aborted) {
-                setLoading(false);
-            }
-        }
-    }, [refreshTrigger]);
 
     useEffect(() => {
-        const controller = new AbortController();
+        let isCancelled = false;
         
-        // Reset previous request ref when refreshTrigger changes
-        if (refreshTrigger > 0) {
-            previousRequestRef.current = null;
-        }
+        const fetchProducts = async () => {
+            setLoading(true);
+            setError(null);
+            
+            try {
+                const params = new URLSearchParams();
+                
+                // Add filters
+                if (filters.search) params.append('search', filters.search);
+                if (filters.is_active === 'true') params.append('is_active', 'true');
+                if (filters.low_stock === 'true') params.append('low_stock', 'true');
+                if (filters.location) params.append('location', filters.location);
+                
+                // Add pagination
+                if (page > 1) params.append('page', page);
 
-        const debounceTimer = setTimeout(() => {
-            fetchProducts(controller.signal, filters, Math.max(1, page));
-        }, filters.search ? 300 : 0); // Only debounce for search, immediate for other filters
+                console.log('Fetching products with params:', params.toString());
+                const response = await inventoryService.getProducts(params);
+                
+                if (!isCancelled) {
+                    console.log('Products response:', response.data);
+                    setData(response.data);
+                }
+            } catch (err) {
+                if (!isCancelled) {
+                    setError("Failed to fetch products");
+                    console.error("Error fetching products:", err);
+                }
+            } finally {
+                if (!isCancelled) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        // Debounce search, immediate for other changes
+        const timeoutId = setTimeout(fetchProducts, filters.search ? 300 : 0);
 
         return () => {
-            clearTimeout(debounceTimer);
-            controller.abort();
+            isCancelled = true;
+            clearTimeout(timeoutId);
         };
-    }, [fetchProducts, filters, page, refreshTrigger]);
+    }, [filters.search, filters.is_active, filters.low_stock, filters.location, page, refreshTrigger]);
 
     return {
         data,
         loading,
         error,
-        fetchProducts
     };
 };
 
