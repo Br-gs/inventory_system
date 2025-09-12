@@ -74,7 +74,7 @@ const MovementFilters = ({
                             <SelectValue placeholder="All types" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">All types</SelectItem>
+                            <SelectItem value="All">All types</SelectItem>
                             <SelectItem value="IN">Input</SelectItem>
                             <SelectItem value="OUT">Output</SelectItem>
                             <SelectItem value="ADJ">Adjustment</SelectItem>

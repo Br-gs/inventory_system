@@ -36,31 +36,31 @@ const ProductsPage = () => {
         setRefreshTrigger(prev => prev + 1);
     }, []);
 
-    const openCreateProductSidebar = () => {
+    const openCreateProductSidebar = useCallback(() => {
         setProductToEdit(null);
         setSidebarContent('product');
-    };
+    }, []);
 
-    const openEditProductSidebar = (product) => {
+    const openEditProductSidebar = useCallback((product) => {
         setProductToEdit(product);
         setSidebarContent('product');
-    };
+    }, []);
 
-    const openMovementSidebar = () => {
+    const openMovementSidebar = useCallback(() => {
         setSidebarContent('movement');
-    };
+    }, []);
 
-    const closeSidebar = () => {
+    const closeSidebar = useCallback(() => {
         setSidebarContent(null);
-    };
+    }, []);
 
-    const handleProductSuccess = () => {
+    const handleProductSuccess = useCallback(() => {
         closeSidebar();
         handleRefresh();
         toast.success(`Product ${productToEdit ? 'update' : 'created'} with succesed.`);
-    };
+    }, [productToEdit, handleRefresh, closeSidebar]);
 
-    const handleMovementSuccess = (newMovement) => {
+    const handleMovementSuccess = useCallback((newMovement) => {
         closeSidebar();
         handleRefresh();
 
@@ -77,7 +77,7 @@ const ProductsPage = () => {
         ),
             {duration: 6000,}
         );
-    };
+    }, [closeSidebar, handleRefresh, navigate]);
 
     return (
         <div className="space-y-6">

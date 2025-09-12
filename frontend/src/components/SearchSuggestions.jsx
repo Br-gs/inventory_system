@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import {inventoryService} from "../api";
 
-const SearchSuggestions = ({ value, onChange }) => {
+const SearchSuggestions = memo(({ value, onChange }) => {
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -37,15 +37,15 @@ const SearchSuggestions = ({ value, onChange }) => {
             return () => controller.abort();
         }, [value, fetchSuggestions]);
 
-        const handleSuggestionClick = (suggestion) => {
+        const handleSuggestionClick = useCallback((suggestion) => {
             onChange(suggestion);
             setShowSuggestions(false);
-        };
+        }, [onChange]);
 
-        const handleSearchSubmit = (e) => {
+        const handleSearchSubmit = useCallback((e) => {
             e.preventDefault();
             setShowSuggestions(false);
-        };
+        }, []);
 
         return (
             <div className="relative">
@@ -74,6 +74,8 @@ const SearchSuggestions = ({ value, onChange }) => {
                 )}
             </div>
         );
-};
+});
+
+SearchSuggestions.displayName = 'SearchSuggestions';
 
 export default SearchSuggestions;

@@ -1,4 +1,4 @@
-import { useContext, useState} from "react";
+import { useContext, useState, useCallback, memo } from "react";
 import { inventoryService } from "../api";
 import AuthContext from "../context/authContext";
 import toast from "react-hot-toast";
@@ -16,7 +16,7 @@ import { MoreHorizontal, Package } from 'lucide-react';
 
 const PAGE_SIZE = 10;
 
-const ProductList = ({ filters, setFilters, onRefresh, refreshTrigger, onEditProduct }) => {
+const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEditProduct }) => {
     const { user } = useContext(AuthContext);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedLocation, setSelectedLocation] = useState('');
@@ -32,15 +32,15 @@ const ProductList = ({ filters, setFilters, onRefresh, refreshTrigger, onEditPro
     const totalProducts = data?.count ?? 0;
     const totalPages = Math.ceil(totalProducts / PAGE_SIZE);
 
-    const handleSearchChange = (searchTerm) => {
+    const handleSearchChange = useCallback((searchTerm) => {
         setFilters((prevFilters) => ({
             ...prevFilters,
             search: searchTerm
         }));
         setCurrentPage(1);
-    };
+    }, [setFilters]);
 
-    const handleFilterChange = (e) => {
+    const handleFilterChange = useCallback((e) => {
         const { name, value, type, checked } = e.target;
         const filterValue = type === 'checkbox' ? (checked ? 'true' : '') : value;
         setFilters((prevFilters) => ({
@@ -48,18 +48,18 @@ const ProductList = ({ filters, setFilters, onRefresh, refreshTrigger, onEditPro
             [name]: filterValue
         }));
         setCurrentPage(1);
-    };
+    }, [setFilters]);
 
-    const handleLocationChange = (locationId) => {
+    const handleLocationChange = useCallback((locationId) => {
         setSelectedLocation(locationId);
         setCurrentPage(1);
-    };
+    }, []);
 
-    const handleClearLocationFilter = () => {
+    const handleClearLocationFilter = useCallback(() => {
         setSelectedLocation('');
-    };
+    }, []);
 
-    const handleDelete = async (productId) => {
+    const handleDelete = useCallback(async (productId) => {
         if (window.confirm("Are you sure you want to delete this product?")) {
             try {
                 await inventoryService.deleteProduct(productId);
@@ -71,9 +71,9 @@ const ProductList = ({ filters, setFilters, onRefresh, refreshTrigger, onEditPro
                 toast.error(`Error: ${errorMessage}`);
             }
         }
-    };
+    }, [onRefresh]);
 
-    const getStockDisplay = (product) => {
+    const getStockDisplay = useCallback((product) => {
         if (selectedLocation) {
             const locationStock = product.stock_locations?.find(
                 stock => stock.location.id.toString() === selectedLocation
@@ -87,13 +87,13 @@ const ProductList = ({ filters, setFilters, onRefresh, refreshTrigger, onEditPro
             quantity: product.total_quantity || 0,
             locationName: 'All Locations'
         };
-    };
+    }, [selectedLocation]);
 
-    const getStockBadgeVariant = (quantity) => {
+    const getStockBadgeVariant = useCallback((quantity) => {
         if (quantity === 0) return 'destructive';
         if (quantity <= 10) return 'secondary';
         return 'default';
-    };
+    }, []);
 
     if (error) {
         return <div className="text-red-500 text-center p-4">{error}</div>;
@@ -364,7 +364,9 @@ const ProductList = ({ filters, setFilters, onRefresh, refreshTrigger, onEditPro
             )}
         </div>
     );
-};
+});
+
+ProductList.displayName = 'ProductList';
 
 export default ProductList;
     

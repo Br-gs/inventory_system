@@ -1,12 +1,12 @@
 import SearchSuggestions from './SearchSuggestions';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import LocationFilter from "./locations/LocationFilter";
 import { locationsService } from '@/api';
 
-const ProductFilters = ({ 
+const ProductFilters = memo(({
     filters, 
     onFilterChange, 
     searchValue, 
@@ -18,25 +18,34 @@ const ProductFilters = ({
     const [locations, setLocations] = useState([]);
 
     useEffect(() => {
+        let isMounted = true;
         const fetchLocations = async () => {
             try {
                 const response = await locationsService.getLocations();
-                setLocations(response.data.results || response.data);
+                if (isMounted) {
+                    setLocations(response.data.results || response.data);
+                }
             } catch (error) {
-                console.error('Error fetching locations:', error);
+                if (isMounted) {
+                    console.error('Error fetching locations:', error);
+                }
             }
         };
         fetchLocations();
-    }, []);
+        
+        return () => {
+            isMounted = false;
+        };
+    }, []); // Empty dependency array ensures this only runs once
 
-    const handleClearAll = () => {
+    const handleClearAll = useCallback(() => {
         onSearchChange('');
         onFilterChange({ target: { name: 'is_active', value: '', type: 'checkbox', checked: false }});
         onFilterChange({ target: { name: 'low_stock', value: '', type: 'checkbox', checked: false }});
         if (onClearLocationFilter) {
             onClearLocationFilter();
         }
-    };
+    }, [onSearchChange, onFilterChange, onClearLocationFilter]);
 
     return (
         <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
@@ -87,6 +96,8 @@ const ProductFilters = ({
             </div>
         </div>
     );
-};
+});
+
+ProductFilters.displayName = 'ProductFilters';
 
 export default ProductFilters;
