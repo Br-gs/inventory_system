@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { MoreHorizontal, PlusCircle, ExternalLink } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, MapPin } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Sidebar from './Sidebar';
 import TableSkeleton from './TableSkeleton';
@@ -88,12 +88,19 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
     const handleReceive = async (poId) => {
     if (window.confirm("Mark this order as received?")) {
         try {
-            await purchasingService.receivePurchaseOrder(poId);
-            toast.success("Order marked as received successfully!");
+            const response = await purchasingService.receivePurchaseOrder(poId);
+            if (response.data.inventory_processed) {
+                const totalItems = response.data.items_processed || 0;
+                const locationName = response.data.location_name || 'selected location';
+                toast.success(`Order received! ${totalItems} items added to ${locationName} inventory.`);
+            } else {
+                toast.success("Order marked as received successfully!");
+            }
             setTimeout(() => onRefresh(), 100);
         } catch (error) {
             console.error('Error receiving order:', error);
-            toast.error("Could not update order status.");
+            const errorMessage = error.response?.data?.error || "Could not update order status.";
+            toast.error(errorMessage);
         }
     }
 }
@@ -122,6 +129,7 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
                         <TableRow>
                             <TableHead>ID</TableHead>
                             <TableHead>Supplier</TableHead>
+                            <TableHead>Destination</TableHead>
                             <TableHead>Order Date</TableHead>
                             <TableHead>Total Cost</TableHead>
                             <TableHead>Status</TableHead>
@@ -131,12 +139,18 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
                     </TableHeader>
                     <TableBody>
                         {loading ? (
-                            <TableSkeleton columnCount={7} />
+                            <TableSkeleton columnCount={8} />
                         ) : purchaseOrders.length > 0 ? (
                             purchaseOrders.map((po) => (
                                 <TableRow key={po.id}>
                                     <TableCell className="font-medium">PO #{po.id}</TableCell>
                                     <TableCell>{po.supplier.name}</TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-1">
+                                            <MapPin className="h-3 w-3 text-muted-foreground" />
+                                            <span className="text-sm">{po.destination_location?.name || 'No location'}</span>
+                                        </div>
+                                    </TableCell>
                                     <TableCell>{new Date(po.order_date).toLocaleDateString()}</TableCell>
                                     <TableCell>${Number(po.total_cost).toFixed(2)}</TableCell>
                                     <TableCell>
@@ -184,7 +198,7 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={7} className="h-24 text-center">
+                                <TableCell colSpan={8} className="h-24 text-center">
                                     No purchase orders found.
                                 </TableCell>
                             </TableRow>
@@ -199,7 +213,12 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
                         <PaginationItem>
                             <PaginationPrevious 
                                 href="#" 
-                                onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.max(1, p - 1)); }}
+                                onClick={(e) => { 
+                                    e.preventDefault(); 
+                                    if (currentPage > 1) {
+                                        setCurrentPage(p => p - 1); 
+                                    }
+                                }}
                                 disabled={currentPage === 1}
                                 className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
                             />
@@ -217,7 +236,12 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
                         <PaginationItem>
                             <PaginationNext 
                                 href="#" 
-                                onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.min(totalPages, p + 1)); }}
+                                onClick={(e) => { 
+                                    e.preventDefault(); 
+                                    if (currentPage < totalPages) {
+                                        setCurrentPage(p => p + 1); 
+                                    }
+                                }}
                                 disabled={currentPage >= totalPages}
                                 className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
                             />

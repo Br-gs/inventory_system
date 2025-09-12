@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import ProductCombobox from './ProductCombobox';
 import SupplierCombobox from './SupplierCombobox';
+import LocationSelector from './locations/LocationSelector';
 import { Trash2, ExternalLink } from 'lucide-react';
 import { useEffect} from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,6 +22,7 @@ const poItemSchema = z.object({
 
 const purchaseOrderSchema = z.object({
   supplier_id: z.string().min(1, "Select a provider."),
+  destination_location_id: z.string().min(1, "Select a destination location."),
   items: z.array(poItemSchema).min(1, "You must add at least one product."),
   payment_terms: z.coerce.number().positive("Payment terms must be positive").optional(),
   is_paid: z.boolean().optional(),
@@ -40,6 +42,7 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
     resolver: zodResolver(purchaseOrderSchema),
     defaultValues: orderToEdit ? {
       supplier_id: orderToEdit.supplier.id.toString() || "",
+      destination_location_id: orderToEdit.destination_location.id.toString() || "",
       items: orderToEdit.items.map(item => ({
         product_id: item.product.id.toString(),
         quantity: item.quantity,
@@ -50,6 +53,7 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
       status: orderToEdit.status || 'pending',
     } : {
       supplier_id: "",
+      destination_location_id: "",
       items: [{ product_id: "", quantity: 1, cost_per_unit: 0 }],
       payment_terms: 30,
       is_paid: false,
@@ -66,6 +70,7 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
   const watchedItems = watch('items');
   const watchedIsPaid = watch('is_paid');
   const watchedStatus = watch('status');
+  const watchedLocation = watch('destination_location_id');
 
   // Fetch supplier data when supplier changes
   useEffect(() => {
@@ -93,12 +98,13 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
         
         if (response.data.inventory_processed) {
           const totalItems = response.data.items_processed || 0;
+          const locationName = response.data.location_name || 'selected location';
           toast.success(
             (t) => (
               <div className="flex flex-col gap-2">
                 <span className="font-semibold">Purchase order updated successfully!</span>
                 <span className="text-sm text-gray-600">
-                  {totalItems} items added to inventory with updated prices
+                  {totalItems} items added to {locationName} inventory
                 </span>
                 <button 
                   onClick={() => {
@@ -133,13 +139,26 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <Label>Supplier</Label>
-        <SupplierCombobox 
-          value={watchedSupplier}
-          onChange={(e) => setValue('supplier_id', e.target.value, { shouldValidate: true })} 
-        />
-        {errors.supplier_id && <p className="text-sm text-red-500 mt-1">{errors.supplier_id.message}</p>}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div>
+          <Label>Supplier</Label>
+          <SupplierCombobox 
+            value={watchedSupplier}
+            onChange={(e) => setValue('supplier_id', e.target.value, { shouldValidate: true })} 
+          />
+          {errors.supplier_id && <p className="text-sm text-red-500 mt-1">{errors.supplier_id.message}</p>}
+        </div>
+
+        <div>
+          <LocationSelector
+            value={watchedLocation}
+            onChange={(locationId) => setValue('destination_location_id', locationId, { shouldValidate: true })}
+            label="Destination Location"
+            required={true}
+            placeholder="Select destination location"
+          />
+          {errors.destination_location_id && <p className="text-sm text-red-500 mt-1">{errors.destination_location_id.message}</p>}
+        </div>
       </div>
 
       <Label>Items in the Order</Label>
@@ -321,7 +340,7 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
                   if (value === 'received') {
                     if (window.confirm(
                       "⚠️ IMPORTANT: Once you mark this order as 'Received':\n\n" +
-                      "• Inventory will be automatically updated\n" +
+                      "• Inventory will be automatically updated at the destination location\n" +
                       "• Product prices will be recalculated\n" +
                       "• Status CANNOT be changed again\n\n" +
                       "Are you sure you want to mark this order as received?"
