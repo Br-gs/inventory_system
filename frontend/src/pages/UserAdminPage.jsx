@@ -188,16 +188,11 @@ const UserAdminPage = () => {
                                             <TableCell>
                                                 <div className="flex flex-col gap-2">
                                                     <Badge 
-                                                        variant={getRoleBadgeVariant(user.profile?.role)}
+                                                        variant={getRoleBadgeVariant(user.is_staff ? 'admin' : user.profile?.role)}
                                                         className="w-fit"
                                                     >
-                                                        {user.profile?.role || 'employee'}
+                                                        {user.is_staff ? 'admin' : (user.profile?.role || 'employee')}
                                                     </Badge>
-                                                    {user.is_staff && (
-                                                        <Badge variant="default" className="w-fit">
-                                                            Admin
-                                                        </Badge>
-                                                    )}
                                                 </div>
                                             </TableCell>
 

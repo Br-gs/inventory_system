@@ -24,7 +24,6 @@ const useProducts = (filters, page, refreshTrigger) => {
                 // Add pagination
                 if (page > 1) params.append('page', page);
 
-                console.log('Fetching products with params:', params.toString());
                 const response = await inventoryService.getProducts(params);
                 
                 if (!isCancelled) {

@@ -13,6 +13,7 @@ import LocationSelector from './locations/LocationSelector';
 import { Trash2, ExternalLink } from 'lucide-react';
 import { useEffect} from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useNavigate } from 'react-router-dom';
 
 const poItemSchema = z.object({
   product_id: z.string().min(1, "Select a product."),
@@ -30,6 +31,7 @@ const purchaseOrderSchema = z.object({
 });
 
 const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
+  const navigate = useNavigate();
   
   const { 
     register, 
@@ -89,29 +91,27 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
 
   const onSubmit = async (data) => {
     try {
-      console.log('Submitting purchase order data:', data);
       
       let response;
       if (orderToEdit) {
         response = await purchasingService.updatePurchaseOrder(orderToEdit.id, data);
-        console.log('Update response:', response.data); // Debug log
         
         if (response.data.inventory_processed) {
           const totalItems = response.data.items_processed || 0;
           const locationName = response.data.location_name || 'selected location';
           toast.success(
             (t) => (
-              <div className="flex flex-col gap-2">
-                <span className="font-semibold">Purchase order updated successfully!</span>
-                <span className="text-sm text-gray-600">
+              <div className="space-y-2">
+                <div className="font-semibold">Purchase order updated successfully!</div>
+                <div className="text-sm text-gray-600">
                   {totalItems} items added to {locationName} inventory
-                </span>
+                </div>
                 <button 
                   onClick={() => {
-                    window.open('/movements', '_blank');
+                    navigate('/movements');
                     toast.dismiss(t.id);
                   }}
-                  className="flex items-center gap-1 px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors self-start"
+                  className="flex items-center gap-1 px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors"
                 >
                   <ExternalLink size={14} />
                   View Inventory Movements

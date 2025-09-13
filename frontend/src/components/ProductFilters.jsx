@@ -48,7 +48,7 @@ const ProductFilters = memo(({
     }, [onSearchChange, onFilterChange, onClearLocationFilter]);
 
     return (
-        <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+       <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
             <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1">
                     <SearchSuggestions value={searchValue} onChange={onSearchChange} />
@@ -67,7 +67,7 @@ const ProductFilters = memo(({
                 )}
             </div>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap items-center gap-4">
                 <div className="flex items-center space-x-2">
                     <Checkbox
                         id="is_active"
@@ -90,7 +90,7 @@ const ProductFilters = memo(({
                     <Label htmlFor="low_stock">Low Stock Products</Label>
                 </div>
 
-                <Button variant="outline" onClick={handleClearAll} size="sm">
+                <Button variant="outline" onClick={handleClearAll} size="sm" className="ml-auto">
                     Clear All Filters
                 </Button>
             </div>

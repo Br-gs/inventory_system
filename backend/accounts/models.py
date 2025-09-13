@@ -76,6 +76,7 @@ class UserProfile(models.Model):
 
     def get_accessible_locations(self):
         """Get all locations this user can access"""
+        
         if self.user.is_staff:
             # Admins can access all locations
             return Location.objects.filter(is_active=True)
@@ -84,12 +85,12 @@ class UserProfile(models.Model):
             return self.allowed_locations.filter(is_active=True)
         elif self.default_location:
             # User can only access their default location
-            return self.default_location.__class__.objects.filter(
+            return Location.objects.filter(
                 id=self.default_location.id, is_active=True
             )
         else:
             # No access to any location
-            return self.default_location.__class__.objects.none()
+            return Location.objects.none()
 
     def can_access_location(self, location):
         """Check if user can access a specific location"""

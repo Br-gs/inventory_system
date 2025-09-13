@@ -43,7 +43,7 @@ const MovementFilters = ({
 
     return (
         <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 <div className="grid gap-2">
                     <Label>Product</Label>
                     <ProductCombobox
@@ -54,6 +54,7 @@ const MovementFilters = ({
                 </div>
 
                 <div className="grid gap-2">
+                    <Label>Location</Label>
                     <LocationFilter
                         locations={locations}
                         selectedLocation={selectedLocation || filters.location}
@@ -83,31 +84,33 @@ const MovementFilters = ({
                     </Select>
                 </div>
 
-                <div className="grid gap-2">
+                <div className="grid gap-2 sm:col-span-1 lg:col-span-1">
                     <Label>Date Range</Label>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                         <Input
                             type="date"
                             name="start_date"
                             value={filters.start_date}
                             onChange={onFilterChange}
-                            className="text-xs"
+                            className="text-xs w-full"
+                            placeholder="From"
                         />
                         <Input
                             type="date"
                             name="end_date"
                             value={filters.end_date}
                             onChange={onFilterChange}
-                            className="text-xs"
+                            className="text-xs w-full"
+                            placeholder="To"
                         />
                     </div>
                 </div>
-            </div>
 
-            <div className="flex justify-end">
-                <Button variant="outline" onClick={onClearFilters} size="sm">
-                    Clear All Filters
-                </Button>
+                <div className="sm:col-span-2 lg:col-span-1 xl:col-span-1 flex items-end">
+                    <Button variant="outline" onClick={onClearFilters} size="sm" className="w-full lg:w-auto">
+                        Clear All Filters
+                    </Button>
+                </div>
             </div>
         </div>
     );

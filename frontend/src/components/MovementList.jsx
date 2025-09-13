@@ -84,7 +84,7 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
                     </TableHeader>
                     <TableBody>
                         {loading ? (
-                            <TableSkeleton columns={8} />
+                            <TableSkeleton columns={8} rows={5} />
                         ) : movements.length > 0 ? (
                             movements.map((movement) => (
                                 <TableRow key={movement.id}>
@@ -110,11 +110,11 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
                                             {movement.movement_type_display}
                                         </span>
                                     </TableCell>
-                                    <TableCell className="text-center font-mono">{movement.quantity}</TableCell>
-                                    <TableCell className="text-center font-mono">
+                                    <TableCell className="text-center">{movement.quantity}</TableCell>
+                                    <TableCell className="text-center">
                                         {formatCurrency(movement.unit_price)}
                                     </TableCell>
-                                    <TableCell className="text-center font-mono font-semibold">
+                                    <TableCell className="text-center font-semibold">
                                         {formatCurrency(movement.total_value)}
                                     </TableCell>
                                     <TableCell>

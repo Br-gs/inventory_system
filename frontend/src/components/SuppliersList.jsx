@@ -88,11 +88,7 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
                     </TableHeader>
                     <TableBody> 
                         {loading ? (
-                            <TableRow>
-                                <TableCell  className="h-24 text-center">
-                                    Loading suppliers...
-                                </TableCell>
-                            </TableRow>
+                            <TableSkeleton columns={user?.is_staff ? 6 : 5} />
                         ) : suppliers.length > 0 ? (
                             suppliers.map((supplier) => (
                                 <TableRow key={supplier.id}>
@@ -127,7 +123,9 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
                                 </TableRow>
                             ))
                         ) : (
-                            <TableSkeleton columnCount={user?.is_staff ? 6 : 5} />
+                            <TableCell>
+                                <p className="p-4 text-center text-muted-foreground">No suppliers found.</p>
+                            </TableCell>
                         )}
                     </TableBody>
                 </Table>

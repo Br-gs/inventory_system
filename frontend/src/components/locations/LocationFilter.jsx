@@ -8,13 +8,11 @@ const LocationFilter = ({
   selectedLocation, 
   onLocationChange, 
   onClearFilter,
-  label = "Filter by Location",
   showClearButton = true 
 }) => {
   return (
     <div className="flex items-end gap-2">
       <div className="grid gap-2 flex-1">
-        <Label>{label}</Label>
         <Select 
           value={selectedLocation?.toString() || 'all'} 
           onValueChange={(value) => onLocationChange(value === 'all' ? '' : value)}

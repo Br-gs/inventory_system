@@ -74,13 +74,13 @@ const ProductsPage = () => {
                 }}
                 className="ml-2 p-1 border rounded hover:bg-gray-100 dark:hover:bg-gray-700">View Movements</button>
                 </span>
-        ),
-            {duration: 6000,}
+            ),
+            {duration: 4000,}
         );
     }, [closeSidebar, handleRefresh, navigate]);
 
     return (
-        <div className="space-y-6">
+       <div className="space-y-6">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
@@ -88,18 +88,18 @@ const ProductsPage = () => {
                         <CardDescription>Manage your product catalog and record stock movements.</CardDescription>
                     </div>
                     
-                    {user?.is_staff && (
-                        <div className="flex gap-2">
+                    <div className="flex gap-4">
+                        {user?.is_staff && (
                             <Button onClick={openCreateProductSidebar}>
-                                <PlusCircle className="mr-2 h-4 w-4" />Add New Product
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Add New Product
                             </Button>
-                        </div>
-                    )}
-
-                            <Button onClick={openMovementSidebar}>
-                                <PlusCircle className="mr-2 h-4 w-4" />Add New Movement
-                            </Button>
-
+                        )}
+                        <Button onClick={openMovementSidebar}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add New Movement
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <ProductList

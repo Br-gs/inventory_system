@@ -139,7 +139,7 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
                     </TableHeader>
                     <TableBody>
                         {loading ? (
-                            <TableSkeleton columnCount={8} />
+                            <TableSkeleton columns={8} />
                         ) : purchaseOrders.length > 0 ? (
                             purchaseOrders.map((po) => (
                                 <TableRow key={po.id}>

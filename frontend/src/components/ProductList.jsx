@@ -172,7 +172,7 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    <TableSkeleton columnCount={user?.is_staff ? 6 : 5} />
+                                    <TableSkeleton columns={user?.is_staff ? 6 : 5} />
                                 </TableBody>
                             </Table>
                         </div>
@@ -256,7 +256,7 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
                                                     <TableCell className="hidden md:table-cell max-w-xs truncate">
                                                         {product.description || 'No description'}
                                                     </TableCell>
-                                                    <TableCell className="font-mono">
+                                                    <TableCell>
                                                         ${Number(product.price || 0).toFixed(2)}
                                                     </TableCell>
                                                     <TableCell>
