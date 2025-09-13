@@ -43,7 +43,8 @@ const MovementFilters = ({
 
     return (
         <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {/* First row - Product and Location on mobile/tablet, all filters on desktop */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="grid gap-2">
                     <Label>Product</Label>
                     <ProductCombobox
@@ -54,7 +55,7 @@ const MovementFilters = ({
                 </div>
 
                 <div className="grid gap-2">
-                    <Label>Location</Label>
+                    <label className="text-sm font-medium leading-none mb-1">Location</label>
                     <LocationFilter
                         locations={locations}
                         selectedLocation={selectedLocation || filters.location}
@@ -84,33 +85,34 @@ const MovementFilters = ({
                     </Select>
                 </div>
 
-                <div className="grid gap-2 sm:col-span-1 lg:col-span-1">
+                {/* Date range - spans full width on mobile, single column on desktop */}
+                <div className="grid gap-2 md:col-span-2 lg:col-span-1">
                     <Label>Date Range</Label>
-                    <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <Input
                             type="date"
                             name="start_date"
                             value={filters.start_date}
                             onChange={onFilterChange}
-                            className="text-xs w-full"
-                            placeholder="From"
+                            className="text-sm"
+                            placeholder="From date"
                         />
                         <Input
                             type="date"
                             name="end_date"
                             value={filters.end_date}
                             onChange={onFilterChange}
-                            className="text-xs w-full"
-                            placeholder="To"
+                            className="text-sm"
+                            placeholder="To date"
                         />
                     </div>
                 </div>
+            </div>
 
-                <div className="sm:col-span-2 lg:col-span-1 xl:col-span-1 flex items-end">
-                    <Button variant="outline" onClick={onClearFilters} size="sm" className="w-full lg:w-auto">
-                        Clear All Filters
-                    </Button>
-                </div>
+            <div className="flex justify-end">
+                <Button variant="outline" onClick={onClearFilters} size="sm">
+                    Clear All Filters
+                </Button>
             </div>
         </div>
     );

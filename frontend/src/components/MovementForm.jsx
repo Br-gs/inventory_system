@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, ArrowRightLeft } from 'lucide-react';
+import { AlertTriangle, ArrowDown, ArrowUp } from 'lucide-react';
 
 const movementSchema = z.object({
     product: z.string().min(1, "Product is required"),
@@ -94,6 +94,7 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                 ...data,
                 product: Number(data.product),
                 location: Number(data.location),
+                movement_type: data.movement_type.startsWith('TRF_') ? 'TRF' : data.movement_type,
                 destination_location: data.destination_location ? Number(data.destination_location) : undefined,
                 unit_price: data.unit_price ? Number(data.unit_price) : undefined,
             };
@@ -125,16 +126,16 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
     const isAdjustment = watchedMovementType === 'ADJ';
     
     // Check if there's insufficient stock for output/transfer
-    const hasInsufficientStock = (isOutput || isTransfer) && 
+    const hasInsufficientStock = isOutput && 
                                 watchedQuantity > availableStock && 
-                                availableStock >= 0;
+                                availableStock >= 0
 
     // User can override location if admin or has permission
     const canChangeLocation = user?.is_staff || user?.can_change_location;
 
 
      return (
-        <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
+         <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
             <div className="grid gap-2">
                 <Label htmlFor="product">Product *</Label>
                 <ProductCombobox
@@ -187,7 +188,7 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                 <Select 
                     onValueChange={(value) => setValue('movement_type', value, { shouldValidate: true })}
                     value={watchedMovementType}
-                    disabled={!user?.is_staff}
+                    disabled={!user?.is_staff && watchedMovementType === 'OUT'}
                 >
                     <SelectTrigger id="movement_type">
                         <SelectValue placeholder="-- Select Movement Type --" />
@@ -198,10 +199,16 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                                 <SelectItem value="IN">Input (Receive)</SelectItem>
                                 <SelectItem value="OUT">Output (Sale/Use)</SelectItem>
                                 <SelectItem value="ADJ">Adjustment</SelectItem>
-                                <SelectItem value="TRF">
+                                <SelectItem value="TRF_OUT">
                                     <div className="flex items-center gap-2">
-                                        <ArrowRightLeft className="h-3 w-3" />
-                                        Transfer
+                                        <ArrowUp className="h-3 w-3" />
+                                        Transfer Out
+                                    </div>
+                                </SelectItem>
+                                <SelectItem value="TRF_IN">
+                                    <div className="flex items-center gap-2">
+                                        <ArrowDown className="h-3 w-3" />
+                                        Transfer In
                                     </div>
                                 </SelectItem>
                             </>
@@ -219,7 +226,7 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
             {isTransfer && (
                 <div className="grid gap-2">
                     <LocationSelector
-                        label="Transfer to Location"
+                        label={watchedMovementType === 'TRF_OUT' ? "Transfer to Location" : "Transfer from Location"}
                         value={watch('destination_location')}
                         onChange={(value) => setValue('destination_location', value, { shouldValidate: true })}
                         required={true}
@@ -256,8 +263,8 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                 )}
             </div>
 
-            {/* Unit Price - mainly for inputs */}
-            {(watchedMovementType === 'IN' || user?.is_staff) && (
+            {/* Unit Price - only for inputs and adjustments, not for sales */}
+            {(watchedMovementType === 'IN' || watchedMovementType === 'ADJ' || watchedMovementType === 'TRF_IN') && user?.is_staff && (
                 <div className="grid gap-2">
                     <Label htmlFor="unit_price">
                         Unit Price
@@ -273,6 +280,22 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                     {errors.unit_price && (
                         <p className="text-sm text-red-500 mt-1">{errors.unit_price.message}</p>
                     )}
+                </div>
+            )}
+
+            {/* Show current price for sales (read-only) */}
+            {(watchedMovementType === 'OUT' || watchedMovementType === 'TRF_OUT') && productStock && (
+                <div className="grid gap-2">
+                    <Label>Sale Price</Label>
+                    <Input 
+                        value={`${Number(productStock.price || 0).toFixed(2)}`}
+                        readOnly 
+                        disabled
+                        className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                        Sales use the current product price and cannot be modified.
+                    </p>
                 </div>
             )}
 

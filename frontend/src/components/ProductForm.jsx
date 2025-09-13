@@ -36,7 +36,6 @@ const ProductForm = ({ productToEdit, onSuccess, onClose }) => {
             name: productToEdit?.name || '',
             description: productToEdit?.description || '',
             price: productToEdit?.price || 0,
-            quantity: productToEdit?.quantity || 0,
             is_active: productToEdit?.is_active ?? true,
         },
     });
@@ -46,9 +45,8 @@ const ProductForm = ({ productToEdit, onSuccess, onClose }) => {
             name: '',
             description: '',
             price: 0,
-            initial_quantity: 0,
             is_active: true,
-            };
+        };
 
         reset(productToEdit || defaultValuesForCreate);
     }, [productToEdit, reset]);
@@ -66,7 +64,6 @@ const ProductForm = ({ productToEdit, onSuccess, onClose }) => {
             const errorMessage = error.response?.data?.detail || "An error occurred while saving the product.";
             console.error("Error saving product:", error);
             toast.error(`Error: ${errorMessage}`);
-
         }
     };
 
@@ -90,17 +87,13 @@ const ProductForm = ({ productToEdit, onSuccess, onClose }) => {
                 {errors.price && <p className="text-sm text-red-500 mt-1">{errors.price.message}</p>}
             </div>
 
-            {productToEdit ? (
+            {productToEdit && (
                 <div className="grid gap-2">
-                    <Label>Quantity in Stock</Label>
-                    <Input value={productToEdit.quantity} readOnly disabled />
-                    <p className="text-xs text-muted-foreground">To change the amount, create a transaction.</p>
-                </div>
-            ) : (
-                <div className="grid gap-2">
-                    <Label htmlFor="initial_quantity">Initial Quantity</Label>
-                    <Input id="initial_quantity" type="number" {...register('initial_quantity')} />
-                    {errors.initial_quantity && <p className="text-sm text-red-500 mt-1">{errors.initial_quantity.message}</p>}
+                    <Label>Current Stock</Label>
+                    <Input value={productToEdit.total_quantity || 0} readOnly disabled />
+                    <p className="text-xs text-muted-foreground">
+                        To add initial stock, create an Input movement after saving the product.
+                    </p>
                 </div>
             )}
 
@@ -115,10 +108,7 @@ const ProductForm = ({ productToEdit, onSuccess, onClose }) => {
                     {isSubmitting ? 'Submitting...' : 'Save Product'}
                 </Button>
             </div>
-
-            
         </form>
     );
 };
-
 export default ProductForm;
