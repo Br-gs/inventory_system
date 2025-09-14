@@ -27,7 +27,6 @@ const useProducts = (filters, page, refreshTrigger) => {
                 const response = await inventoryService.getProducts(params);
                 
                 if (!isCancelled) {
-                    console.log('Products response:', response.data);
                     setData(response.data);
                 }
             } catch (err) {
