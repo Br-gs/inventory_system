@@ -178,7 +178,7 @@ const PurchaseOrderList = ({ refreshTrigger, onRefresh }) => {
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent>
                                                 <DropdownMenuItem onSelect={() => handleEdit(po)}>
-                                                    Edit
+                                                    Edit / view
                                                 </DropdownMenuItem>
                                                 {po.status === 'approved' && (
                                                     <DropdownMenuItem onSelect={() => handleReceive(po.id)}>
