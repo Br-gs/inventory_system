@@ -1,6 +1,6 @@
 from django.urls import path
 from .user_api import (
-    RegisterView,
+    # RegisterView removed - only admins can create users
     UserDetailView,
     ChangePasswordView,
     LogoutView,
@@ -20,8 +20,9 @@ urlpatterns = [
     path("token/refresh/", MyTokenRefreshView.as_view(), name="token_refresh"),
     path("token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     path("logout/", LogoutView.as_view(), name="logout"),
-    # API endpoints for user registration and profile management
-    path("register/", RegisterView.as_view(), name="register"),
+    
+    # API endpoints for user profile management (no public registration)
+    # path("register/", RegisterView.as_view(), name="register"),  # REMOVED
     path("user/profile/", UserDetailView.as_view(), name="user_profile"),
     path("user/change-password/", ChangePasswordView.as_view(), name="change_password"),
     path(
@@ -29,7 +30,8 @@ urlpatterns = [
         UserAccessibleLocationsView.as_view(),
         name="user_accessible_locations",
     ),
-    # Admin user management
+    
+    # Admin user management (only way to create users)
     path("users/", UserListView.as_view(), name="user_list"),
     path("users/<int:pk>/", UserAdminDetailView.as_view(), name="user_admin_detail"),
 ]

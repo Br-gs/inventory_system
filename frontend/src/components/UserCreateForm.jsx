@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from 'lucide-react';
 
 const userSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -21,10 +23,10 @@ const userSchema = z.object({
   is_staff: z.boolean().default(false),
   profile: z.object({
     role: z.enum(['admin', 'manager', 'employee']).default('employee'),
-    default_location: z.string().optional(),
+    default_location: z.string().min(1, "Location is required for all users"),
     can_change_location: z.boolean().default(false),
     phone_number: z.string().optional(),
-  }).optional(),
+  }),
 });
 
 const UserCreateForm = ({ onSuccess, onClose }) => {
@@ -66,18 +68,24 @@ const UserCreateForm = ({ onSuccess, onClose }) => {
 
   const onSubmit = async (data) => {
     try {
+      // Validate location is provided
+      if (!data.profile.default_location) {
+        toast.error("Location is required. Please select a default location for this user.");
+        return;
+      }
+
       // Clean up the data
       const userData = {
         ...data,
         profile: {
           ...data.profile,
-          default_location: data.profile.default_location ? Number(data.profile.default_location) : undefined,
+          default_location: Number(data.profile.default_location),
         }
       };
 
-      // Remove empty optional fields
+      // Remove empty optional fields except default_location which is required
       Object.keys(userData.profile).forEach(key => {
-        if (userData.profile[key] === undefined || userData.profile[key] === '') {
+        if (key !== 'default_location' && (userData.profile[key] === undefined || userData.profile[key] === '')) {
           delete userData.profile[key];
         }
       });
@@ -90,6 +98,7 @@ const UserCreateForm = ({ onSuccess, onClose }) => {
       const errorMessage = error.response?.data?.detail || 
                           error.response?.data?.username?.[0] ||
                           error.response?.data?.email?.[0] ||
+                          error.response?.data?.profile?.default_location?.[0] ||
                           'Failed to create user. Please try again.';
       toast.error(errorMessage);
     }
@@ -97,6 +106,13 @@ const UserCreateForm = ({ onSuccess, onClose }) => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          All users must be assigned to a location. This controls what inventory they can view and manage.
+        </AlertDescription>
+      </Alert>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="grid gap-2">
           <Label htmlFor="username">Username *</Label>
@@ -169,55 +185,76 @@ const UserCreateForm = ({ onSuccess, onClose }) => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="grid gap-2">
-          <Label>Role</Label>
-          <Select 
-            value={watch('profile.role')}
-            onValueChange={(value) => setValue('profile.role', value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="employee">Employee</SelectItem>
-              <SelectItem value="manager">Manager</SelectItem>
-              <SelectItem value="admin">Administrator</SelectItem>
-            </SelectContent>
-          </Select>
+      <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+        <h4 className="font-medium">User Permissions & Location</h4>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid gap-2">
+            <Label>Role *</Label>
+            <Select 
+              value={watch('profile.role')}
+              onValueChange={(value) => setValue('profile.role', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="employee">Employee</SelectItem>
+                <SelectItem value="manager">Manager</SelectItem>
+                <SelectItem value="admin">Administrator</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <LocationSelector
+              label="Default Location *"
+              value={watch('profile.default_location')}
+              onChange={(value) => setValue('profile.default_location', value, { shouldValidate: true })}
+              required={true}
+            />
+            {errors.profile?.default_location && (
+              <p className="text-sm text-red-500">{errors.profile.default_location.message}</p>
+            )}
+          </div>
         </div>
 
-        <div className="grid gap-2">
-          <LocationSelector
-            label="Default Location"
-            value={watch('profile.default_location')}
-            onChange={(value) => setValue('profile.default_location', value)}
-            required={false}
-          />
-          {errors.profile?.default_location && (
-            <p className="text-sm text-red-500">{errors.profile.default_location.message}</p>
-          )}
-        </div>
-      </div>
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="is_staff"
+              checked={watchedIsStaff}
+              onCheckedChange={(checked) => setValue('is_staff', checked)}
+            />
+            <Label htmlFor="is_staff">
+              Administrator privileges
+              <span className="text-xs text-muted-foreground ml-2">(Can view all locations)</span>
+            </Label>
+          </div>
 
-      <div className="space-y-3">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="is_staff"
-            checked={watchedIsStaff}
-            onCheckedChange={(checked) => setValue('is_staff', checked)}
-          />
-          <Label htmlFor="is_staff">Administrator privileges</Label>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="can_change_location"
+              checked={watch('profile.can_change_location')}
+              onCheckedChange={(checked) => setValue('profile.can_change_location', checked)}
+            />
+            <Label htmlFor="can_change_location">
+              Can change location during operations
+              <span className="text-xs text-muted-foreground ml-2">(Override default location)</span>
+            </Label>
+          </div>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="can_change_location"
-            checked={watch('profile.can_change_location')}
-            onCheckedChange={(checked) => setValue('profile.can_change_location', checked)}
-          />
-          <Label htmlFor="can_change_location">Can change location during operations</Label>
-        </div>
+        <Alert variant="default" className="mt-2">
+          <Info className="h-4 w-4" />
+          <AlertDescription className="text-xs">
+            {watchedIsStaff ? (
+              "Administrators can view inventory across all locations."
+            ) : (
+              "This user will only see inventory from their assigned location unless given permission to change locations."
+            )}
+          </AlertDescription>
+        </Alert>
       </div>
 
       <div className="flex justify-end gap-2 pt-4">

@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
 import logging
 from location.models import Location
 
@@ -69,6 +70,24 @@ class UserProfile(models.Model):
     def __str__(self):
         return f"{self.user.username}'s profile"
 
+    def clean(self):
+        """Validate that non-admin users have a default location assigned"""
+        super().clean()
+        # Only validate if user exists (not during signal creation)
+        if hasattr(self, 'user'):
+            # Non-admin users must have a default location
+            if not self.user.is_staff and not self.default_location:
+                raise ValidationError({
+                    'default_location': 'A default location is required for non-admin users.'
+                })
+
+    def save(self, *args, **kwargs):
+        """Override save to ensure validation"""
+        # Skip validation during signal creation (when profile is being created automatically)
+        if not self._state.adding:
+            self.full_clean()
+        super().save(*args, **kwargs)
+
     def get_full_name(self):
         if self.user.first_name and self.user.last_name:
             return f"{self.user.first_name} {self.user.last_name}".strip()
@@ -103,7 +122,25 @@ def create_or_update_user_profile(sender, instance, created, **kwargs):
         try:
             # Set role based on is_staff
             role = "admin" if instance.is_staff else "employee"
-            UserProfile.objects.get_or_create(user=instance, defaults={"role": role})
+            
+            # For admin users, we can create profile without location
+            # For regular users created via admin panel, location will be set separately
+            profile, _ = UserProfile.objects.get_or_create(
+                user=instance, 
+                defaults={"role": role}
+            )
+            
+            # If it's a regular user and no default location, try to assign first active location
+            # This is a fallback for backwards compatibility
+            if not instance.is_staff and not profile.default_location:
+                first_location = Location.objects.filter(is_active=True).first()
+                if first_location:
+                    profile.default_location = first_location
+                    profile.save(update_fields=['default_location'])
+                    logger.info(f"Auto-assigned location {first_location.name} to user {instance.username}")
+                else:
+                    logger.warning(f"No active locations available for user {instance.username}")
+            
             logger.info(f"User profile created for {instance.username}")
         except Exception as e:
             logger.error(
