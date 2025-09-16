@@ -123,9 +123,11 @@ const SupplierList = ({ refreshTrigger, onRefresh }) => {
                                 </TableRow>
                             ))
                         ) : (
-                            <TableCell>
-                                <p className="p-4 text-center text-muted-foreground">No suppliers found.</p>
-                            </TableCell>
+                            <TableRow>
+                                <TableCell colSpan={user?.is_staff ? 6 : 5} className="h-24 text-center">
+                                    <p className="text-muted-foreground">No suppliers found.</p>
+                                </TableCell>
+                            </TableRow>
                         )}
                     </TableBody>
                 </Table>

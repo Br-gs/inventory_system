@@ -34,30 +34,82 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        {/* Logo */}
+        {/* Premium Logo */}
         <Link to="/" className="mr-6 flex items-center space-x-2">
           <div className="flex items-center space-x-2">
-            {/* Logo Icon */}
-            <svg width="28" height="28" viewBox="0 0 32 32" className="flex-shrink-0">
-              <defs>
-                <linearGradient id="boxGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style={{stopColor: '#3b82f6', stopOpacity: 1}} />
-                  <stop offset="100%" style={{stopColor: '#1e40af', stopOpacity: 1}} />
-                </linearGradient>
-              </defs>
-              <rect x="10" y="8" width="14" height="10" rx="1" fill="url(#boxGradient)" stroke="#1e40af" strokeWidth="0.5"/>
-              <rect x="8" y="10" width="14" height="10" rx="1" fill="#60a5fa" opacity="0.8" stroke="#3b82f6" strokeWidth="0.5"/>
-              <rect x="6" y="12" width="14" height="10" rx="1" fill="#93c5fd" opacity="0.6" stroke="#60a5fa" strokeWidth="0.5"/>
-              <line x1="12" y1="11" x2="22" y2="11" stroke="white" strokeWidth="1" opacity="0.9"/>
-              <line x1="12" y1="13" x2="20" y2="13" stroke="white" strokeWidth="1" opacity="0.9"/>
-              <line x1="12" y1="15" x2="22" y2="15" stroke="white" strokeWidth="1" opacity="0.9"/>
-              <circle cx="13" cy="12" r="0.8" fill="white"/>
-              <circle cx="13" cy="14" r="0.8" fill="white"/>
-              <circle cx="13" cy="16" r="0.8" fill="white"/>
-            </svg>
+            {/* Premium Logo Icon with gradient and animation */}
+            <div className="relative">
+              <svg width="32" height="32" viewBox="0 0 40 40" className="flex-shrink-0">
+                <defs>
+                  <linearGradient id="premiumGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style={{stopColor: '#3B82F6', stopOpacity: 1}} />
+                    <stop offset="50%" style={{stopColor: '#2563EB', stopOpacity: 1}} />
+                    <stop offset="100%" style={{stopColor: '#1E40AF', stopOpacity: 1}} />
+                  </linearGradient>
+                  <linearGradient id="shineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style={{stopColor: '#60A5FA', stopOpacity: 0.8}} />
+                    <stop offset="100%" style={{stopColor: '#93C5FD', stopOpacity: 0.4}} />
+                  </linearGradient>
+                  <filter id="glow">
+                    <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+                
+                {/* Background circle with subtle glow */}
+                <circle cx="20" cy="20" r="18" fill="url(#premiumGradient)" opacity="0.1" />
+                
+                {/* Main cube structure */}
+                <g transform="translate(20, 20)">
+                  {/* Back face */}
+                  <path d="M -8,-8 L 0,-12 L 8,-8 L 8,0 L 0,4 L -8,0 Z" 
+                        fill="url(#premiumGradient)" 
+                        opacity="0.7"
+                        transform="translate(0, -2)"/>
+                  
+                  {/* Middle face */}
+                  <path d="M -8,-4 L 0,-8 L 8,-4 L 8,4 L 0,8 L -8,4 Z" 
+                        fill="url(#premiumGradient)" 
+                        opacity="0.85"/>
+                  
+                  {/* Front face with shine */}
+                  <path d="M -8,0 L 0,-4 L 8,0 L 8,8 L 0,12 L -8,8 Z" 
+                        fill="url(#premiumGradient)" 
+                        filter="url(#glow)"
+                        transform="translate(0, 2)"/>
+                  
+                  {/* Top shine effect */}
+                  <path d="M -8,0 L 0,-4 L 8,0 L 0,4 Z" 
+                        fill="url(#shineGradient)" 
+                        transform="translate(0, 2)"/>
+                  
+                  {/* Data lines on the cube */}
+                  <g stroke="white" strokeWidth="0.8" opacity="0.9">
+                    <line x1="-4" y1="3" x2="4" y2="3" />
+                    <line x1="-4" y1="5" x2="2" y2="5" />
+                    <line x1="-4" y1="7" x2="4" y2="7" />
+                  </g>
+                </g>
+              </svg>
+              
+              {/* Animated pulse effect */}
+              <div className="absolute inset-0 -z-10 animate-pulse">
+                <div className="h-full w-full rounded-full bg-primary/20 blur-xl"></div>
+              </div>
+            </div>
+            
             <div className="hidden sm:block">
-              <span className="font-bold text-lg">Inventory</span>
-              <span className="hidden lg:inline text-xs text-muted-foreground ml-1">Management</span>
+              <div className="flex flex-col">
+                <span className="font-bold text-lg bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                  InvenTrack
+                </span>
+                <span className="hidden lg:block text-[10px] text-muted-foreground uppercase tracking-wider">
+                  Professional Inventory
+                </span>
+              </div>
             </div>
           </div>
         </Link>

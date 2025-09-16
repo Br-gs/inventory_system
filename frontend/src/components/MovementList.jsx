@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import TableSkeleton from "./TableSkeleton";
-import { ArrowRight, ArrowDown, ArrowUp, ArrowRightLeft, AlertTriangle } from 'lucide-react';
+import { ArrowRight, ArrowDown, ArrowUp, ArrowRightLeft, AlertTriangle, Package} from 'lucide-react';
 
 const PAGE_SIZE = 10
 
@@ -170,8 +170,14 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan="8" className="h-24 text-center">
-                                    No movements found.
+                                <TableCell 
+                                    colSpan={8}
+                                    className="text-center py-8"
+                                >
+                                    <div className="flex flex-col items-center gap-2">
+                                        <Package className="h-12 w-12 text-muted-foreground" />
+                                        <p className="text-lg font-medium">No Movements found</p>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         )}

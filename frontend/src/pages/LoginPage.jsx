@@ -1,6 +1,6 @@
 import { useContext, useState } from "react";
 import AuthContext from "../context/authContext";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Info } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -79,15 +81,18 @@ const LoginPage = () => {
             {apiError && <p className="text-sm text-red-600 text-center">{apiError}</p>}
           </CardContent>
 
-          <CardFooter className="flex flex-col">
+          <CardFooter className="flex flex-col gap-4">
             <Button className="w-full" type="submit" disabled={isSubmitting} >
               {isSubmitting ? "Logging in..." : "Login"}
             </Button>
         
-            <p className="mt-4 text-center text-sm text-muted-foreground">
-              Don't have an account? 
-            </p>
-              <Link to="/register" className="underline hover:text-primary">Register here</Link>
+            {/* Registration removed - only admins can create users */}
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                Contact your administrator if you need access to the system.
+              </AlertDescription>
+            </Alert>
           </CardFooter>
         </form>
       </Card>
