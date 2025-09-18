@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -6,37 +6,75 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { suppliersService } from "../api";
 
-const SupplierCombobox = ({ value, onChange, placeholder = "Select a supplier..." }) => {
+const SupplierCombobox = ({ 
+  value, 
+  onChange, 
+  placeholder = "Select a supplier...", 
+  id,
+  disabled = false,
+  className = ""
+}) => {
   const [open, setOpen] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(false);
+  const abortControllerRef = useRef(null);
 
+  // Reset selectedSupplier when value changes externally
   useEffect(() => {
-    if (value && !selectedSupplier) {
-      suppliersService.getSupplierById(value)
-        .then(response => setSelectedSupplier(response.data))
-        .catch(() => setSelectedSupplier(null));
-    } else if (!value) {
+    if (!value) {
       setSelectedSupplier(null);
+      return;
+    }
+    
+    // Only fetch if we don't have the supplier or it's different
+    if (!selectedSupplier || selectedSupplier.id.toString() !== value.toString()) {
+      setLoading(true);
+      suppliersService.getSupplierById(value)
+        .then(response => {
+          setSelectedSupplier(response.data);
+          setLoading(false);
+        })
+        .catch(error => {
+          console.error('Error fetching supplier:', error);
+          setSelectedSupplier(null);
+          setLoading(false);
+        });
     }
   }, [value, selectedSupplier]);
 
-
+  // Debounced search with cleanup
   useEffect(() => {
     if (!open) {
-        setSuppliers([]);
-        return;
+      setSuppliers([]);
+      return;
     }
 
-    const controller = new AbortController();
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    abortControllerRef.current = new AbortController();
+    const controller = abortControllerRef.current;
+
     const debounceTimer = setTimeout(() => {
+      setLoading(true);
       const params = new URLSearchParams({ search: searchTerm });
+      
       suppliersService.getSuppliers(params, controller.signal)
-        .then(response => setSuppliers(response.data.results))
-        .catch(err => {
-          if (err.name !== 'CanceledError') {
-            console.error("Failed to fetch supplier suggestions", err);
+        .then(response => {
+          if (!controller.signal.aborted) {
+            setSuppliers(response.data.results || []);
+            setLoading(false);
+          }
+        })
+        .catch(error => {
+          if (!controller.signal.aborted && error.name !== 'AbortError') {
+            console.error("Failed to fetch supplier suggestions", error);
+            setSuppliers([]);
+            setLoading(false);
           }
         });
     }, 300);
@@ -47,29 +85,55 @@ const SupplierCombobox = ({ value, onChange, placeholder = "Select a supplier...
     };
   }, [searchTerm, open]);
 
-  const handleSelect = (supplier) => {
-    onChange({ target: { name: 'supplier_id', value: String(supplier.id) } });
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
+  const handleSelect = useCallback((supplier) => {
+    const newValue = String(supplier.id);
+    onChange(newValue);
     setSelectedSupplier(supplier);
     setOpen(false);
     setSearchTerm("");
-  };
+  }, [onChange]);
 
-  const handleClear = () => {
-    onChange({ target: { name: 'supplier_id', value: '' } });
+  const handleClear = useCallback(() => {
+    onChange('');
     setSelectedSupplier(null);
     setSearchTerm("");
-  };
+  }, [onChange]);
+
+  const handleOpenChange = useCallback((newOpen) => {
+    setOpen(newOpen);
+    if (!newOpen) {
+      setSearchTerm("");
+    }
+  }, []);
+
+  // Memoize display value to prevent unnecessary re-renders
+  const displayValue = useMemo(() => {
+    if (loading) return "Loading...";
+    return selectedSupplier ? selectedSupplier.name : placeholder;
+  }, [selectedSupplier, placeholder, loading]);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
+          id={id}
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          aria-label="Select supplier"
+          disabled={disabled}
+          className={cn("w-full justify-between", className)}
         >
-          {selectedSupplier ? selectedSupplier.name : placeholder}
+          <span className="truncate">{displayValue}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -81,10 +145,13 @@ const SupplierCombobox = ({ value, onChange, placeholder = "Select a supplier...
             onValueChange={setSearchTerm}
           />
           <CommandList>
-            <CommandEmpty>No suppliers found.</CommandEmpty>
+            {loading ? (
+              <CommandEmpty>Loading suppliers...</CommandEmpty>
+            ) : (
+              <CommandEmpty>No suppliers found.</CommandEmpty>
+            )}
             <CommandGroup>
-              
-              {selectedSupplier && (
+              {selectedSupplier && !loading && (
                 <CommandItem
                   value=""
                   onSelect={handleClear}
@@ -106,7 +173,7 @@ const SupplierCombobox = ({ value, onChange, placeholder = "Select a supplier...
                       value === String(supplier.id) ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  {supplier.name}
+                  <span className="truncate">{supplier.name}</span>
                 </CommandItem>
               ))}
             </CommandGroup>

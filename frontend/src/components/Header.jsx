@@ -1,5 +1,5 @@
 import AuthContext from '../context/authContext';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useContext, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -8,20 +8,27 @@ import { LogOut, Menu, Package } from 'lucide-react';
 const Header = () => {
   const { user, logoutUser } = useContext(AuthContext);
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
 
-  const getNavLinkClass = ({ isActive }) => 
-    `text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-muted-foreground'}`;
+  // Fixed: More precise NavLink active state logic
+  const getNavLinkClass = ({ isActive }) => {
+    const baseClasses = "text-sm font-medium transition-colors hover:text-primary";
+    return `${baseClasses} ${isActive ? 'text-primary' : 'text-muted-foreground'}`;
+  };
 
-  const getMobileNavLinkClass = ({ isActive }) => 
-    `flex items-center text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-muted-foreground'} py-2`;
+  const getMobileNavLinkClass = ({ isActive }) => {
+    const baseClasses = "flex items-center text-sm font-medium transition-colors hover:text-primary py-2";
+    return `${baseClasses} ${isActive ? 'text-primary' : 'text-muted-foreground'}`;
+  };
 
+  // Fixed: Better route matching for suppliers/purchases
   const navigationItems = [
-    { to: "/", label: "Home" },
+    { to: "/", label: "Home", exact: true },
     { to: "/products", label: "Products" },
     { to: "/movements", label: "Movements" },
     { to: "/suppliers", label: "Suppliers" },
     ...(user?.is_staff ? [
-      { to: "/purchase-order", label: "Purchases" },
+      { to: "/purchase-order", label: "Purchases" }, // This was causing the issue
       { to: "/reports", label: "Reports" },
       { to: "/admin/users", label: "Users" }
     ] : [])
@@ -29,6 +36,23 @@ const Header = () => {
 
   const handleLinkClick = () => {
     setIsOpen(false);
+  };
+
+  // Custom function to determine if a nav item is active
+  const isNavItemActive = (itemPath, exact = false) => {
+    if (exact) {
+      return location.pathname === itemPath;
+    }
+    
+    // Special handling for purchase-order vs suppliers conflict
+    if (itemPath === '/suppliers' && location.pathname.startsWith('/purchase-order')) {
+      return false;
+    }
+    if (itemPath === '/purchase-order' && location.pathname.startsWith('/suppliers')) {
+      return false;
+    }
+    
+    return location.pathname.startsWith(itemPath);
   };
 
   return (
@@ -114,14 +138,23 @@ const Header = () => {
           </div>
         </Link>
         
-        {/* Desktop Navigation */}
+        {/* Desktop Navigation - Fixed */}
         {user && (
           <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-            {navigationItems.map(item => (
-              <NavLink key={item.to} to={item.to} className={getNavLinkClass}>
-                {item.label}
-              </NavLink>
-            ))}
+            {navigationItems.map(item => {
+              const isActive = isNavItemActive(item.to, item.exact);
+              return (
+                <Link 
+                  key={item.to} 
+                  to={item.to} 
+                  className={`text-sm font-medium transition-colors hover:text-primary ${
+                    isActive ? 'text-primary' : 'text-muted-foreground'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
         )}
 
@@ -131,10 +164,15 @@ const Header = () => {
             <>
               {/* Desktop user info */}
               <div className="hidden sm:flex items-center space-x-2">
-                <NavLink to="/profile" className={getNavLinkClass}>
+                <Link 
+                  to="/profile" 
+                  className={`text-sm font-medium transition-colors hover:text-primary ${
+                    location.pathname === '/profile' ? 'text-primary' : 'text-muted-foreground'
+                  }`}
+                >
                   <span className="hidden md:inline">Hello, </span>
                   <span className="font-medium">{user.username}!</span>
-                </NavLink>
+                </Link>
                 <Button variant="ghost" size="icon" onClick={logoutUser} title="Logout">
                   <LogOut className="h-4 w-4" />
                 </Button>
@@ -164,23 +202,30 @@ const Header = () => {
                       
                       {/* Mobile navigation */}
                       <nav className="flex flex-col space-y-2">
-                        {navigationItems.map(item => (
-                          <NavLink 
-                            key={item.to} 
-                            to={item.to} 
-                            className={getMobileNavLinkClass}
-                            onClick={handleLinkClick}
-                          >
-                            {item.label}
-                          </NavLink>
-                        ))}
-                        <NavLink 
+                        {navigationItems.map(item => {
+                          const isActive = isNavItemActive(item.to, item.exact);
+                          return (
+                            <Link 
+                              key={item.to} 
+                              to={item.to} 
+                              className={`flex items-center text-sm font-medium transition-colors hover:text-primary py-2 ${
+                                isActive ? 'text-primary' : 'text-muted-foreground'
+                              }`}
+                              onClick={handleLinkClick}
+                            >
+                              {item.label}
+                            </Link>
+                          );
+                        })}
+                        <Link 
                           to="/profile" 
-                          className={getMobileNavLinkClass}
+                          className={`flex items-center text-sm font-medium transition-colors hover:text-primary py-2 ${
+                            location.pathname === '/profile' ? 'text-primary' : 'text-muted-foreground'
+                          }`}
                           onClick={handleLinkClick}
                         >
                           Profile Settings
-                        </NavLink>
+                        </Link>
                       </nav>
 
                       {/* Mobile logout */}

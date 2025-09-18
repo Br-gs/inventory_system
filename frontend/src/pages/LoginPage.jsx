@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 const LoginPage = () => {
@@ -27,7 +27,8 @@ const LoginPage = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors } } = useForm({
+    formState: { errors }
+  } = useForm({
     resolver: zodResolver(loginSchema),
     mode: "onBlur",
     defaultValues: {
@@ -57,33 +58,65 @@ const LoginPage = () => {
           <CardTitle className="text-2xl">Log In</CardTitle>
           <CardDescription>Enter your credentials to access the system.</CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit)} autoComplete="on">
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="username">Username</Label>
               <Input 
-              type="text"
-              id="username"
-              disabled={isSubmitting}
-              {...register("username")} />
-              {errors.username && <p className="text-xs text-red-600 mt-1">{errors.username.message}</p>}
+                type="text"
+                id="username"
+                disabled={isSubmitting}
+                autoComplete="username"
+                autoCapitalize="off"
+                spellCheck={false}
+                placeholder="Enter your username"
+                {...register("username")}
+              />
+              {errors.username && (
+                <p className="text-xs text-red-600 mt-1" role="alert">
+                  {errors.username.message}
+                </p>
+              )}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
               <Input 
-              type="password"
-              id="password"
-              disabled={isSubmitting}
-              {...register("password")} />
-              {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password.message}</p>}
+                type="password"
+                id="password"
+                disabled={isSubmitting}
+                autoComplete="current-password"
+                placeholder="Enter password (min 8 characters)"
+                {...register("password")}
+              />
+              {errors.password && (
+                <p className="text-xs text-red-600 mt-1" role="alert">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
             
-            {apiError && <p className="text-sm text-red-600 text-center">{apiError}</p>}
+            {apiError && (
+              <p className="text-sm text-red-600 text-center" role="alert">
+                {apiError}
+              </p>
+            )}
           </CardContent>
 
           <CardFooter className="flex flex-col gap-4">
-            <Button className="w-full" type="submit" disabled={isSubmitting} >
-              {isSubmitting ? "Logging in..." : "Login"}
+            <Button 
+              className="w-full" 
+              type="submit" 
+              disabled={isSubmitting}
+              aria-describedby={isSubmitting ? "login-loading" : undefined}
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="sr-only" id="login-loading">Loading</span>
+                  Logging in...
+                </>
+              ) : (
+                "Login"
+              )}
             </Button>
         
             {/* Registration removed - only admins can create users */}
