@@ -16,16 +16,20 @@ def create_inventory_movement(
 ) -> InventoryMovement:
     """
     Create an inventory movement and update the product's stock accordingly.
+    For transfers, this creates two movements: OUT from source and IN to destination.
 
     Args:
         product (Product): The product to move
+        location: The source location
         quantity (int): Quantity to move
-        movement_type (str): Type of movement (IN, OUT, ADJ)
+        movement_type (str): Type of movement (IN, OUT, ADJ, TRF)
         user (User, optional): User performing the movement
         unit_price (float, optional): Unit price for INPUT movements
+        destination_location: Destination location for transfers
+        notes (str): Additional notes
 
     Returns:
-        InventoryMovement: Created movement record
+        InventoryMovement: Created movement record (the source movement for transfers)
     """
     # validate movement type
     if not product.is_active:
@@ -44,9 +48,23 @@ def create_inventory_movement(
     ]:
         unit_price = product.price
 
-    # update product stock
+    # Handle different movement types
     if movement_type == InventoryMovement.MOVEMENT_INPUT:
         stock.quantity += quantity
+        stock.save()
+        
+        # Create input movement record
+        movement = InventoryMovement.objects.create(
+            product=product,
+            location=location,
+            quantity=quantity,
+            movement_type=movement_type,
+            user=user,
+            unit_price=unit_price,
+            destination_location=destination_location,
+            notes=notes,
+        )
+        
     elif movement_type == InventoryMovement.MOVEMENT_OUTPUT:
         if stock.quantity < quantity:
             raise ValueError(
@@ -54,8 +72,36 @@ def create_inventory_movement(
                 f"Available: {stock.quantity}, Requested: {quantity}"
             )
         stock.quantity -= quantity
+        stock.save()
+        
+        # Create output movement record
+        movement = InventoryMovement.objects.create(
+            product=product,
+            location=location,
+            quantity=quantity,
+            movement_type=movement_type,
+            user=user,
+            unit_price=unit_price,
+            destination_location=destination_location,
+            notes=notes,
+        )
+        
     elif movement_type == InventoryMovement.MOVEMENT_ADJUSTMENT:
         stock.quantity = quantity
+        stock.save()
+        
+        # Create adjustment movement record
+        movement = InventoryMovement.objects.create(
+            product=product,
+            location=location,
+            quantity=quantity,
+            movement_type=movement_type,
+            user=user,
+            unit_price=unit_price,
+            destination_location=destination_location,
+            notes=notes,
+        )
+        
     elif movement_type == InventoryMovement.MOVEMENT_TRANSFER:
         if not destination_location:
             raise ValueError("Destination location is required for transfers")
@@ -64,31 +110,46 @@ def create_inventory_movement(
                 f"Insufficient stock of {product.name} at {location.name} for transfer"
             )
 
-        # Deduct from source location
+        # Update source location stock (deduct)
         stock.quantity -= quantity
+        stock.save()
 
-        # Add to destination location
+        # Update destination location stock (add)
         dest_stock, _ = ProductLocationStock.objects.get_or_create(
             product=product, location=destination_location, defaults={"quantity": 0}
         )
         dest_stock.quantity += quantity
         dest_stock.save()
+
+        # Create OUT movement record for source location
+        out_movement = InventoryMovement.objects.create(
+            product=product,
+            location=location,
+            quantity=quantity,
+            movement_type=InventoryMovement.MOVEMENT_OUTPUT,
+            user=user,
+            unit_price=unit_price,
+            destination_location=destination_location,
+            notes=f"Transfer to {destination_location.name}. {notes}".strip(),
+        )
+
+        # Create IN movement record for destination location
+        in_movement = InventoryMovement.objects.create(
+            product=product,
+            location=destination_location,
+            quantity=quantity,
+            movement_type=InventoryMovement.MOVEMENT_INPUT,
+            user=user,
+            unit_price=unit_price,
+            destination_location=location,  # Source location as reference
+            notes=f"Transfer from {location.name}. {notes}".strip(),
+        )
+
+        # Return the OUT movement as the primary movement record
+        movement = out_movement
+        
     else:
         raise ValueError(f"Invalid movement type: {movement_type}")
-
-    stock.save()
-
-    # create inventory movement record
-    movement = InventoryMovement.objects.create(
-        product=product,
-        location=location,
-        quantity=quantity,
-        movement_type=movement_type,
-        user=user,
-        unit_price=unit_price,
-        destination_location=destination_location,
-        notes=notes,
-    )
 
     return movement
 
@@ -117,15 +178,13 @@ def transfer_product_between_locations(
             f"Available: {source_stock.quantity if source_stock else 0}"
         )
 
-    # Create OUT movement
-    create_inventory_movement(
+    # Use the main create_inventory_movement function with TRANSFER type
+    return create_inventory_movement(
         product=product,
         location=from_location,
         quantity=quantity,
         movement_type=InventoryMovement.MOVEMENT_TRANSFER,
         user=user,
         destination_location=to_location,
-        notes=f"Transfer to {to_location.name}. {notes}".strip(),
+        notes=notes,
     )
-
-    return True

@@ -9,26 +9,14 @@ const Header = () => {
   const { user, logoutUser } = useContext(AuthContext);
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-
-  // Fixed: More precise NavLink active state logic
-  const getNavLinkClass = ({ isActive }) => {
-    const baseClasses = "text-sm font-medium transition-colors hover:text-primary";
-    return `${baseClasses} ${isActive ? 'text-primary' : 'text-muted-foreground'}`;
-  };
-
-  const getMobileNavLinkClass = ({ isActive }) => {
-    const baseClasses = "flex items-center text-sm font-medium transition-colors hover:text-primary py-2";
-    return `${baseClasses} ${isActive ? 'text-primary' : 'text-muted-foreground'}`;
-  };
-
-  // Fixed: Better route matching for suppliers/purchases
+  
   const navigationItems = [
     { to: "/", label: "Home", exact: true },
     { to: "/products", label: "Products" },
     { to: "/movements", label: "Movements" },
     { to: "/suppliers", label: "Suppliers" },
     ...(user?.is_staff ? [
-      { to: "/purchase-order", label: "Purchases" }, // This was causing the issue
+      { to: "/purchase-order", label: "Purchases" },
       { to: "/reports", label: "Reports" },
       { to: "/admin/users", label: "Users" }
     ] : [])
@@ -58,10 +46,10 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        {/* Premium Logo */}
+        {/* Logo */}
         <Link to="/" className="mr-6 flex items-center space-x-2">
           <div className="flex items-center space-x-2">
-            {/* Premium Logo Icon with gradient and animation */}
+            {/*  Logo Icon with gradient and animation */}
             <div className="relative">
               <svg width="32" height="32" viewBox="0 0 40 40" className="flex-shrink-0">
                 <defs>

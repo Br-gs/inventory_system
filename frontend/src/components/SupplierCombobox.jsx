@@ -96,14 +96,14 @@ const SupplierCombobox = ({
 
   const handleSelect = useCallback((supplier) => {
     const newValue = String(supplier.id);
-    onChange(newValue);
+    onChange({ target: { value: newValue } });
     setSelectedSupplier(supplier);
     setOpen(false);
     setSearchTerm("");
   }, [onChange]);
 
   const handleClear = useCallback(() => {
-    onChange('');
+    onChange({ target: { value: '' } });
     setSelectedSupplier(null);
     setSearchTerm("");
   }, [onChange]);

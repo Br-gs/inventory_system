@@ -137,6 +137,10 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
     }
   };
 
+  const handleSupplierChange = (e) => {
+    setValue('supplier_id', e.target.value, { shouldValidate: true });
+  };
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -144,7 +148,7 @@ const PurchaseOrderForm = ({ onSuccess, onClose, orderToEdit = null }) => {
           <Label>Supplier</Label>
           <SupplierCombobox 
             value={watchedSupplier}
-            onChange={(e) => setValue('supplier_id', e.target.value, { shouldValidate: true })} 
+            onChange={handleSupplierChange}
           />
           {errors.supplier_id && <p className="text-sm text-red-500 mt-1">{errors.supplier_id.message}</p>}
         </div>

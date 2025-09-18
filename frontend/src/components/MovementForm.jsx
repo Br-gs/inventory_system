@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, ArrowDown, ArrowUp, ArrowRightLeft } from 'lucide-react';
+import { AlertTriangle, ArrowDown, ArrowUp, ArrowRightLeft, ShoppingCart, Package } from 'lucide-react';
 
 const movementSchema = z.object({
     product: z.string().min(1, "Product is required"),
@@ -25,6 +25,9 @@ const movementSchema = z.object({
     movement_type: z.enum(['IN', 'OUT', 'ADJ', 'TRF'], { 
         required_error: "Movement type is required" 
     }),
+    output_reason: z.enum(['SALE', 'DAMAGE'], {
+        required_error: "Output reason is required"
+    }).optional(),
     destination_location: z.string().optional(),
     unit_price: z.coerce.number().optional(),
     notes: z.string().optional(),
@@ -50,6 +53,7 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
             location: preselectedLocation || (user?.default_location_id?.toString() || ''),
             quantity: 1,
             movement_type: user?.is_staff ? '' : 'OUT',
+            output_reason: user?.is_staff ? '' : 'SALE',
             destination_location: '',
             unit_price: '',
             notes: '',
@@ -59,6 +63,7 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
     const watchedProduct = watch('product');
     const watchedLocation = watch('location');
     const watchedMovementType = watch('movement_type');
+    const watchedOutputReason = watch('output_reason');
     const watchedQuantity = watch('quantity');
     const watchedDestinationLocation = watch('destination_location');
 
@@ -89,6 +94,15 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
         fetchProductStock();
     }, [watchedProduct, watchedLocation]);
 
+    // Reset output_reason when movement type changes
+    useEffect(() => {
+        if (watchedMovementType !== 'OUT') {
+            setValue('output_reason', '');
+        } else if (watchedMovementType === 'OUT' && !watchedOutputReason) {
+            setValue('output_reason', user?.is_staff ? '' : 'SALE');
+        }
+    }, [watchedMovementType, setValue, user?.is_staff, watchedOutputReason]);
+
     const onSubmit = async (data) => {
         try {
             const movementData = {
@@ -99,6 +113,14 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                 destination_location: data.destination_location ? Number(data.destination_location) : undefined,
                 unit_price: data.unit_price ? Number(data.unit_price) : undefined,
             };
+
+            // Add output reason to notes for better tracking
+            if (data.output_reason) {
+                const reasonText = data.output_reason === 'SALE' ? 'Sale' : 'Damage/Loss';
+                movementData.notes = data.notes ? 
+                    `${reasonText} - ${data.notes}` : 
+                    reasonText;
+            }
             
             // Remove undefined fields
             Object.keys(movementData).forEach(key => {
@@ -126,6 +148,7 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
     const isOutput = watchedMovementType === 'OUT';
     const isAdjustment = watchedMovementType === 'ADJ';
     const isInput = watchedMovementType === 'IN';
+    const isSale = watchedOutputReason === 'SALE';
     
     // Check if there's insufficient stock for output/transfer
     const hasInsufficientStock = (isOutput || isTransfer) && 
@@ -155,6 +178,8 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                         setValue('movement_type', value, { shouldValidate: true });
                         // Clear destination location when changing movement type
                         setValue('destination_location', '');
+                        // Reset output reason
+                        setValue('output_reason', value === 'OUT' ? (user?.is_staff ? '' : 'SALE') : '');
                     }}
                     value={watchedMovementType}
                     disabled={!user?.is_staff && watchedMovementType === 'OUT'}
@@ -174,7 +199,7 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                                 <SelectItem value="OUT">
                                     <div className="flex items-center gap-2">
                                         <ArrowUp className="h-3 w-3 text-red-600" />
-                                        Output (Sale/Use)
+                                        Output
                                     </div>
                                 </SelectItem>
                                 <SelectItem value="ADJ">
@@ -193,7 +218,7 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                         ) : (
                             <SelectItem value="OUT">
                                 <div className="flex items-center gap-2">
-                                    <ArrowUp className="h-3 w-3 text-red-600" />
+                                    <ShoppingCart className="h-3 w-3 text-red-600" />
                                     Sale
                                 </div>
                             </SelectItem>
@@ -204,6 +229,40 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                     <p className="text-sm text-red-500 mt-1">{errors.movement_type.message}</p>
                 )}
             </div>
+
+            {/* Output Reason - Only for Output movements */}
+            {isOutput && (
+                <div className="grid gap-2">
+                    <Label htmlFor="output_reason">Reason for Output *</Label>
+                    <Select 
+                        onValueChange={(value) => setValue('output_reason', value, { shouldValidate: true })}
+                        value={watchedOutputReason}
+                    >
+                        <SelectTrigger id="output_reason">
+                            <SelectValue placeholder="-- Select Reason --" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="SALE">
+                                <div className="flex items-center gap-2">
+                                    <ShoppingCart className="h-3 w-3 text-green-600" />
+                                    Sale
+                                </div>
+                            </SelectItem>
+                            {user?.is_staff && (
+                                <SelectItem value="DAMAGE">
+                                    <div className="flex items-center gap-2">
+                                        <Package className="h-3 w-3 text-red-600" />
+                                        Damage/Loss
+                                    </div>
+                                </SelectItem>
+                            )}
+                        </SelectContent>
+                    </Select>
+                    {errors.output_reason && (
+                        <p className="text-sm text-red-500 mt-1">{errors.output_reason.message}</p>
+                    )}
+                </div>
+            )}
 
             {/* Location Configuration Based on Movement Type */}
             {isTransfer ? (
@@ -271,11 +330,11 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                         )}
                     </div>
                     
-                    {/* Optional destination/source for tracking - only for admins */}
-                    {(isInput || isOutput) && user?.is_staff && (
+                    {/* Destination for outputs (only for damage/loss, not for sales) and inputs - only for admins */}
+                    {((isOutput && watchedOutputReason === 'DAMAGE') || isInput) && user?.is_staff && (
                         <div className="grid gap-2">
                             <LocationSelector
-                                label={isInput ? "From Location/Supplier (Optional)" : "To Location/Customer (Optional)"}
+                                label={isInput ? "From Location/Supplier (Optional)" : "To Location (Optional)"}
                                 value={watchedDestinationLocation}
                                 onChange={(value) => setValue('destination_location', value)}
                                 allowEmpty={true}
@@ -285,7 +344,7 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                             <p className="text-xs text-muted-foreground">
                                 {isInput 
                                     ? "Optionally specify where this stock is coming from" 
-                                    : "Optionally specify where this stock is going"
+                                    : "Optionally specify where this damaged stock is going (disposal, return, etc.)"
                                 }
                             </p>
                         </div>
@@ -368,7 +427,10 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                         className="bg-muted"
                     />
                     <p className="text-xs text-muted-foreground">
-                        {isOutput ? 'Sales use the current product price.' : 'Transfers use the current product price for valuation.'}
+                        {isOutput ? 
+                            (isSale ? 'Sales use the current product price.' : 'Damage/loss uses current product price for valuation.') :
+                            'Transfers use the current product price for valuation.'
+                        }
                     </p>
                 </div>
             )}
