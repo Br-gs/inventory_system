@@ -33,6 +33,11 @@ const inventoryService = {
     createInventoryMovement : (movementData) => {
         return axiosClient.post('/api/inventory-movements/', movementData);
     },
+
+    // Reports
+    getInventoryReport : (params) => {
+        return axiosClient.get('/api/reports/', { params });
+    },
 };
 
 export default inventoryService;

@@ -15,6 +15,7 @@ from django.db.models import (
     ExpressionWrapper,
     Subquery,
     OuterRef,
+    Q,
 )
 from datetime import datetime, timedelta
 from django.utils import timezone
@@ -201,23 +202,26 @@ class InventoryReportsView(APIView):
         last_month_start = last_month_end.replace(day=1)
         due_date_threshold = today + timedelta(days=7)
 
-        base_queryset = InventoryMovement.objects.filter(
+        # Base queryset for sales (OUTPUT movements excluding damage/loss)
+        sales_queryset = InventoryMovement.objects.filter(
             movement_type=InventoryMovement.MOVEMENT_OUTPUT
+        ).exclude(
+            Q(notes__icontains='damage') | Q(notes__icontains='loss')
         )
 
         # Apply filters
         if start_date_str:
-            base_queryset = base_queryset.filter(
+            sales_queryset = sales_queryset.filter(
                 date__gte=datetime.fromisoformat(start_date_str)
             )
         if end_date_str:
-            base_queryset = base_queryset.filter(
+            sales_queryset = sales_queryset.filter(
                 date__lte=datetime.fromisoformat(end_date_str)
             )
         if product_id:
-            base_queryset = base_queryset.filter(product_id=product_id)
+            sales_queryset = sales_queryset.filter(product_id=product_id)
         if location_id:
-            base_queryset = base_queryset.filter(location_id=location_id)
+            sales_queryset = sales_queryset.filter(location_id=location_id)
 
         # Dashboard KPIs
         if location_id:
@@ -261,13 +265,13 @@ class InventoryReportsView(APIView):
             for movement in recent_movements_query
         ]
 
-        # Sales metrics
-        sales_current_month_data = base_queryset.filter(
+        # Sales metrics (excluding damage/loss)
+        sales_current_month_data = sales_queryset.filter(
             date__gte=current_month_start
         ).aggregate(total=Sum("quantity"))
         sales_current_month = sales_current_month_data["total"] or 0
 
-        sales_last_month_data = base_queryset.filter(
+        sales_last_month_data = sales_queryset.filter(
             date__gte=last_month_start, date__lt=current_month_start
         ).aggregate(total=Sum("quantity"))
         sales_last_month = sales_last_month_data["total"] or 0
@@ -281,17 +285,17 @@ class InventoryReportsView(APIView):
         elif sales_current_month > 0:
             percentage_change = 100
 
-        # Sales by month
+        # Sales by month (excluding damage/loss)
         sales_by_month = (
-            base_queryset.annotate(month=TruncMonth("date"))
+            sales_queryset.annotate(month=TruncMonth("date"))
             .values("month")
             .annotate(total_quantity=Sum("quantity"))
             .order_by("month")
         )
 
-        # Top selling products
+        # Top selling products (excluding damage/loss)
         top_selling_products = (
-            base_queryset.values("product__name")
+            sales_queryset.values("product__name")
             .annotate(total_quantity_sold=Sum("quantity"))
             .order_by("-total_quantity_sold")[:5]
         )

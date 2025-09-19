@@ -1,9 +1,8 @@
-import axiosClient from "./axiosClient";
+import inventoryService from './inventoryService';
 
 const reportsService = {
-    getInventoryReport: (filters) => {
-        const params = new URLSearchParams(filters);
-        return axiosClient.get('/api/reports/', {params});
+    getInventoryReport: (params) => {
+        return inventoryService.getInventoryReport(params);
     },
 };
 
