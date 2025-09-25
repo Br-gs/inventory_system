@@ -1,7 +1,4 @@
 import {useContext, useState, useEffect } from "react";
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import inventoryService from "../api/inventoryService";
 import toast from "react-hot-toast";
 import AuthContext from '../context/authContext';
@@ -16,173 +13,203 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, ArrowDown, ArrowUp, ArrowRightLeft, ShoppingCart, Package } from 'lucide-react';
 
-const movementSchema = z.object({
-    product: z.string().min(1, "Product is required"),
-    location: z.string().min(1, "Location is required"),
-    quantity: z.coerce.number({ invalid_type_error: "Quantity must be a number" })
-        .int({ message: "Quantity must be an integer" })
-        .positive({ message: "Quantity must be positive" }),
-    movement_type: z.enum(['IN', 'OUT', 'ADJ', 'TRF'], { 
-        required_error: "Movement type is required" 
-    }),
-    output_reason: z.enum(['SALE', 'DAMAGE'], {
-        required_error: "Output reason is required"
-    }).optional(),
-    destination_location: z.string().optional(),
-    unit_price: z.coerce.number().optional(),
-    notes: z.string().optional(),
-});
-
 const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
     const { user } = useContext(AuthContext);
+    
+    const [product, setProduct] = useState('');
+    const [location, setLocation] = useState(preselectedLocation || user?.default_location_id?.toString() || '');
+    const [quantity, setQuantity] = useState(1);
+    const [movementType, setMovementType] = useState(user?.is_staff ? '' : 'OUT');
+    const [outputReason, setOutputReason] = useState(user?.is_staff ? '' : 'SALE');
+    const [destinationLocation, setDestinationLocation] = useState('');
+    const [unitPrice, setUnitPrice] = useState('');
+    const [notes, setNotes] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // Product stock info
     const [productStock, setProductStock] = useState(null);
     const [availableStock, setAvailableStock] = useState(0);
+    const [loading, setLoading] = useState(false);
 
-    const {
-        register,
-        setValue,
-        watch,
-        handleSubmit,
-        reset,
-        formState: { errors, isSubmitting },
-    } = useForm({
-        resolver: zodResolver(movementSchema),
-        mode: 'onBlur',
-        defaultValues: {
-            product: '',
-            location: preselectedLocation || (user?.default_location_id?.toString() || ''),
-            quantity: 1,
-            movement_type: user?.is_staff ? '' : 'OUT',
-            output_reason: user?.is_staff ? '' : 'SALE',
-            destination_location: '',
-            unit_price: '',
-            notes: '',
-        },
-    });
-
-    const watchedProduct = watch('product');
-    const watchedLocation = watch('location');
-    const watchedMovementType = watch('movement_type');
-    const watchedOutputReason = watch('output_reason');
-    const watchedQuantity = watch('quantity');
-    const watchedDestinationLocation = watch('destination_location');
-
-    // Fetch product stock information when product or location changes
+    // Fetch product stock when product or location changes
     useEffect(() => {
         const fetchProductStock = async () => {
-            if (watchedProduct && watchedLocation) {
-                try {
-                    const response = await inventoryService.getProductById(watchedProduct);
-                    const product = response.data;
-                    setProductStock(product);
-                    
-                    // Find stock at selected location
-                    const locationStock = product.stock_locations?.find(
-                        stock => stock.location.id.toString() === watchedLocation
-                    );
-                    setAvailableStock(locationStock?.quantity || 0);
-                } catch (error) {
-                    console.error('Error fetching product stock:', error);
-                    setAvailableStock(0);
-                }
-            } else {
+            if (!product || !location) {
+                setProductStock(null);
+                setAvailableStock(0);
+                return;
+            }
+
+            setLoading(true);
+            try {
+                const response = await inventoryService.getProductById(product);
+                const productData = response.data;
+                setProductStock(productData);
+                
+                // Find stock at selected location
+                const locationStock = productData.stock_locations?.find(
+                    stock => stock.location.id.toString() === location.toString()
+                );
+                setAvailableStock(locationStock?.quantity || 0);
+            } catch (error) {
+                console.error('Error fetching product stock:', error);
                 setAvailableStock(0);
                 setProductStock(null);
+            } finally {
+                setLoading(false);
             }
         };
 
         fetchProductStock();
-    }, [watchedProduct, watchedLocation]);
+    }, [product, location]);
 
     // Reset output_reason when movement type changes
     useEffect(() => {
-        if (watchedMovementType !== 'OUT') {
-            setValue('output_reason', '');
-        } else if (watchedMovementType === 'OUT' && !watchedOutputReason) {
-            setValue('output_reason', user?.is_staff ? '' : 'SALE');
+        if (movementType !== 'OUT') {
+            setOutputReason('');
+        } else if (movementType === 'OUT' && !outputReason) {
+            setOutputReason(user?.is_staff ? '' : 'SALE');
         }
-    }, [watchedMovementType, setValue, user?.is_staff, watchedOutputReason]);
+    }, [movementType, user?.is_staff, outputReason]);
 
-    const onSubmit = async (data) => {
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        // Basic validation
+        if (!product) {
+            toast.error('Please select a product');
+            return;
+        }
+        if (!location) {
+            toast.error('Please select a location');
+            return;
+        }
+        if (!movementType) {
+            toast.error('Please select movement type');
+            return;
+        }
+        if (quantity <= 0) {
+            toast.error('Quantity must be greater than 0');
+            return;
+        }
+
+        // Transfer validation
+        if (movementType === 'TRF') {
+            if (!destinationLocation) {
+                toast.error('Please select destination location for transfer');
+                return;
+            }
+            if (destinationLocation === location) {
+                toast.error('Source and destination locations must be different');
+                return;
+            }
+        }
+
+        // Output validation
+        if (movementType === 'OUT' && !outputReason) {
+            toast.error('Please select output reason');
+            return;
+        }
+
+        // Stock validation
+        if ((movementType === 'OUT' || movementType === 'TRF') && quantity > availableStock) {
+            toast.error(`Insufficient stock! Available: ${availableStock} units, Requested: ${quantity} units`);
+            return;
+        }
+
+        setIsSubmitting(true);
+
         try {
             const movementData = {
-                ...data,
-                product: Number(data.product),
-                location: Number(data.location),
-                movement_type: data.movement_type,
-                destination_location: data.destination_location ? Number(data.destination_location) : undefined,
-                unit_price: data.unit_price ? Number(data.unit_price) : undefined,
+                product: Number(product),
+                location: Number(location),
+                quantity: Number(quantity),
+                movement_type: movementType,
             };
 
-            // Add output reason to notes for better tracking
-            if (data.output_reason) {
-                const reasonText = data.output_reason === 'SALE' ? 'Sale' : 'Damage/Loss';
-                movementData.notes = data.notes ? 
-                    `${reasonText} - ${data.notes}` : 
-                    reasonText;
+            // Add destination location for transfers
+            if (movementType === 'TRF' && destinationLocation) {
+                movementData.destination_location = Number(destinationLocation);
             }
-            
-            // Remove undefined fields
-            Object.keys(movementData).forEach(key => {
-                if (movementData[key] === undefined) {
-                    delete movementData[key];
-                }
-            });
+
+            // Add unit price if provided
+            if (unitPrice) {
+                movementData.unit_price = Number(unitPrice);
+            }
+
+            // Add output reason to notes for better tracking
+            let finalNotes = notes;
+            if (outputReason) {
+                const reasonText = outputReason === 'SALE' ? 'Sale' : 'Damage/Loss';
+                finalNotes = notes ? `${reasonText} - ${notes}` : reasonText;
+            }
+            if (finalNotes) {
+                movementData.notes = finalNotes;
+            }
 
             const response = await inventoryService.createInventoryMovement(movementData);
-            reset();
-            onSuccess(response.data);
+            
+            // Reset form
+            setProduct('');
+            setLocation(user?.default_location_id?.toString() || '');
+            setQuantity(1);
+            setMovementType(user?.is_staff ? '' : 'OUT');
+            setOutputReason(user?.is_staff ? '' : 'SALE');
+            setDestinationLocation('');
+            setUnitPrice('');
+            setNotes('');
+            
             toast.success('Movement created successfully!');
+            onSuccess(response.data);
+            
         } catch (error) {
             const errorMessage = error.response?.data?.detail || 
                                error.response?.data?.non_field_errors?.[0] ||
-                               (typeof error.response?.data === 'object' ? 
-                                JSON.stringify(error.response.data) : 
-                                'Could not create movement.');
-            console.error("Error saving movement:", error.response?.data || error.message);
+                               'Could not create movement.';
             toast.error(`Failed to save movement: ${errorMessage}`);
+            console.error("Error saving movement:", error.response?.data || error.message);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
-    const isTransfer = watchedMovementType === 'TRF';
-    const isOutput = watchedMovementType === 'OUT';
-    const isAdjustment = watchedMovementType === 'ADJ';
-    const isInput = watchedMovementType === 'IN';
-    const isSale = watchedOutputReason === 'SALE';
+    const isTransfer = movementType === 'TRF';
+    const isOutput = movementType === 'OUT';
+    const isAdjustment = movementType === 'ADJ';
+    const isInput = movementType === 'IN';
+    const isSale = outputReason === 'SALE';
     
     // Check if there's insufficient stock for output/transfer
     const hasInsufficientStock = (isOutput || isTransfer) && 
-                                watchedQuantity > availableStock && 
+                                quantity > availableStock && 
                                 availableStock >= 0;
 
     // User can override location if admin or has permission
     const canChangeLocation = user?.is_staff || user?.can_change_location;
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
+        <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid gap-2">
                 <Label htmlFor="product">Product *</Label>
                 <ProductCombobox
-                    value={watchedProduct}
-                    onChange={(e) => setValue('product', e.target.value, { shouldValidate: true })}
+                    value={product}
+                    onChange={(e) => setProduct(e.target.value)}
+                    placeholder="Select a product"
                 />
-                {errors.product && (
-                    <p className="text-sm text-red-500 mt-1">{errors.product.message}</p>
-                )}
             </div>
             
             <div className="grid gap-2">
                 <Label htmlFor="movement_type">Movement Type *</Label>
                 <Select 
+                    value={movementType}
                     onValueChange={(value) => {
-                        setValue('movement_type', value, { shouldValidate: true });
+                        setMovementType(value);
                         // Clear destination location when changing movement type
-                        setValue('destination_location', '');
+                        setDestinationLocation('');
                         // Reset output reason
-                        setValue('output_reason', value === 'OUT' ? (user?.is_staff ? '' : 'SALE') : '');
+                        setOutputReason(value === 'OUT' ? (user?.is_staff ? '' : 'SALE') : '');
                     }}
-                    value={watchedMovementType}
-                    disabled={!user?.is_staff && watchedMovementType === 'OUT'}
+                    disabled={!user?.is_staff && movementType === 'OUT'}
                 >
                     <SelectTrigger id="movement_type">
                         <SelectValue placeholder="-- Select Movement Type --" />
@@ -225,9 +252,6 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                         )}
                     </SelectContent>
                 </Select>
-                {errors.movement_type && (
-                    <p className="text-sm text-red-500 mt-1">{errors.movement_type.message}</p>
-                )}
             </div>
 
             {/* Output Reason - Only for Output movements */}
@@ -235,8 +259,8 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                 <div className="grid gap-2">
                     <Label htmlFor="output_reason">Reason for Output *</Label>
                     <Select 
-                        onValueChange={(value) => setValue('output_reason', value, { shouldValidate: true })}
-                        value={watchedOutputReason}
+                        value={outputReason}
+                        onValueChange={setOutputReason}
                     >
                         <SelectTrigger id="output_reason">
                             <SelectValue placeholder="-- Select Reason --" />
@@ -258,9 +282,6 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                             )}
                         </SelectContent>
                     </Select>
-                    {errors.output_reason && (
-                        <p className="text-sm text-red-500 mt-1">{errors.output_reason.message}</p>
-                    )}
                 </div>
             )}
 
@@ -276,29 +297,23 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                     <div className="grid gap-2">
                         <LocationSelector
                             label="From Location (Source)"
-                            value={watchedLocation}
-                            onChange={(value) => setValue('location', value, { shouldValidate: true })}
+                            value={location}
+                            onChange={setLocation}
                             disabled={!canChangeLocation}
                             required={true}
                             showLabel={true}
                         />
-                        {errors.location && (
-                            <p className="text-sm text-red-500 mt-1">{errors.location.message}</p>
-                        )}
                     </div>
 
                     <div className="grid gap-2">
                         <LocationSelector
                             label="To Location (Destination)"
-                            value={watchedDestinationLocation}
-                            onChange={(value) => setValue('destination_location', value, { shouldValidate: true })}
+                            value={destinationLocation}
+                            onChange={setDestinationLocation}
                             required={true}
                             showLabel={true}
                         />
-                        {errors.destination_location && (
-                            <p className="text-sm text-red-500 mt-1">{errors.destination_location.message}</p>
-                        )}
-                        {watchedLocation && watchedDestinationLocation && watchedLocation === watchedDestinationLocation && (
+                        {location && destinationLocation && location === destinationLocation && (
                             <Alert variant="destructive">
                                 <AlertTriangle className="h-4 w-4" />
                                 <AlertDescription>
@@ -314,15 +329,12 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                     <div className="grid gap-2">
                         <LocationSelector
                             label={isInput ? "Receive at Location" : isOutput ? "From Location" : "Location"}
-                            value={watchedLocation}
-                            onChange={(value) => setValue('location', value, { shouldValidate: true })}
+                            value={location}
+                            onChange={setLocation}
                             disabled={!canChangeLocation}
                             required={true}
                             showLabel={true}
                         />
-                        {errors.location && (
-                            <p className="text-sm text-red-500 mt-1">{errors.location.message}</p>
-                        )}
                         {!canChangeLocation && (
                             <p className="text-xs text-muted-foreground">
                                 Using your default location. Contact admin to change.
@@ -331,12 +343,12 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                     </div>
                     
                     {/* Destination for outputs (only for damage/loss, not for sales) and inputs - only for admins */}
-                    {((isOutput && watchedOutputReason === 'DAMAGE') || isInput) && user?.is_staff && (
+                    {((isOutput && outputReason === 'DAMAGE') || isInput) && user?.is_staff && (
                         <div className="grid gap-2">
                             <LocationSelector
                                 label={isInput ? "From Location/Supplier (Optional)" : "To Location (Optional)"}
-                                value={watchedDestinationLocation}
-                                onChange={(value) => setValue('destination_location', value)}
+                                value={destinationLocation}
+                                onChange={setDestinationLocation}
                                 allowEmpty={true}
                                 placeholder={isInput ? "Select source (optional)" : "Select destination (optional)"}
                                 showLabel={true}
@@ -353,15 +365,17 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
             )}
 
             {/* Stock Information Display */}
-            {productStock && watchedLocation && (
+            {productStock && location && (
                 <div className="p-3 bg-muted rounded-lg">
                     <div className="flex justify-between items-center text-sm">
                         <span>Available at {isInput ? 'receiving' : 'source'} location:</span>
-                        <span className={`font-semibold ${availableStock <= 10 ? 'text-orange-600' : availableStock === 0 ? 'text-red-600' : 'text-green-600'}`}>
-                            {availableStock} units
+                        <span className={`font-semibold ${loading ? 'text-gray-500' : 
+                            availableStock <= 10 ? 'text-orange-600' : 
+                            availableStock === 0 ? 'text-red-600' : 'text-green-600'}`}>
+                            {loading ? 'Loading...' : `${availableStock} units`}
                         </span>
                     </div>
-                    {productStock.total_quantity !== availableStock && (
+                    {productStock.total_quantity !== availableStock && !loading && (
                         <div className="flex justify-between items-center text-xs text-muted-foreground mt-1">
                             <span>Total across all locations:</span>
                             <span>{productStock.total_quantity} units</span>
@@ -379,18 +393,16 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                     type="number" 
                     id="quantity" 
                     min="1"
-                    {...register("quantity")} 
+                    value={quantity}
+                    onChange={(e) => setQuantity(Number(e.target.value))}
                 />
-                {errors.quantity && (
-                    <p className="text-sm text-red-500 mt-1">{errors.quantity.message}</p>
-                )}
                 
                 {/* Stock warning */}
                 {hasInsufficientStock && (
                     <Alert variant="destructive">
                         <AlertTriangle className="h-4 w-4" />
                         <AlertDescription>
-                            Insufficient stock! Available: {availableStock} units, Requested: {watchedQuantity} units.
+                            Insufficient stock! Available: {availableStock} units, Requested: {quantity} units.
                         </AlertDescription>
                     </Alert>
                 )}
@@ -407,12 +419,10 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                         type="number" 
                         step="0.01"
                         id="unit_price" 
-                        {...register("unit_price")} 
+                        value={unitPrice}
+                        onChange={(e) => setUnitPrice(e.target.value)}
                         placeholder={productStock ? `Current: ${productStock.price}` : "0.00"}
                     />
-                    {errors.unit_price && (
-                        <p className="text-sm text-red-500 mt-1">{errors.unit_price.message}</p>
-                    )}
                 </div>
             )}
 
@@ -439,13 +449,11 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                 <Label htmlFor="notes">Notes</Label>
                 <Textarea 
                     id="notes" 
-                    {...register("notes")} 
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
                     placeholder="Optional notes about this movement..."
                     rows={3}
                 />
-                {errors.notes && (
-                    <p className="text-sm text-red-500 mt-1">{errors.notes.message}</p>
-                )}
             </div>
 
             <div className="flex justify-end gap-2 mt-4">
@@ -454,7 +462,7 @@ const MovementForm = ({ onSuccess, onClose, preselectedLocation = null }) => {
                 </Button>
                 <Button 
                     type="submit" 
-                    disabled={isSubmitting || hasInsufficientStock || (isTransfer && watchedLocation === watchedDestinationLocation)}
+                    disabled={isSubmitting || hasInsufficientStock || (isTransfer && location === destinationLocation)}
                 >
                     {isSubmitting ? "Creating..." : "Create Movement"}
                 </Button>

@@ -21,12 +21,10 @@ const userSchema = z.object({
   last_name: z.string().optional(),
   password: z.string().min(8, "Password must be at least 8 characters"),
   is_staff: z.boolean().default(false),
-  profile: z.object({
-    role: z.enum(['admin', 'manager', 'employee']).default('employee'),
-    default_location: z.string().min(1, "Location is required for all users"),
-    can_change_location: z.boolean().default(false),
-    phone_number: z.string().optional(),
-  }),
+  role: z.enum(['admin', 'manager', 'employee']).default('employee'),
+  default_location: z.coerce.number().positive("Location is required"),
+  can_change_location: z.boolean().default(false),
+  phone_number: z.string().optional(),
 });
 
 const UserCreateForm = ({ onSuccess, onClose }) => {
@@ -35,10 +33,11 @@ const UserCreateForm = ({ onSuccess, onClose }) => {
     handleSubmit,
     setValue,
     watch,
-    reset, // Add reset function
+    reset,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(userSchema),
+    mode: 'onChange',
     defaultValues: {
       username: '',
       email: '',
@@ -46,36 +45,29 @@ const UserCreateForm = ({ onSuccess, onClose }) => {
       last_name: '',
       password: '',
       is_staff: false,
-      profile: {
-        role: 'employee',
-        default_location: '',
-        can_change_location: false,
-        phone_number: '',
-      }
+      role: 'employee',
+      default_location: '',
+      can_change_location: false,
+      phone_number: '',
     },
   });
 
   const watchedIsStaff = watch('is_staff');
-  const watchedRole = watch('profile.role');
+  const watchedRole = watch('role');
+  const watchedDefaultLocation = watch('default_location');
 
   // Auto-update role when is_staff changes
   useEffect(() => {
     if (watchedIsStaff && watchedRole !== 'admin') {
-      setValue('profile.role', 'admin');
+      setValue('role', 'admin');
     } else if (!watchedIsStaff && watchedRole === 'admin') {
-      setValue('profile.role', 'employee');
+      setValue('role', 'employee');
     }
   }, [watchedIsStaff, watchedRole, setValue]);
 
   const onSubmit = async (data) => {
     try {
-      // Validate location is provided
-      if (!data.profile.default_location) {
-        toast.error("Location is required. Please select a default location for this user.");
-        return;
-      }
-
-      // Clean up the data and prepare for backend - match UserCreateSerializer
+      // Simple structure that matches what backend expects
       const userData = {
         username: data.username,
         email: data.email,
@@ -84,82 +76,53 @@ const UserCreateForm = ({ onSuccess, onClose }) => {
         ...(data.first_name && { first_name: data.first_name }),
         ...(data.last_name && { last_name: data.last_name }),
         profile: {
-          role: data.profile.role,
-          default_location: parseInt(data.profile.default_location, 10), // Ensure it's an integer
-          can_change_location: data.profile.can_change_location,
-          ...(data.profile.phone_number && { phone_number: data.profile.phone_number }),
+          role: data.role,
+          default_location: Number(data.default_location),
+          can_change_location: data.can_change_location,
+          ...(data.phone_number && { phone_number: data.phone_number }),
         }
       };
 
       await authService.createUser(userData);
       
-      // Success - user was created, clean up and close form
-      reset(); // Clear form data
+      // If we get here, the user was created successfully
+      reset();
       toast.success(`User ${data.username} created successfully!`);
-      onSuccess(); // This closes the form and refreshes the list
+      onSuccess();
       
     } catch (error) {
-      // Check if the error is actually a success (status 201) or user was created despite error
-      if (error.response?.status === 201 || 
-          (error.response?.status === 400 && !error.response?.data?.username && !error.response?.data?.email && !error.response?.data?.profile)) {
-        // It's actually a success, treat it as such without logging error
-        reset(); 
-        toast.success(`User ${data.username} created successfully!`);
-        onSuccess(); 
-        return;
-      }
-      
-      // Only log real errors
-      console.error('Error creating user:', error);
-      
-      // Handle specific error cases
-      if (error.response?.status === 400 && error.response?.data) {
+      // Handle the case where backend returns 400 but user is created
+      if (error.response?.status === 400) {
         const errorData = error.response.data;
         
-        if (errorData.username && errorData.username[0]?.includes("already exists")) {
-          toast.error("Username already exists. Please choose a different username.");
+        // Check if user was actually created (has id in response)
+        if (errorData?.id || errorData?.username) {
+          reset();
+          toast.success(`User ${data.username} created successfully!`);
+          onSuccess();
           return;
         }
         
-        if (errorData.email && errorData.email[0]?.includes("already exists")) {
-          toast.error("Email already exists. Please use a different email address.");
+        // Handle actual validation errors
+        if (errorData.username?.[0]) {
+          toast.error(`Username: ${errorData.username[0]}`);
           return;
         }
-        
-        // Handle other validation errors
-        if (errorData.username) {
-          toast.error(`Username: ${Array.isArray(errorData.username) ? errorData.username[0] : errorData.username}`);
+        if (errorData.email?.[0]) {
+          toast.error(`Email: ${errorData.email[0]}`);
           return;
         }
-        
-        if (errorData.email) {
-          toast.error(`Email: ${Array.isArray(errorData.email) ? errorData.email[0] : errorData.email}`);
-          return;
-        }
-        
-        if (errorData.password) {
-          toast.error(`Password: ${Array.isArray(errorData.password) ? errorData.password[0] : errorData.password}`);
-          return;
-        }
-        
-        if (errorData.profile) {
-          if (errorData.profile.default_location) {
-            toast.error(`Location: ${Array.isArray(errorData.profile.default_location) ? errorData.profile.default_location[0] : errorData.profile.default_location}`);
-            return;
-          }
-          toast.error(`Profile error: ${JSON.stringify(errorData.profile)}`);
+        if (errorData.profile?.default_location?.[0]) {
+          toast.error(`Location: ${errorData.profile.default_location[0]}`);
           return;
         }
       }
       
-      // If we get here, check if the user was actually created by checking the response
-      if (error.message.includes('Request failed with status code 400') && 
-          !error.response?.data?.username && 
-          !error.response?.data?.email) {
-        // Likely the user was created successfully but there's a response parsing issue
-        reset(); 
+      // Success response
+      if (error.response?.status === 201) {
+        reset();
         toast.success(`User ${data.username} created successfully!`);
-        onSuccess(); 
+        onSuccess();
         return;
       }
       
@@ -241,11 +204,11 @@ const UserCreateForm = ({ onSuccess, onClose }) => {
         <Label htmlFor="phone_number">Phone Number</Label>
         <Input
           id="phone_number"
-          {...register('profile.phone_number')}
+          {...register('phone_number')}
           placeholder="+1234567890"
         />
-        {errors.profile?.phone_number && (
-          <p className="text-sm text-red-500">{errors.profile.phone_number.message}</p>
+        {errors.phone_number && (
+          <p className="text-sm text-red-500">{errors.phone_number.message}</p>
         )}
       </div>
 
@@ -256,8 +219,8 @@ const UserCreateForm = ({ onSuccess, onClose }) => {
           <div className="grid gap-2">
             <Label>Role *</Label>
             <Select 
-              value={watch('profile.role')}
-              onValueChange={(value) => setValue('profile.role', value)}
+              value={watchedRole}
+              onValueChange={(value) => setValue('role', value)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -271,18 +234,21 @@ const UserCreateForm = ({ onSuccess, onClose }) => {
           </div>
 
           <div className="grid gap-2">
+            <Label>Default Location *</Label>
             <LocationSelector
-              label="Default Location *"
-              value={watch('profile.default_location')}
+              value={watchedDefaultLocation}
               onChange={(value) => {
-                // Ensure we store only the ID as a string
-                const locationId = value === 'none' ? '' : String(value);
-                setValue('profile.default_location', locationId, { shouldValidate: true });
+                // LocationSelector returns string IDs, convert to number
+                const locationId = value === 'none' ? '' : Number(value);
+                setValue('default_location', locationId, { shouldValidate: true });
               }}
               required={true}
+              allowEmpty={false}
+              placeholder="Select default location"
+              showLabel={false}
             />
-            {errors.profile?.default_location && (
-              <p className="text-sm text-red-500">{errors.profile.default_location.message}</p>
+            {errors.default_location && (
+              <p className="text-sm text-red-500">{errors.default_location.message}</p>
             )}
           </div>
         </div>
@@ -303,8 +269,8 @@ const UserCreateForm = ({ onSuccess, onClose }) => {
           <div className="flex items-center space-x-2">
             <Checkbox
               id="can_change_location"
-              checked={watch('profile.can_change_location')}
-              onCheckedChange={(checked) => setValue('profile.can_change_location', checked)}
+              checked={watch('can_change_location')}
+              onCheckedChange={(checked) => setValue('can_change_location', checked)}
             />
             <Label htmlFor="can_change_location">
               Can change location during operations
@@ -329,7 +295,10 @@ const UserCreateForm = ({ onSuccess, onClose }) => {
         <Button type="button" variant="ghost" onClick={onClose}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button 
+          type="submit" 
+          disabled={isSubmitting || !watchedDefaultLocation}
+        >
           {isSubmitting ? "Creating..." : "Create User"}
         </Button>
       </div>

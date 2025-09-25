@@ -203,18 +203,26 @@ class UserListView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         """Create a new user (admin only)"""
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            logger.info(
-                f"New user created by admin {request.user.username}: {user.username}"
+        
+        try:
+            serializer = self.get_serializer(data=request.data)
+            
+            if serializer.is_valid():
+                user = serializer.save()
+                
+                # Return the created user with full details using UserSerializer
+                response_serializer = UserSerializer(user)
+                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {"error": f"Unexpected error: {str(e)}"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-            # Return the created user with full details
-            response_serializer = UserSerializer(user)
-            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserAdminDetailView(generics.RetrieveUpdateDestroyAPIView):

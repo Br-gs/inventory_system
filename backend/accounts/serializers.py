@@ -33,6 +33,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
         """Get locations this user can access"""
         locations = obj.get_accessible_locations()
         return [{"id": loc.id, "name": loc.name} for loc in locations]
+    
+    def to_internal_value(self, data):
+        # Convertir Location object a ID si es necesario
+        if 'default_location' in data:
+            location = data['default_location']
+            if hasattr(location, 'id'):
+                data['default_location'] = location.id
+        return super().to_internal_value(data)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -255,17 +263,37 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
+        print(f"🔍 RECEIVED DATA: {validated_data}")
+        
         profile_data = validated_data.pop("profile", None)
+        print(f"🔍 PROFILE DATA: {profile_data}")
+        
         password = validated_data.pop("password")
 
         user = User.objects.create_user(password=password, **validated_data)
-
+           
+        # Update profile if provided
         if profile_data and hasattr(user, "profile"):
-            profile_serializer = UserProfileSerializer(
-                user.profile, data=profile_data, partial=True
-            )
-            if profile_serializer.is_valid(raise_exception=True):
-                profile_serializer.save()
+            
+            # check if default_location is an ID and convert it to a Location instance
+            if 'default_location' in profile_data:
+                location_value = profile_data['default_location']
+                
+                if isinstance(location_value, int):
+                    # is ID, convert to Location instance
+                    try:
+                        location_instance = Location.objects.get(id=location_value)
+                        profile_data['default_location'] = location_instance
+                    except Location.DoesNotExist:
+                        raise serializers.ValidationError(f"Location with ID {location_value} does not exist")
+            
+            # Now update the profile
+            profile = user.profile
+            for attr, value in profile_data.items():
+                setattr(profile, attr, value)
+            profile.save()
+            
+            logger.info(f"Profile updated for new user {user.username} with location {profile.default_location}")
 
         return user
 

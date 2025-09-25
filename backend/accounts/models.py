@@ -120,32 +120,32 @@ class UserProfile(models.Model):
 def create_or_update_user_profile(sender, instance, created, **kwargs):
     if created:
         try:
-            # Set role based on is_staff
             role = "admin" if instance.is_staff else "employee"
             
-            # For admin users, we can create profile without location
-            # For regular users created via admin panel, location will be set separately
-            profile, _ = UserProfile.objects.get_or_create(
+            profile, profile_created = UserProfile.objects.get_or_create(
                 user=instance, 
                 defaults={"role": role}
             )
             
-            # If it's a regular user and no default location, try to assign first active location
-            # This is a fallback for backwards compatibility
-            if not instance.is_staff and not profile.default_location:
-                first_location = Location.objects.filter(is_active=True).first()
-                if first_location:
-                    profile.default_location = first_location
-                    profile.save(update_fields=['default_location'])
-                    logger.info(f"Auto-assigned location {first_location.name} to user {instance.username}")
-                else:
-                    logger.warning(f"No active locations available for user {instance.username}")
+            if (not instance.is_staff and profile_created and 
+                not profile.default_location):
+                # asynchronously assign a default location if none is set
+                import time
+                time.sleep(0.1)
+                
+                # Refresh profile from DB to ensure it's up-to-date
+                profile.refresh_from_db()
+                
+                if not profile.default_location:
+                    first_location = Location.objects.filter(is_active=True).first()
+                    if first_location:
+                        profile.default_location = first_location
+                        profile.save(update_fields=['default_location'])
+                        logger.info(f"Auto-assigned location {first_location.name} to user {instance.username}")
             
             logger.info(f"User profile created for {instance.username}")
         except Exception as e:
-            logger.error(
-                f"Error creating user profile for {instance.username}: {str(e)}"
-            )
+            logger.error(f"Error creating user profile for {instance.username}: {str(e)}")
     else:
         try:
             if hasattr(instance, "profile"):
