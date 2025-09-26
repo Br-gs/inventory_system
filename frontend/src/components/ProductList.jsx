@@ -16,15 +16,23 @@ import { MoreHorizontal, Package } from 'lucide-react';
 
 const PAGE_SIZE = 10;
 
-const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEditProduct }) => {
+const ProductList = memo(({
+    filters,
+    setFilters,
+    onRefresh,
+    refreshTrigger,
+    onEditProduct,
+    selectedLocation,
+    onLocationChange,
+    onClearLocationFilter
+}) => {
     const { user } = useContext(AuthContext);
     const [currentPage, setCurrentPage] = useState(1);
-    const [selectedLocation, setSelectedLocation] = useState('');
-    const [viewMode, setViewMode] = useState('table'); // 'table' or 'cards'
+    const [viewMode, setViewMode] = useState('table');
 
     const { data, loading, error } = useProducts(
-        { ...filters, location: selectedLocation }, 
-        currentPage, 
+        { ...filters, location: selectedLocation },
+        currentPage,
         refreshTrigger
     );
 
@@ -33,31 +41,16 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
     const totalPages = Math.ceil(totalProducts / PAGE_SIZE);
 
     const handleSearchChange = useCallback((searchTerm) => {
-        setFilters((prevFilters) => ({
-            ...prevFilters,
-            search: searchTerm
-        }));
+        setFilters(prev => ({ ...prev, search: searchTerm }));
         setCurrentPage(1);
     }, [setFilters]);
 
     const handleFilterChange = useCallback((e) => {
         const { name, value, type, checked } = e.target;
         const filterValue = type === 'checkbox' ? (checked ? 'true' : '') : value;
-        setFilters((prevFilters) => ({
-            ...prevFilters,
-            [name]: filterValue
-        }));
+        setFilters(prev => ({ ...prev, [name]: filterValue }));
         setCurrentPage(1);
     }, [setFilters]);
-
-    const handleLocationChange = useCallback((locationId) => {
-        setSelectedLocation(locationId);
-        setCurrentPage(1);
-    }, []);
-
-    const handleClearLocationFilter = useCallback(() => {
-        setSelectedLocation('');
-    }, []);
 
     const handleDelete = useCallback(async (productId) => {
         if (window.confirm("Are you sure you want to delete this product?")) {
@@ -75,7 +68,6 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
 
     const getStockInfo = useCallback((product) => {
         if (selectedLocation) {
-            // Find stock for selected location
             const locationStock = product.stock_locations?.find(
                 stock => stock.location.id.toString() === selectedLocation
             );
@@ -86,7 +78,6 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
                 locationName: locationStock?.location.name || 'Unknown Location'
             };
         }
-        // Show total stock across all locations
         return {
             quantity: product.total_quantity || 0,
             showTotal: false,
@@ -138,9 +129,9 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
                 onFilterChange={handleFilterChange}
                 searchValue={filters.search}
                 onSearchChange={handleSearchChange}
-                onLocationChange={handleLocationChange}
+                onLocationChange={onLocationChange}
                 selectedLocation={selectedLocation}
-                onClearLocationFilter={handleClearLocationFilter}
+                onClearLocationFilter={onClearLocationFilter}
             />
 
             {loading ? (
@@ -185,8 +176,8 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
                             {products.length > 0 ? (
                                 products.map((product) => (
                                     <div key={product.id} className="relative">
-                                        <ProductStockCard 
-                                            product={product} 
+                                        <ProductStockCard
+                                            product={product}
                                             selectedLocation={selectedLocation}
                                         />
                                         {user?.is_staff && (
@@ -201,8 +192,8 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
                                                         <DropdownMenuItem onClick={() => onEditProduct(product)}>
                                                             Edit
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem 
-                                                            onClick={() => handleDelete(product.id)} 
+                                                        <DropdownMenuItem
+                                                            onClick={() => handleDelete(product.id)}
                                                             className="text-red-500 focus:text-red-500"
                                                         >
                                                             Delete
@@ -218,7 +209,7 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
                                     <Package className="h-12 w-12 text-muted-foreground mb-4" />
                                     <p className="text-lg font-medium mb-2">No products found</p>
                                     <p className="text-sm text-muted-foreground text-center">
-                                        {selectedLocation 
+                                        {selectedLocation
                                             ? "No products available at the selected location"
                                             : "Try adjusting your search criteria"
                                         }
@@ -292,8 +283,8 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
                                                                     <DropdownMenuItem onClick={() => onEditProduct(product)}>
                                                                         Edit
                                                                     </DropdownMenuItem>
-                                                                    <DropdownMenuItem 
-                                                                        onClick={() => handleDelete(product.id)} 
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => handleDelete(product.id)}
                                                                         className="text-red-500 focus:text-red-500"
                                                                     >
                                                                         Delete
@@ -307,15 +298,15 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
                                         })
                                     ) : (
                                         <TableRow>
-                                            <TableCell 
-                                                colSpan={user?.is_staff ? 6 : 5} 
+                                            <TableCell
+                                                colSpan={user?.is_staff ? 6 : 5}
                                                 className="text-center py-8"
                                             >
                                                 <div className="flex flex-col items-center gap-2">
                                                     <Package className="h-12 w-12 text-muted-foreground" />
                                                     <p className="text-lg font-medium">No products found</p>
                                                     <p className="text-sm text-muted-foreground">
-                                                        {selectedLocation 
+                                                        {selectedLocation
                                                             ? "No products available at the selected location"
                                                             : "Try adjusting your search criteria"
                                                         }
@@ -337,10 +328,10 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
                         <PaginationItem>
                             <PaginationPrevious
                                 href="#"
-                                onClick={(e) => { 
-                                    e.preventDefault(); 
+                                onClick={(e) => {
+                                    e.preventDefault();
                                     if (currentPage > 1) {
-                                        setCurrentPage(p => p - 1); 
+                                        setCurrentPage(p => p - 1);
                                     }
                                 }}
                                 disabled={currentPage === 1}
@@ -360,10 +351,10 @@ const ProductList = memo(({ filters, setFilters, onRefresh, refreshTrigger, onEd
                         <PaginationItem>
                             <PaginationNext
                                 href="#"
-                                onClick={(e) => { 
-                                    e.preventDefault(); 
+                                onClick={(e) => {
+                                    e.preventDefault();
                                     if (currentPage < totalPages) {
-                                        setCurrentPage(p => p + 1); 
+                                        setCurrentPage(p => p + 1);
                                     }
                                 }}
                                 disabled={currentPage >= totalPages}

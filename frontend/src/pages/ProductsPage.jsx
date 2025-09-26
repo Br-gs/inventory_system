@@ -10,19 +10,31 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from 'lucide-react';
 
 const ProductsPage = () => {
-    const { user } = useContext(AuthContext);
+    const { user, canChangeLocation, getCurrentLocation } = useContext(AuthContext);
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
-    
+
     const [sidebarContent, setSidebarContent] = useState(null);
     const [productToEdit, setProductToEdit] = useState(null);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const [selectedLocation, setSelectedLocation] = useState('');
 
     const [filters, setFilters] = useState({
         search: searchParams.get('search') || '',
         is_active: searchParams.get('is_active') || '',
         low_stock: searchParams.get('low_stock') || '',
     });
+
+    // Initialize location for non-admin users
+    useEffect(() => {
+        const userCanChangeLocation = user?.is_staff || canChangeLocation();
+        const currentLocation = getCurrentLocation();
+
+        // Auto-set location for users who can't change it
+        if (!userCanChangeLocation && currentLocation && !selectedLocation) {
+            setSelectedLocation(currentLocation.id.toString());
+        }
+    }, [user?.is_staff, canChangeLocation, getCurrentLocation, selectedLocation]);
 
     useEffect(() => {
         const activeFilters = Object.fromEntries(
@@ -57,7 +69,7 @@ const ProductsPage = () => {
     const handleProductSuccess = useCallback(() => {
         closeSidebar();
         handleRefresh();
-        toast.success(`Product ${productToEdit ? 'update' : 'created'} with succesed.`);
+        toast.success(`Product ${productToEdit ? 'updated' : 'created'} successfully.`);
     }, [productToEdit, handleRefresh, closeSidebar]);
 
     const handleMovementSuccess = useCallback((newMovement) => {
@@ -79,6 +91,20 @@ const ProductsPage = () => {
         );
     }, [closeSidebar, handleRefresh, navigate]);
 
+    const handleLocationChange = useCallback((locationId) => {
+        const userCanChangeLocation = user?.is_staff || canChangeLocation();
+        if (userCanChangeLocation) {
+            setSelectedLocation(locationId);
+        }
+    }, [user?.is_staff, canChangeLocation]);
+
+    const handleClearLocationFilter = useCallback(() => {
+        const userCanChangeLocation = user?.is_staff || canChangeLocation();
+        if (userCanChangeLocation) {
+            setSelectedLocation('');
+        }
+    }, [user?.is_staff, canChangeLocation]);
+
     return (
        <div className="space-y-6">
             <Card>
@@ -87,7 +113,7 @@ const ProductsPage = () => {
                         <CardTitle>Manage Products</CardTitle>
                         <CardDescription>Manage your product catalog and record stock movements.</CardDescription>
                     </div>
-                    
+
                     <div className="flex gap-4">
                         {user?.is_staff && (
                             <Button onClick={openCreateProductSidebar}>
@@ -105,19 +131,23 @@ const ProductsPage = () => {
                     <ProductList
                         filters={filters}
                         setFilters={setFilters}
-                        refreshTrigger={refreshTrigger} 
+                        refreshTrigger={refreshTrigger}
                         onEditProduct={openEditProductSidebar}
-                        onRefresh={handleRefresh} />
+                        onRefresh={handleRefresh}
+                        selectedLocation={selectedLocation}
+                        onLocationChange={handleLocationChange}
+                        onClearLocationFilter={handleClearLocationFilter}
+                    />
                 </CardContent>
             </Card>
 
-            <Sidebar 
-                isOpen={sidebarContent !== null} 
+            <Sidebar
+                isOpen={sidebarContent !== null}
                 onClose={closeSidebar}
                 title={sidebarContent === 'product' ? (productToEdit ? 'Edit Product' : 'Add Product') : 'Add Movement'}
                 description={
-                    sidebarContent === 'product' 
-                    ? "Complete the product details here." 
+                    sidebarContent === 'product'
+                    ? "Complete the product details here."
                     : "Select a product and register a new stock transaction."
                 }
             >
@@ -129,9 +159,9 @@ const ProductsPage = () => {
                     />
                 )}
                 {sidebarContent === 'movement' && (
-                    <MovementForm 
-                        onSuccess={handleMovementSuccess} 
-                        onClose={closeSidebar} 
+                    <MovementForm
+                        onSuccess={handleMovementSuccess}
+                        onClose={closeSidebar}
                         refreshTrigger={refreshTrigger} />
                 )}
             </Sidebar>
