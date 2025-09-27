@@ -28,11 +28,7 @@ const LocationFilter = ({
         <div className="grid gap-2 flex-1">
           <div className="flex items-center justify-between px-3 py-2 bg-muted rounded-md border">
             <span className="text-sm">{displayLocation.name}</span>
-            <span className="text-xs text-muted-foreground">(Fixed)</span>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Contact admin to change location access
-          </p>
         </div>
       );
     }
