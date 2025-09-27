@@ -5,7 +5,7 @@ import { Package, MapPin } from 'lucide-react';
 import AuthContext from '../../context/authContext';
 
 const ProductStockCard = ({ product, selectedLocation = null }) => {
-    const { user, accessibleLocations } = useContext(AuthContext);
+    const { user, userProfile } = useContext(AuthContext);
 
     const getLocationStock = () => {
         if (selectedLocation) {
@@ -25,12 +25,12 @@ const ProductStockCard = ({ product, selectedLocation = null }) => {
 
     // Filter stock locations based on user access
     const getAccessibleStockLocations = () => {
-        if (user?.is_staff) {
-            // Admins can see all locations
+        if (user?.is_staff || userProfile?.profile?.can_change_location) {
+            // Admins and users with can_change_location can see all locations
             return product.stock_locations || [];
         } else {
             // Regular users can only see their accessible locations
-            const accessibleLocationIds = accessibleLocations.map(loc => loc.id);
+            const accessibleLocationIds = (userProfile?.profile?.accessible_locations || []).map(loc => loc.id);
             return (product.stock_locations || []).filter(stock =>
                 accessibleLocationIds.includes(stock.location.id)
             );

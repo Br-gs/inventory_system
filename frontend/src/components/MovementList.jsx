@@ -18,7 +18,7 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
         location: ''
     });
     const [currentPage, setCurrentPage] = useState(1);
-    
+
     const { data, loading, error} = useMovements(filters, currentPage, refreshTrigger);
 
     const movements = data?.results ?? [];
@@ -61,15 +61,15 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
     const getMovementTypeIcon = (type, notes = '') => {
         // Check if it's a transfer based on notes
         const isTransfer = notes?.toLowerCase().includes('transfer');
-        
+
         switch (type) {
-            case 'IN': 
-                return isTransfer ? 
-                    <ArrowRightLeft className="h-3 w-3" /> : 
+            case 'IN':
+                return isTransfer ?
+                    <ArrowRightLeft className="h-3 w-3" /> :
                     <ArrowDown className="h-3 w-3" />;
-            case 'OUT': 
-                return isTransfer ? 
-                    <ArrowRightLeft className="h-3 w-3" /> : 
+            case 'OUT':
+                return isTransfer ?
+                    <ArrowRightLeft className="h-3 w-3" /> :
                     <ArrowUp className="h-3 w-3" />;
             case 'TRF': return <ArrowRightLeft className="h-3 w-3" />;
             case 'ADJ': return <AlertTriangle className="h-3 w-3" />;
@@ -79,15 +79,15 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
 
     const getMovementTypeColor = (type, notes = '') => {
         const isTransfer = notes?.toLowerCase().includes('transfer');
-        
+
         switch (type) {
-            case 'IN': 
-                return isTransfer ? 
-                    'bg-blue-100 text-blue-800 border-blue-200' : 
+            case 'IN':
+                return isTransfer ?
+                    'bg-blue-100 text-blue-800 border-blue-200' :
                     'bg-green-100 text-green-800 border-green-200';
-            case 'OUT': 
-                return isTransfer ? 
-                    'bg-blue-100 text-blue-800 border-blue-200' : 
+            case 'OUT':
+                return isTransfer ?
+                    'bg-blue-100 text-blue-800 border-blue-200' :
                     'bg-red-100 text-red-800 border-red-200';
             case 'TRF': return 'bg-blue-100 text-blue-800 border-blue-200';
             case 'ADJ': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
@@ -100,7 +100,7 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
         const isTransferOut = movement.notes?.toLowerCase().includes('transfer to');
         const isSale = movement.notes?.toLowerCase().includes('sale');
         const isDamage = movement.notes?.toLowerCase().includes('damage');
-        
+
         if (isTransferIn || isTransferOut) {
             return 'Transfer';
         } else if (isSale) {
@@ -118,14 +118,14 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
 
     return (
         <div className="space-y-4">
-            <MovementFilters 
-                filters={filters} 
+            <MovementFilters
+                filters={filters}
                 onFilterChange={handleFilterChange}
                 onLocationChange={handleLocationChange}
                 selectedLocation={filters.location}
                 onClearFilters={handleClearFilters}
             />
-            
+
             <div className="rounded-md border">
                <Table>
                     <TableHeader>
@@ -137,7 +137,7 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
                             <TableHead className="text-center">Unit Price</TableHead>
                             <TableHead className="text-center">Total Value</TableHead>
                             <TableHead>Date and Time</TableHead>
-                            <TableHead>Made By</TableHead> 
+                            <TableHead>Made By</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -148,7 +148,7 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
                                 const isTransferIn = movement.notes?.toLowerCase().includes('transfer from');
                                 const isTransferOut = movement.notes?.toLowerCase().includes('transfer to');
                                 const isTransfer = isTransferIn || isTransferOut;
-                                
+
                                 return (
                                     <TableRow key={movement.id}>
                                         <TableCell className="font-medium">{movement.product_name}</TableCell>
@@ -195,8 +195,8 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge 
-                                                variant="outline" 
+                                            <Badge
+                                                variant="outline"
                                                 className={`inline-flex items-center gap-1 ${getMovementTypeColor(movement.movement_type, movement.notes)}`}
                                             >
                                                 {getMovementTypeIcon(movement.movement_type, movement.notes)}
@@ -222,7 +222,7 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
                             })
                         ) : (
                             <TableRow>
-                                <TableCell 
+                                <TableCell
                                     colSpan={8}
                                     className="text-center py-8"
                                 >
@@ -239,21 +239,21 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
 
             {totalPages > 1 && (
                 <Pagination>
-                    <PaginationContent className="space-x-1"> 
+                    <PaginationContent className="space-x-1">
                         <PaginationItem>
-                            <PaginationPrevious 
-                                href="#" 
-                                onClick={(e) => { 
-                                    e.preventDefault(); 
+                            <PaginationPrevious
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault();
                                     if (currentPage > 1) {
-                                        setCurrentPage(p => p - 1); 
+                                        setCurrentPage(p => p - 1);
                                     }
                                 }}
                                 disabled={currentPage === 1}
                                 className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
                             />
                         </PaginationItem>
-                        
+
                         <PaginationItem>
                             <PaginationLink href="#" isActive>
                                 {currentPage}
@@ -264,12 +264,12 @@ const MovementList = ({ refreshTrigger, initialProductFilter = null }) => {
                         </PaginationItem>
 
                         <PaginationItem>
-                            <PaginationNext 
-                                href="#" 
-                                onClick={(e) => { 
-                                    e.preventDefault(); 
+                            <PaginationNext
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault();
                                     if (currentPage < totalPages) {
-                                        setCurrentPage(p => p + 1); 
+                                        setCurrentPage(p => p + 1);
                                     }
                                 }}
                                 disabled={currentPage >= totalPages}

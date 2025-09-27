@@ -16,7 +16,7 @@ const ProductFilters = memo(({
     selectedLocation,
     onClearLocationFilter
 }) => {
-    const { user, canChangeLocation, getCurrentLocation, accessibleLocations } = useContext(AuthContext);
+    const { user, userProfile, getCurrentLocation } = useContext(AuthContext);
     const [locations, setLocations] = useState([]);
 
     useEffect(() => {
@@ -24,16 +24,18 @@ const ProductFilters = memo(({
 
         const fetchLocations = async () => {
             try {
-                // For admins, fetch all locations. For regular users, use accessible locations
-                if (user?.is_staff) {
+                // For admins OR users with can_change_location permission, fetch all locations
+                if (user?.is_staff || userProfile?.profile?.can_change_location) {
                     const response = await locationsService.getLocations();
                     if (isMounted) {
                         setLocations(response.data.results || response.data);
                     }
                 } else {
-                    // Use accessible locations from context
+                    // Regular users without permission use only their accessible locations
                     if (isMounted) {
-                        setLocations(accessibleLocations);
+                        const userAccessibleLocations = userProfile?.profile?.accessible_locations || [];
+                        setLocations(userAccessibleLocations);
+                        console.log('User accessible locations (restricted):', userAccessibleLocations);
                     }
                 }
             } catch (error) {
@@ -48,18 +50,18 @@ const ProductFilters = memo(({
         return () => {
             isMounted = false;
         };
-    }, [user?.is_staff, accessibleLocations]);
+    }, [user?.is_staff, userProfile?.profile?.can_change_location, userProfile?.profile?.accessible_locations]);
 
     // Auto-set location for non-admin users
     useEffect(() => {
-        const userCanChangeLocation = user?.is_staff || canChangeLocation();
+        const canUserChangeLocation = user?.is_staff || userProfile?.profile?.can_change_location;
         const currentLocation = getCurrentLocation();
 
         // If user can't change location and no location is selected, auto-select their default
-        if (!userCanChangeLocation && currentLocation && !selectedLocation) {
+        if (!canUserChangeLocation && currentLocation && !selectedLocation) {
             onLocationChange(currentLocation.id.toString());
         }
-    }, [user?.is_staff, canChangeLocation, getCurrentLocation, selectedLocation, onLocationChange]);
+    }, [user?.is_staff, userProfile?.profile?.can_change_location, getCurrentLocation, selectedLocation, onLocationChange]);
 
     const handleClearAll = useCallback(() => {
         onSearchChange('');
@@ -67,26 +69,26 @@ const ProductFilters = memo(({
         onFilterChange({ target: { name: 'low_stock', value: '', type: 'checkbox', checked: false }});
 
         // Only clear location if user can change it
-        const userCanChangeLocation = user?.is_staff || canChangeLocation();
-        if (userCanChangeLocation && onClearLocationFilter) {
+        const canUserChangeLocation = user?.is_staff || userProfile?.profile?.can_change_location;
+        if (canUserChangeLocation && onClearLocationFilter) {
             onClearLocationFilter();
         }
-    }, [onSearchChange, onFilterChange, onClearLocationFilter, user?.is_staff, canChangeLocation]);
+    }, [onSearchChange, onFilterChange, onClearLocationFilter, user?.is_staff, userProfile?.profile?.can_change_location]);
 
     const handleLocationChange = useCallback((locationId) => {
         // Only allow location change if user has permission
-        const userCanChangeLocation = user?.is_staff || canChangeLocation();
-        if (userCanChangeLocation && onLocationChange) {
+        const canUserChangeLocation = user?.is_staff || userProfile?.profile?.can_change_location;
+        if (canUserChangeLocation && onLocationChange) {
             onLocationChange(locationId);
         }
-    }, [user?.is_staff, canChangeLocation, onLocationChange]);
+    }, [user?.is_staff, userProfile?.profile?.can_change_location, onLocationChange]);
 
     const handleClearLocationFilter = useCallback(() => {
-        const userCanChangeLocation = user?.is_staff || canChangeLocation();
-        if (userCanChangeLocation && onClearLocationFilter) {
+        const canUserChangeLocation = user?.is_staff || userProfile?.profile?.can_change_location;
+        if (canUserChangeLocation && onClearLocationFilter) {
             onClearLocationFilter();
         }
-    }, [user?.is_staff, canChangeLocation, onClearLocationFilter]);
+    }, [user?.is_staff, userProfile?.profile?.can_change_location, onClearLocationFilter]);
 
     return (
        <div className="space-y-4 p-4 bg-muted/30 rounded-lg">

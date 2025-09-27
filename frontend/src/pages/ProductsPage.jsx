@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from 'lucide-react';
 
 const ProductsPage = () => {
-    const { user, canChangeLocation, getCurrentLocation } = useContext(AuthContext);
+    const { user, userProfile, getCurrentLocation } = useContext(AuthContext);
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
 
@@ -27,14 +27,14 @@ const ProductsPage = () => {
 
     // Initialize location for non-admin users
     useEffect(() => {
-        const userCanChangeLocation = user?.is_staff || canChangeLocation();
+        const userCanChangeLocation = user?.is_staff || userProfile?.profile?.can_change_location;
         const currentLocation = getCurrentLocation();
 
         // Auto-set location for users who can't change it
         if (!userCanChangeLocation && currentLocation && !selectedLocation) {
             setSelectedLocation(currentLocation.id.toString());
         }
-    }, [user?.is_staff, canChangeLocation, getCurrentLocation, selectedLocation]);
+    }, [user?.is_staff, userProfile?.profile?.can_change_location, getCurrentLocation, selectedLocation]);
 
     useEffect(() => {
         const activeFilters = Object.fromEntries(
@@ -92,18 +92,18 @@ const ProductsPage = () => {
     }, [closeSidebar, handleRefresh, navigate]);
 
     const handleLocationChange = useCallback((locationId) => {
-        const userCanChangeLocation = user?.is_staff || canChangeLocation();
+        const userCanChangeLocation = user?.is_staff || userProfile?.profile?.can_change_location;
         if (userCanChangeLocation) {
             setSelectedLocation(locationId);
         }
-    }, [user?.is_staff, canChangeLocation]);
+    }, [user?.is_staff, userProfile?.profile?.can_change_location]);
 
     const handleClearLocationFilter = useCallback(() => {
-        const userCanChangeLocation = user?.is_staff || canChangeLocation();
+        const userCanChangeLocation = user?.is_staff || userProfile?.profile?.can_change_location;
         if (userCanChangeLocation) {
             setSelectedLocation('');
         }
-    }, [user?.is_staff, canChangeLocation]);
+    }, [user?.is_staff, userProfile?.profile?.can_change_location]);
 
     return (
        <div className="space-y-6">
